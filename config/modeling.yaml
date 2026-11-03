@@ -76,4 +76,11 @@ decisions:
   transfer_trip_minutes: 60
   # Do not raise an alert for fewer expected leftover or missing units than this.
   alert_min_units: 5
+  # Products whose demand rises on hot days (playbook s9: watermelon and tender coconut).
+  heat_sensitive_skus: [P11, P12]
+  # How far ahead a surplus pickup may be planned. ASSUMED; the playbook gives no limit.
+  surplus_horizon_hours: 36
+  # A festival counts as "major" for the day before it from this intensity (calendar 0 to 1).
+  # ASSUMED; the forecast evaluation used the same cut-off.
+  major_festival_intensity: 0.8
 
