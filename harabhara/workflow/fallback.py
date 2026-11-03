@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
-from harabhara.contracts import Forecast, PriceQuote
+from harabhara.contracts import Forecast, PriceQuote, Projection
 
 STALE_HEADER = "X-Data-Stale"
 
@@ -23,6 +23,18 @@ def fresh_forecasts(forecasts: list[Forecast], today: date) -> Served[Forecast]:
     """Drop forecasts for days already past; if any were dropped the rest is marked stale."""
     keep = [f for f in forecasts if f.target_date >= today]
     return Served(keep, stale=len(keep) != len(forecasts))
+
+
+def fresh_projections(rows: list[Projection], today: date) -> Served[Projection]:
+    """Keep the latest projection per store and product; drop any wholly in the past (stale)."""
+    latest: dict[tuple[str, str], Projection] = {}
+    for p in rows:
+        key = (p.store_id, p.sku_id)
+        if key not in latest or p.as_of > latest[key].as_of:
+            latest[key] = p
+    keep = [p for p in latest.values() if p.days[-1].on >= today]
+    keep.sort(key=lambda p: (p.store_id, p.sku_id))
+    return Served(keep, stale=len(keep) != len(latest))
 
 
 def as_stale(quotes: list[PriceQuote]) -> list[PriceQuote]:

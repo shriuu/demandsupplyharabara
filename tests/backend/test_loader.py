@@ -13,7 +13,9 @@ from tests.backend.conftest import (
     NOW,
     farmer_row,
     make_forecast,
+    make_projection,
     make_suggestion,
+    make_trimming,
     scorecard_row,
 )
 
@@ -72,3 +74,35 @@ def test_only_proposed_suggestions_can_be_loaded(tmp_path: Path) -> None:
     write(tmp_path, "suggestions.json", [approved])
     with pytest.raises(ValueError, match="proposed"):
         load_directory(InMemoryStorage(), tmp_path, NOW)
+
+
+def test_loads_trimming_and_projections_and_is_repeat_safe(tmp_path: Path) -> None:
+    write(tmp_path, "trimming.json", [make_trimming("tomato"), make_trimming("onion")])
+    write(tmp_path, "projections.json", [make_projection("S1"), make_projection("S2")])
+    storage = InMemoryStorage()
+    first = load_directory(storage, tmp_path, NOW)
+    assert (first.trimming, first.projections) == (2, 2)
+    before = (storage.list_trimming(), storage.list_projections())
+    load_directory(storage, tmp_path, NOW)
+    assert (storage.list_trimming(), storage.list_projections()) == before
+
+
+def test_bad_trimming_or_projection_data_is_rejected_before_any_write(tmp_path: Path) -> None:
+    write(tmp_path, "forecasts.json", [make_forecast()])
+    write(tmp_path, "projections.json", [make_projection()])
+    bad = json.loads(make_trimming().model_dump_json())
+    bad["spot_units_to_trim"] = -4
+    (tmp_path / "trimming.json").write_text(json.dumps([bad]))
+    storage = InMemoryStorage()
+    with pytest.raises(ValueError, match="spot_units_to_trim"):
+        load_directory(storage, tmp_path, NOW)
+    assert storage.list_forecasts() == []
+    assert storage.list_projections() == []
+
+    (tmp_path / "trimming.json").write_text("[]")
+    bad_projection = json.loads(make_projection().model_dump_json())
+    bad_projection["days"] = []
+    (tmp_path / "projections.json").write_text(json.dumps([bad_projection]))
+    with pytest.raises(ValueError, match="days"):
+        load_directory(storage, tmp_path, NOW)
+    assert storage.list_forecasts() == []

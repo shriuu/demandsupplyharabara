@@ -199,6 +199,18 @@ class FarmerVolumeForecast(_Frozen):
     label: Literal["estimate"] = "estimate"  # information only, never a commitment
 
 
+class TrimmingSuggestion(_Frozen):
+    """Advice to the DC buying lead: trim this much spot (mandi) buying first.
+
+    Spot buying only. Confirmed farmer-group volume is never part of it (guardrail 3).
+    """
+
+    on: date
+    sku_id: str
+    spot_units_to_trim: float = Field(ge=0)
+    reason: str = Field(min_length=1)
+
+
 class Scorecard(_Frozen):
     """Waste, empty shelves and farmer share travel together (guardrail 4)."""
 

@@ -5,10 +5,13 @@ from __future__ import annotations
 import pytest
 
 from tests.backend.conftest import (
+    TODAY,
     Env,
     farmer_row,
     make_forecast,
+    make_projection,
     make_suggestion,
+    make_trimming,
     scorecard_row,
 )
 
@@ -17,6 +20,7 @@ V1 = "/api/v1"
 # endpoint -> the only roles (by PIN owner) allowed
 ALLOWED = {
     "/forecasts": {"store_manager", "dc_lead"},
+    "/projections": {"store_manager", "area_manager", "dc_lead"},
     "/dc/totals": {"dc_lead"},
     "/prices": {"dc_lead"},
     "/farmers/forecast": {"farmer_coordinator"},
@@ -97,7 +101,50 @@ def test_dc_totals_sum_the_ranges_across_stores(env: Env) -> None:
     (total,) = body["totals"]
     assert total["demand"] == {"low": 40, "likely": 60, "high": 90}
     assert total["stores"] == 2
-    assert body["trimming"] == []  # nothing from the decision layer yet; nothing is invented
+    assert body["trimming"] == []  # nothing stored, nothing invented
+
+
+def test_dc_totals_show_the_stored_trimming_for_that_date_only(env: Env) -> None:
+    from datetime import timedelta
+
+    env.storage.put_trimming(
+        [make_trimming("tomato"), make_trimming("onion", TODAY + timedelta(days=1))]
+    )
+    body = env.client.get(f"{V1}/dc/totals", headers=env.login("4444")).json()
+    assert body["trimming"] == [
+        {
+            "sku_id": "tomato",
+            "spot_units_to_trim": 12,
+            "reason": "Stock is long, so buy less at the mandi.",
+        }
+    ]
+    assert body["stale"] is False
+    # nobody else may read it
+    for pin in ("1111", "3333", "5555"):
+        assert env.client.get(f"{V1}/dc/totals", headers=env.login(pin)).status_code == 403
+
+
+def test_store_manager_reads_only_their_own_stores_projections(env: Env) -> None:
+    env.storage.put_projections([make_projection("S1"), make_projection("S2")])
+    mine = env.client.get(f"{V1}/projections", headers=env.login("1111")).json()
+    assert {p["store_id"] for p in mine} == {"S1"}
+    other = env.client.get(f"{V1}/projections?store_id=S2", headers=env.login("1111"))
+    assert other.status_code == 403
+    for pin in ("3333", "4444"):
+        rows = env.client.get(f"{V1}/projections", headers=env.login(pin)).json()
+        assert {p["store_id"] for p in rows} == {"S1", "S2"}
+    one = env.client.get(f"{V1}/projections?store_id=S2&sku_id=tomato", headers=env.login("3333"))
+    assert [p["store_id"] for p in one.json()] == ["S2"]
+
+
+def test_only_the_latest_projection_per_store_and_product_is_served(env: Env) -> None:
+    from datetime import timedelta
+
+    env.storage.put_projections(
+        [make_projection(as_of=TODAY - timedelta(days=1)), make_projection(as_of=TODAY)]
+    )
+    rows = env.client.get(f"{V1}/projections", headers=env.login("1111")).json()
+    assert [r["as_of"] for r in rows] == [TODAY.isoformat()]
 
 
 def test_farmer_forecast_is_labelled_estimate_and_scorecard_reports_all_three(env: Env) -> None:
