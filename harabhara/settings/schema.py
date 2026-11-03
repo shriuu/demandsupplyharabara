@@ -104,6 +104,10 @@ class ManagersRuleBaseline(_Strict):
     extra_buffer_pct: float | None
 
 
+class Explanations(_Strict):
+    max_reason_chars: int = Field(ge=20)
+
+
 class Rules(_Strict):
     version: str
     playbook_version: str
@@ -117,6 +121,7 @@ class Rules(_Strict):
     ordering: Ordering
     automation: Automation
     managers_rule_baseline: ManagersRuleBaseline
+    explanations: Explanations
 
 
 # ---- schedule.yaml --------------------------------------------------------------------------

@@ -75,3 +75,7 @@ managers_rule_baseline:             # playbook §2 — rebuild exactly for the b
   weekend_bump_pct: 20
   festival_bump_pct: 25             # playbook §9, flat for every product
   extra_buffer_pct: null            # "a further buffer 'to be safe'" — size not stated; calibrate on train (data shows orders ~+9–10% above next-day sales)
+
+explanations:                       # guardrail 9: one sentence a store manager would say
+  max_reason_chars: 200             # ASSUMED upper bound for "one sentence"; not from the playbook
+
