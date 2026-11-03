@@ -210,10 +210,21 @@ class ProjectionParams(_Strict):
     sales_order: Literal["freshest_first", "oldest_first"]
 
 
+class ShelfLifeParams(_Strict):
+    quantiles: tuple[float, float, float]
+    iterations: int = Field(ge=1)
+    depth: int = Field(ge=1)
+    learning_rate: float = Field(gt=0)
+    seed: int
+    fit_until: date
+    training_period_end: date
+
+
 class Modeling(_Strict):
     version: str
     hidden_demand: HiddenDemandParams
     projection: ProjectionParams
+    shelf_life: ShelfLifeParams
 
 
 # ---- feeds.yaml -----------------------------------------------------------------------------

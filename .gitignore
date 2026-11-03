@@ -38,3 +38,6 @@ node_modules/
 
 # Third-party documents kept locally
 docs/*.pdf
+
+# Trained models and metrics stay local; the registry copies what ships
+artifacts/

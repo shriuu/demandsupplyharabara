@@ -14,3 +14,17 @@ projection:
   # Which stock shoppers take first. The brief (s2) says shoppers pick the freshest and leave
   # older stock behind, so the default is freshest first. "oldest_first" is a display-rule view.
   sales_order: freshest_first
+
+shelf_life:
+  # Boosted trees, one model per quantile, on the QC measures taken at receipt.
+  # Weather is not a feature: ambient weather added nothing in the QC samples (docs/shelf_life.md).
+  quantiles: [0.1, 0.5, 0.9]
+  # Chosen on validation samples inside the training period (300 iterations under-fitted).
+  iterations: 1500
+  depth: 4
+  learning_rate: 0.05
+  seed: 0
+  # Model development uses QC samples up to this date for fitting and the rest of the training
+  # period for validation. QC samples dated in the holdout are not touched until the final run.
+  fit_until: 2026-05-31
+  training_period_end: 2026-08-05
