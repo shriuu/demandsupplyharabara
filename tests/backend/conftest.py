@@ -23,11 +23,14 @@ from harabhara.contracts import (
     MarkdownPayload,
     OrderPayload,
     PriceQuote,
+    Projection,
+    ProjectionDay,
     Range,
     Role,
     Scorecard,
     Suggestion,
     TransferPayload,
+    TrimmingSuggestion,
 )
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -85,6 +88,42 @@ def make_forecast(store: str = "S1", sku: str = "tomato", on: date = TODAY) -> F
         target_date=on,
         horizon_days=1,
         demand=Range(low=20, likely=30, high=45),
+        model_version="m-test",
+        data_snapshot_id="snap-test",
+        config_digest="cfg-test",
+    )
+
+
+def make_trimming(sku: str = "tomato", on: date = TODAY, units: float = 12) -> TrimmingSuggestion:
+    return TrimmingSuggestion(
+        on=on,
+        sku_id=sku,
+        spot_units_to_trim=units,
+        reason="Stock is long, so buy less at the mandi.",
+    )
+
+
+def make_projection(
+    store: str = "S1", sku: str = "tomato", as_of: date = TODAY, days: int = 3
+) -> Projection:
+    r = Range(low=1, likely=2, high=3)
+    return Projection(
+        store_id=store,
+        sku_id=sku,
+        as_of=as_of,
+        days=[
+            ProjectionDay(
+                day=i,
+                on=as_of + timedelta(days=i),
+                demand=r,
+                sold=r,
+                lost_sales=r,
+                expected_waste=r,
+                closing_stock=r,
+            )
+            for i in range(1, days + 1)
+        ],
+        assumptions=["synthetic test"],
         model_version="m-test",
         data_snapshot_id="snap-test",
         config_digest="cfg-test",

@@ -36,6 +36,7 @@ from harabhara.contracts import (
     FarmerVolumeForecast,
     Forecast,
     PriceQuote,
+    Projection,
     Role,
     Scorecard,
     Suggestion,
@@ -153,6 +154,15 @@ def create_app(
         if body.suggestion_id != suggestion_id:
             raise HTTPException(422, "suggestion_id in the body does not match the path")
         return service.decide(user, suggestion_id, body)
+
+    @router.get("/projections")
+    def projections(
+        user: CurrentUser,
+        response: Response,
+        store_id: str | None = None,
+        sku_id: str | None = None,
+    ) -> list[Projection]:
+        return _mark(service.projections(user, store_id, sku_id), response)
 
     @router.get("/dc/totals")
     def dc_totals(

@@ -14,6 +14,7 @@ from harabhara.contracts import (
     PriceQuote,
     Range,
     Suggestion,
+    TrimmingSuggestion,
 )
 
 NOW = datetime(2026, 11, 3, 21, 0, tzinfo=UTC)
@@ -112,3 +113,14 @@ def test_a_price_is_never_invented() -> None:
     assert PriceQuote(status="unavailable", **kwargs).modal_inr is None
     with pytest.raises(ValidationError):
         PriceQuote(status="ok", modal_inr=20.0, **{**kwargs, "source": ""})
+
+
+def test_trimming_suggestion_needs_a_reason_and_no_negative_units() -> None:
+    ok = TrimmingSuggestion(
+        on=date(2026, 11, 4), sku_id="P13", spot_units_to_trim=0, reason="Stock is long."
+    )
+    assert ok.spot_units_to_trim == 0
+    with pytest.raises(ValidationError):
+        TrimmingSuggestion(on=date(2026, 11, 4), sku_id="P13", spot_units_to_trim=-1, reason="x")
+    with pytest.raises(ValidationError):
+        TrimmingSuggestion(on=date(2026, 11, 4), sku_id="P13", spot_units_to_trim=1, reason="")

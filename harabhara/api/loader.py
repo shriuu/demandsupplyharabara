@@ -1,7 +1,8 @@
 """Load precomputed model output (JSON files) into storage. Repeat-safe.
 
 Files in the directory, each a JSON list of the matching contract type (all optional):
-``forecasts.json``, ``suggestions.json``, ``farmer_forecasts.json``, ``scorecards.json``.
+``forecasts.json``, ``suggestions.json``, ``farmer_forecasts.json``, ``scorecards.json``,
+``trimming.json``, ``projections.json``.
 
 Loading never overwrites a suggestion that exists, so a decision is never undone. While the kill
 switch is on, no new suggestion is loaded.
@@ -19,7 +20,14 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from harabhara.api.storage import AlreadyExistsError, Storage
-from harabhara.contracts import FarmerVolumeForecast, Forecast, Scorecard, Suggestion
+from harabhara.contracts import (
+    FarmerVolumeForecast,
+    Forecast,
+    Projection,
+    Scorecard,
+    Suggestion,
+    TrimmingSuggestion,
+)
 from harabhara.workflow import audit
 from harabhara.workflow.deadlines import LOCAL_TZ
 
@@ -32,6 +40,9 @@ class LoadReport:
     suggestions_blocked_by_kill_switch: int = 0
     farmer_forecasts: int = 0
     scorecards: int = 0
+    projections: int = 0
+    trimming: int = 0
+    trimming_blocked_by_kill_switch: int = 0
 
 
 def _read[M](directory: Path, name: str, model: type[M]) -> list[M]:
@@ -49,6 +60,8 @@ def load_directory(storage: Storage, directory: Path, now: datetime | None = Non
     suggestions = _read(directory, "suggestions.json", Suggestion)
     farmers = _read(directory, "farmer_forecasts.json", FarmerVolumeForecast)
     scorecards = _read(directory, "scorecards.json", Scorecard)
+    trimming = _read(directory, "trimming.json", TrimmingSuggestion)
+    projections = _read(directory, "projections.json", Projection)
 
     # everything is validated before the first write
     for s in suggestions:
@@ -63,7 +76,16 @@ def load_directory(storage: Storage, directory: Path, now: datetime | None = Non
     storage.put_scorecards(scorecards)
     report.scorecards = len(scorecards)
 
+    storage.put_projections(projections)
+    report.projections = len(projections)
+
     killed = storage.kill_switch_on()
+    # trimming is advice to a person, so like any suggestion it is not loaded while switched off
+    if killed:
+        report.trimming_blocked_by_kill_switch = len(trimming)
+    else:
+        storage.put_trimming(trimming)
+        report.trimming = len(trimming)
     for s in suggestions:
         if killed:
             report.suggestions_blocked_by_kill_switch += 1
