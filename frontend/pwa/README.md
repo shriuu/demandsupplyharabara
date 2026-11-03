@@ -17,14 +17,19 @@ npm run gen:types      # re-export JSON Schema from harabhara/contracts.py and r
 - Interface-only settings (edit step, "big edit" share) are in `src/config.ts`; business limits
   stay in the server's `config/`.
 
-## Response shapes the contract file does not define (assumed; API session please match)
-| Endpoint | Assumed shape |
-|---|---|
-| `GET /dc/totals` | `{date, totals: [{sku_id, total: Range}], trimming: [{suggestion_id, sku_id, reduce_spot_units, reason}]}` |
-| `POST /admin/kill-switch` | request `{active: true}`; response `{status, kill_switch}` |
-| `POST /assistant/ask` | response `{answer: string \| null}`; null/empty or any error shows "I don't have that." |
-| `POST /suggestions/{id}/decision` | request is an `Approval`; response is the updated `Suggestion` |
-| Price shock | `PriceQuote` has no shock field, so no shock flag is shown yet |
+## Types come from the API
+`npm run gen:types` dumps `app.openapi()` (in-memory storage, no network) with
+`scripts/export_openapi.py` into `src/api/openapi.json`, then `openapi-typescript` writes
+`src/api/schema.d.ts`. Both are committed; `tests/test_openapi_file.py` fails if the JSON is stale.
+The mock API (`src/mock/`) is typed from the same types, so drift is a compile error.
 
-Sign-in, voice, translations and offline mode are deferred; actors are recorded as
-`screen-<role>` and the store manager screens use a demo store id (`S01`) until sign-in sets it.
+## Sign-in
+A PIN pad calls `POST /auth/login`; the token is kept in memory and `sessionStorage` and sent as
+`Authorization: Bearer`. The returned `role` picks the screen and `store_id` scopes the store
+manager. 401 returns to the pad, 423 shows "suggestions are switched off", 429 shows "wait".
+
+## End-to-end against the real API
+`npm run e2e:real` builds the app and runs `scripts/serve_e2e.py` (the real FastAPI app, in-memory
+storage, tiny synthetic fixture, throwaway test PINs) and drives it with Playwright.
+
+Voice, translations and offline mode are deferred.

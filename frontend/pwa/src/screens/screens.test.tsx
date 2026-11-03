@@ -1,21 +1,63 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "../App";
+import { clearSession, signalExpired } from "../api/session";
 import { installMockFetch } from "../mock/handlers";
+
+const PIN_FOR: Record<string, string> = {
+  "Store manager": "1111",
+  "Area manager": "3333",
+  "DC buying lead": "4444",
+  "Farmer group": "5555",
+};
 
 let mock: ReturnType<typeof installMockFetch>;
 beforeEach(() => {
   mock = installMockFetch();
-  window.location.hash = "";
+  clearSession();
 });
+
+async function enterPin(user: ReturnType<typeof userEvent.setup>, pin: string) {
+  for (const digit of pin) await user.click(await screen.findByRole("button", { name: digit }));
+  await user.click(screen.getByRole("button", { name: "Go" }));
+}
 
 async function openRole(name: string) {
   const user = userEvent.setup();
   render(<App />);
-  await user.click(await screen.findByRole("button", { name }));
+  await enterPin(user, PIN_FOR[name]);
   return user;
 }
+
+describe("sign-in", () => {
+  it("a wrong PIN shows a message and stays on the pad", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await enterPin(user, "9999");
+    expect(await screen.findByText("Wrong PIN. Try again.")).toBeInTheDocument();
+  });
+
+  it("too many wrong PINs shows the wait message", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    for (let i = 0; i < 5; i++) await enterPin(user, "9999");
+    await enterPin(user, "1111");
+    expect(await screen.findByText("Too many tries. Wait a minute.")).toBeInTheDocument();
+  });
+
+  it("goes to the screen for the role the server returns, and sends the token", async () => {
+    await openRole("DC buying lead");
+    expect(await screen.findByText("Totals to buy")).toBeInTheDocument();
+  });
+
+  it("an ended sign-in goes back to the PIN pad", async () => {
+    await openRole("Farmer group");
+    await screen.findAllByText("Estimate");
+    act(() => signalExpired());
+    expect(await screen.findByText("Please sign in again.")).toBeInTheDocument();
+  });
+});
 
 describe("store manager evening", () => {
   it("accepting sends an approve and moves to the next product", async () => {
@@ -68,13 +110,19 @@ describe("area manager", () => {
     expect(screen.getByLabelText("Farmer share")).toBeInTheDocument();
   });
 
-  it("the kill switch needs a second step", async () => {
+  it("the kill switch needs a second step, and can be switched off again", async () => {
     const user = await openRole("Area manager");
+    const state = async () => ((await (await fetch("/api/v1/health")).json()) as { kill_switch: boolean }).kill_switch;
     await user.click(await screen.findByRole("button", { name: /Stop all suggestions/ }));
-    expect((await (await fetch("/api/v1/health")).json()).kill_switch).toBe(false);
+    expect(await state()).toBe(false);
     await user.click(screen.getByRole("button", { name: "Yes" }));
-    expect(await screen.findByText("Suggestions are stopped")).toBeInTheDocument();
-    expect((await (await fetch("/api/v1/health")).json()).kill_switch).toBe(true);
+    expect(await screen.findByRole("button", { name: /Start suggestions again/ })).toBeInTheDocument();
+    expect(await state()).toBe(true);
+    await user.click(screen.getByRole("button", { name: /Start suggestions again/ }));
+    expect(await state()).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Yes" }));
+    expect(await screen.findByRole("button", { name: /Stop all suggestions/ })).toBeInTheDocument();
+    expect(await state()).toBe(false);
   });
 });
 

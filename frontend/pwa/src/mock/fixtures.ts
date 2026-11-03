@@ -143,21 +143,19 @@ export function suggestions(): Suggestion[] {
   ];
 }
 
+const meta = { stores: 3, flags: [] as never[], demand_estimated: false, model_version: "mock-1", data_snapshot_id: "mock-snapshot", config_digest: "mock-config" };
+
 export const dcTotals: DcTotals = {
-  date: "2026-11-04",
+  on: "2026-11-04",
   totals: [
-    { sku_id: "TOMATO", total: { low: 40, likely: 52, high: 64 } },
-    { sku_id: "BANANA", total: { low: 80, likely: 96, high: 120 } },
-    { sku_id: "SPINACH", total: { low: 15, likely: 22, high: 30 } },
+    { ...meta, sku_id: "TOMATO", demand: { low: 40, likely: 52, high: 64 } },
+    { ...meta, sku_id: "BANANA", demand: { low: 80, likely: 96, high: 120 } },
+    { ...meta, sku_id: "SPINACH", demand: { low: 15, likely: 22, high: 30 } },
   ],
   trimming: [
-    {
-      suggestion_id: "s-order-tomato",
-      sku_id: "TOMATO",
-      reduce_spot_units: 6,
-      reason: "Stock is long for tomatoes, so buy less at the mandi first.",
-    },
+    { sku_id: "TOMATO", spot_units_to_trim: 6, reason: "Stock is long for tomatoes, so buy less at the mandi first." },
   ],
+  stale: false,
 };
 
 const fetched_at = "2026-11-03T17:00:00+05:30";

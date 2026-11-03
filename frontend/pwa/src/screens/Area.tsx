@@ -82,8 +82,8 @@ function ApprovalCard({ s, onDone }: { s: Suggestion; onDone: () => void }) {
   );
 }
 
-function Queue() {
-  const { state, reload } = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), []);
+function Queue({ killed }: { killed: boolean }) {
+  const { state, reload } = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), String(killed));
   useChatFocus(state.status === "ready" ? (state.data[0]?.id ?? null) : null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
@@ -97,38 +97,42 @@ function Queue() {
   );
 }
 
-function KillSwitch({ onStopped }: { onStopped: () => void }) {
+function KillSwitch({ killed, onChange }: { killed: boolean; onChange: (killed: boolean) => void }) {
   const [asking, setAsking] = useState(false);
-  const [stopped, setStopped] = useState(false);
   const [failed, setFailed] = useState(false);
-  async function stop() {
+  async function flip() {
     setAsking(false);
+    setFailed(false);
     try {
-      await api.killSwitch();
-      setStopped(true);
-      onStopped();
+      const result = await api.setKillSwitch(!killed);
+      onChange(result.kill_switch);
     } catch {
       setFailed(true);
     }
   }
   return (
     <section className="kill">
-      {stopped ? (
+      {killed && (
         <p className="notice notice-error" role="status">
-          <Icon name="stop" /> {t("kill.done")}
+          <Icon name="stop" /> {t("kill.stoppedNow")}
         </p>
-      ) : (
-        <button className="btn btn-danger" onClick={() => setAsking(true)}>
-          <Icon name="stop" size={36} /> {t("kill.button")}
-        </button>
       )}
+      <button className={`btn ${killed ? "btn-yes" : "btn-danger"}`} onClick={() => setAsking(true)}>
+        <Icon name={killed ? "tick" : "stop"} size={36} /> {killed ? t("kill.off") : t("kill.on")}
+      </button>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      {asking && <Confirm message={t("kill.confirm")} onYes={() => void stop()} onNo={() => setAsking(false)} />}
+      {asking && (
+        <Confirm
+          message={killed ? t("kill.confirmOff") : t("kill.confirm")}
+          onYes={() => void flip()}
+          onNo={() => setAsking(false)}
+        />
+      )}
     </section>
   );
 }
 
-export function AreaScreen({ onKilled }: { onKilled: () => void }) {
+export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKilledChange: (killed: boolean) => void }) {
   return (
     <div className="stack">
       <h2>
@@ -138,8 +142,8 @@ export function AreaScreen({ onKilled }: { onKilled: () => void }) {
       <h2>
         <Icon name="tick" /> {t("area.queue")}
       </h2>
-      <Queue />
-      <KillSwitch onStopped={onKilled} />
+      <Queue killed={killed} />
+      <KillSwitch killed={killed} onChange={onKilledChange} />
     </div>
   );
 }

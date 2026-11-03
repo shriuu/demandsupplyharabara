@@ -1,7 +1,6 @@
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
 import type { PriceQuote } from "../api/types";
-import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { RangeBar } from "../components/RangeBar";
@@ -44,17 +43,21 @@ export function PriceCard({ quote }: { quote: PriceQuote }) {
 export function DcScreen() {
   const totals = useLoad(() => api.dcTotals(), []);
   const prices = useLoad(() => api.prices(), []);
-  useChatFocus(totals.state.status === "ready" ? (totals.state.data.trimming[0]?.suggestion_id ?? null) : null);
   return (
     <div className="stack">
       <h2>
         <Icon name="box" /> {t("dc.totals")}
       </h2>
+      {totals.state.status === "ready" && totals.state.data.stale && (
+        <p className="notice notice-error" role="status">
+          <Icon name="clock" /> {t("app.stale")}
+        </p>
+      )}
       {totals.state.status === "loading" && <Loading />}
       {totals.state.status === "error" && <LoadError onRetry={totals.reload} />}
       {totals.state.status === "ready" &&
         (() => {
-          const max = Math.max(1, ...totals.state.data.totals.map((r) => r.total.high));
+          const max = Math.max(1, ...totals.state.data.totals.map((r) => r.demand.high));
           return (
             <ul className="stack">
               {totals.state.data.totals.map((row) => (
@@ -62,7 +65,7 @@ export function DcScreen() {
                   <ProductIcon skuId={row.sku_id} size={64} />
                   <div className="grow">
                     <h3>{productName(row.sku_id)}</h3>
-                    <RangeBar range={row.total} max={max} />
+                    <RangeBar range={row.demand} max={max} />
                   </div>
                 </li>
               ))}
@@ -91,12 +94,12 @@ export function DcScreen() {
         (totals.state.data.trimming.length ? (
           <ul className="stack">
             {totals.state.data.trimming.map((tr) => (
-              <li key={tr.suggestion_id} className="card total-card">
+              <li key={tr.sku_id} className="card total-card">
                 <ProductIcon skuId={tr.sku_id} size={64} />
                 <div>
                   <h3>{productName(tr.sku_id)}</h3>
                   <p>
-                    <Icon name="minus" size={22} /> {t("dc.trimUnits", { n: tr.reduce_spot_units })}
+                    <Icon name="minus" size={22} /> {t("dc.trimUnits", { n: tr.spot_units_to_trim })}
                   </p>
                   <p className="small">{tr.reason}</p>
                 </div>

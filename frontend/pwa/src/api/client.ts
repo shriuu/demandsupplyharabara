@@ -1,16 +1,20 @@
-import { ACTOR_ID_PREFIX, API_BASE } from "../config";
+import { API_BASE } from "../config";
+import { clearSession, loadSession, saveSession, signalExpired, signalSwitchedOff } from "./session";
 import type {
   Approval,
   AskResponse,
   DcTotals,
   FarmerVolumeForecast,
   Health,
+  KillSwitchResponse,
+  LoginResponse,
   PriceQuote,
   Role,
   Scorecard,
   Suggestion,
 } from "./types";
 
+/** `status` is the HTTP code: 401 sign in again, 423 switched off, 429 too many PIN tries. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -21,11 +25,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = loadSession()?.token;
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
-  if (!response.ok) throw new ApiError(response.status, `${response.status} ${path}`);
+  if (!response.ok) {
+    // A 401 on login just means a wrong PIN; anywhere else it means the sign-in ended.
+    if (response.status === 401 && token) signalExpired();
+    if (response.status === 423) signalSwitchedOff();
+    throw new ApiError(response.status, `${response.status} ${path}`);
+  }
   return (await response.json()) as T;
 }
 
@@ -38,21 +52,27 @@ function query(params: Record<string, string | undefined>): string {
 
 export const api = {
   health: () => request<Health>("/health"),
-  suggestions: (params: {
-    role: Role;
-    store_id?: string;
-    kind?: string;
-    state?: string;
-  }) => request<Suggestion[]>(`/suggestions${query(params)}`),
+  login: async (pin: string) => {
+    const session = await request<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ pin }),
+    });
+    saveSession(session);
+    return session;
+  },
+  logout: () => clearSession(),
+  suggestions: (params: { role?: Role; store_id?: string; kind?: string; state?: string }) =>
+    request<Suggestion[]>(`/suggestions${query(params)}`),
   decide: (
     role: Role,
     suggestionId: string,
     body: { action: Approval["action"]; edited_units?: number; reason?: string },
   ) => {
+    // The server fills in who and when from the sign-in; the contract still needs the fields.
     const approval: Approval = {
       suggestion_id: suggestionId,
       actor_role: role,
-      actor_id: `${ACTOR_ID_PREFIX}${role}`,
+      actor_id: loadSession()?.actor_id ?? "",
       at: new Date().toISOString(),
       ...body,
     };
@@ -63,11 +83,13 @@ export const api = {
   },
   dcTotals: () => request<DcTotals>("/dc/totals"),
   prices: () => request<PriceQuote[]>("/prices"),
-  farmers: (fpoId?: string) =>
-    request<FarmerVolumeForecast[]>(`/farmers/forecast${query({ fpo_id: fpoId })}`),
+  farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),
   scorecard: () => request<Scorecard[]>("/scorecard"),
-  killSwitch: () =>
-    request<Health>("/admin/kill-switch", { method: "POST", body: JSON.stringify({ active: true }) }),
+  setKillSwitch: (on: boolean) =>
+    request<KillSwitchResponse>("/admin/kill-switch", {
+      method: "POST",
+      body: JSON.stringify({ on }),
+    }),
   ask: (suggestionId: string, question: string) =>
     request<AskResponse>("/assistant/ask", {
       method: "POST",

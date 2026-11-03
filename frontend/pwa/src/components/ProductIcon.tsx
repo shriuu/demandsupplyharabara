@@ -12,7 +12,7 @@ const fallback = { shape: "round" as Shape, color: "#6d7f5c" };
 
 /** A drawn picture of the product. Name is read by screen readers; the picture carries meaning. */
 export function ProductIcon({ skuId, size = 96 }: { skuId: string; size?: number }) {
-  const { shape, color } = looks[skuId] ?? fallback;
+  const { shape, color } = looks[skuId.toUpperCase()] ?? fallback;
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label={productName(skuId)}>
       <circle cx="32" cy="32" r="31" fill="#f1f8e9" />

@@ -80,10 +80,8 @@ export const en = {
   "score.farmer": "Farmer share",
   "score.unknown": "Not known",
   "score.together": "These three always go together.",
-  "kill.button": "Stop all suggestions",
-  "kill.confirm": "Stop all suggestions for everyone?",
-  "kill.done": "Suggestions are stopped",
-  "dc.totals": "Totals to buy",
+    "kill.confirm": "Stop all suggestions for everyone?",
+    "dc.totals": "Totals to buy",
   "dc.prices": "Mandi prices",
   "dc.trim": "Buy less on the spot market",
   "dc.trimNote": "A suggestion only. Farmer group volumes are not touched.",
@@ -107,6 +105,19 @@ export const en = {
   "chat.pick": "Choose a suggestion first",
   "chat.none": "No suggestion to ask about yet.",
   "chat.thinking": "Thinking",
+  "login.title": "Enter your PIN",
+  "login.enter": "Go",
+  "login.erase": "Erase",
+  "login.wrong": "Wrong PIN. Try again.",
+  "login.tooMany": "Too many tries. Wait a minute.",
+  "login.off": "Sign-in is not ready. Carry on the usual way.",
+  "login.expired": "Please sign in again.",
+  "app.logout": "Sign out",
+  "app.switchedOff": "Suggestions are switched off right now.",
+  "kill.on": "Stop all suggestions",
+  "kill.off": "Start suggestions again",
+  "kill.confirmOff": "Start suggestions again for everyone?",
+  "kill.stoppedNow": "Suggestions are stopped",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -127,5 +138,5 @@ export const productNames: Record<string, string> = {
 };
 
 export function productName(skuId: string): string {
-  return productNames[skuId] ?? skuId;
+  return productNames[skuId.toUpperCase()] ?? skuId;
 }

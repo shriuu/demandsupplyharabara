@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export type IconName =
   | "tick" | "cross" | "plus" | "minus" | "cloud-rain" | "sun" | "lamp" | "clock" | "calendar"
   | "alert" | "triangle" | "tag" | "van" | "bag" | "crate" | "chat" | "mic-off" | "stop"
-  | "home" | "moon" | "box" | "tractor" | "store" | "chart" | "coin" | "back" | "send" | "hourglass" | "rule";
+  | "home" | "moon" | "box" | "tractor" | "store" | "chart" | "coin" | "back" | "send" | "hourglass" | "rule" | "lock" | "logout";
 
 const paths: Record<IconName, ReactNode> = {
   tick: <path d="M4 13l5 5L20 6" />,
@@ -113,6 +113,13 @@ const paths: Record<IconName, ReactNode> = {
   back: <path d="M15 5l-7 7 7 7" />,
   send: <path d="M3 12l18-8-6 16-3-7z" />,
   hourglass: <path d="M6 3h12M6 21h12M7 3c0 6 10 6 10 18M17 3c0 6-10 6-10 18" />,
+  lock: (
+    <>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 018 0v3" />
+    </>
+  ),
+  logout: <path d="M9 4H4v16h5M14 8l4 4-4 4M18 12H8" />,
   rule: (
     <>
       <path d="M5 3h14v18H5z" />

@@ -1,23 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api/client";
-import type { Role } from "./api/types";
+import { loadSession, setOnExpired, setOnSwitchedOff } from "./api/session";
+import type { LoginResponse, Role } from "./api/types";
 import { ChatPanel } from "./components/ChatPanel";
 import { ChatFocus } from "./components/chatContext";
 import { Icon, type IconName } from "./components/Icons";
 import { AreaScreen } from "./screens/Area";
 import { DcScreen } from "./screens/Dc";
 import { FarmerScreen } from "./screens/Farmer";
+import { Login } from "./screens/Login";
 import { StoreEvening } from "./screens/StoreEvening";
 import { StoreMorning } from "./screens/StoreMorning";
 import { StoreSurplus } from "./screens/StoreSurplus";
 import { t, type StringKey } from "./i18n/strings";
 
-const roles: { role: Role; icon: IconName; label: StringKey }[] = [
-  { role: "store_manager", icon: "store", label: "role.store_manager" },
-  { role: "area_manager", icon: "chart", label: "role.area_manager" },
-  { role: "dc_lead", icon: "box", label: "role.dc_lead" },
-  { role: "farmer_coordinator", icon: "tractor", label: "role.farmer_coordinator" },
-];
+const roleIcons: Record<Role, IconName> = {
+  store_manager: "store",
+  area_manager: "chart",
+  dc_lead: "box",
+  farmer_coordinator: "tractor",
+};
 
 type StoreTab = "evening" | "morning" | "surplus";
 const storeTabs: { tab: StoreTab; icon: IconName; label: StringKey }[] = [
@@ -26,44 +28,45 @@ const storeTabs: { tab: StoreTab; icon: IconName; label: StringKey }[] = [
   { tab: "surplus", icon: "bag", label: "tab.surplus" },
 ];
 
-/** Demo store for the store-manager screens until sign-in assigns one (sign-in is deferred). */
-const DEMO_STORE_ID = "S01";
-
-function roleFromHash(): Role | null {
-  const name = window.location.hash.replace(/^#\/?/, "");
-  return roles.find((r) => r.role === name)?.role ?? null;
-}
-
 export function App() {
-  const [role, setRole] = useState<Role | null>(roleFromHash);
+  const [session, setSession] = useState<LoginResponse | null>(loadSession);
+  const [expired, setExpired] = useState(false);
   const [tab, setTab] = useState<StoreTab>("evening");
   const [focusId, setFocusId] = useState<string | null>(null);
   const [killed, setKilled] = useState(false);
 
   useEffect(() => {
-    const onHash = () => setRole(roleFromHash());
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    setOnExpired(() => {
+      setSession(null);
+      setExpired(true);
+    });
+    setOnSwitchedOff(() => setKilled(true));
   }, []);
   useEffect(() => {
     api.health().then((h) => setKilled(h.kill_switch), () => undefined);
-  }, []);
+  }, [session]);
 
-  const choose = (next: Role | null) => {
-    window.location.hash = next ? `/${next}` : "";
-    setRole(next);
+  const signOut = () => {
+    api.logout();
+    setSession(null);
+    setExpired(false);
   };
   const setFocus = useCallback((id: string | null) => setFocusId(id), []);
+  const role = session?.role ?? null;
+  const storeId = session?.store_id ?? null;
 
   return (
     <ChatFocus.Provider value={setFocus}>
       <header className="topbar">
         {role ? (
-          <button className="btn btn-plain" onClick={() => choose(null)} aria-label={t("role.switch")}>
-            <Icon name="back" size={32} />
-            <Icon name={roles.find((r) => r.role === role)?.icon ?? "home"} size={32} />
-            <span>{t(`role.${role}`)}</span>
-          </button>
+          <div className="topbar-row">
+            <span className="brand">
+              <Icon name={roleIcons[role]} size={32} /> {t(`role.${role}`)}
+            </span>
+            <button className="btn btn-plain" onClick={signOut} aria-label={t("app.logout")}>
+              <Icon name="logout" size={32} />
+            </button>
+          </div>
         ) : (
           <span className="brand">
             <Icon name="home" /> {t("app.name")}
@@ -76,17 +79,8 @@ export function App() {
         </p>
       )}
       <main>
-        {!role && (
-          <nav className="role-grid" aria-label={t("role.pick")}>
-            {roles.map((r) => (
-              <button key={r.role} className="btn role-tile" onClick={() => choose(r.role)}>
-                <Icon name={r.icon} size={64} />
-                <span>{t(r.label)}</span>
-              </button>
-            ))}
-          </nav>
-        )}
-        {role === "store_manager" && (
+        {!session && <Login onSignedIn={(s) => { setExpired(false); setSession(s); }} notice={expired ? "login.expired" : undefined} />}
+        {role === "store_manager" && storeId && (
           <>
             <nav className="tabs" aria-label={t("role.store_manager")}>
               {storeTabs.map((s) => (
@@ -101,12 +95,12 @@ export function App() {
                 </button>
               ))}
             </nav>
-            {tab === "evening" && <StoreEvening storeId={DEMO_STORE_ID} />}
-            {tab === "morning" && <StoreMorning storeId={DEMO_STORE_ID} />}
-            {tab === "surplus" && <StoreSurplus storeId={DEMO_STORE_ID} />}
+            {tab === "evening" && <StoreEvening storeId={storeId} />}
+            {tab === "morning" && <StoreMorning storeId={storeId} />}
+            {tab === "surplus" && <StoreSurplus storeId={storeId} />}
           </>
         )}
-        {role === "area_manager" && <AreaScreen onKilled={() => setKilled(true)} />}
+        {role === "area_manager" && <AreaScreen killed={killed} onKilledChange={setKilled} />}
         {role === "dc_lead" && <DcScreen />}
         {role === "farmer_coordinator" && <FarmerScreen />}
       </main>

@@ -11,5 +11,5 @@ export const LARGE_EDIT_FRACTION = 0.25;
 /** Most crate icons drawn in one row; bigger quantities use one icon for several units. */
 export const MAX_ICONS = 12;
 
-/** Until sign-in is wired (deferred), actions are recorded under the chosen role. */
-export const ACTOR_ID_PREFIX = "screen-";
+/** Longest PIN the number pad accepts. */
+export const MAX_PIN_LENGTH = 8;
