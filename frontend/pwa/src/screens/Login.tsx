@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api, ApiError } from "../api/client";
 import type { LoginResponse } from "../api/types";
 import { Icon } from "../components/Icons";
-import { MAX_PIN_LENGTH } from "../config";
+import { MAX_PIN_LENGTH, PIN_DOTS_SHOWN } from "../config";
 import { t, type StringKey } from "../i18n/strings";
 
 /** A big number pad. The PIN shows as dots, so no one has to read anything. */
@@ -34,7 +34,7 @@ export function Login({ onSignedIn, notice }: { onSignedIn: (s: LoginResponse) =
       <Icon name="lock" size={64} />
       <h2>{t("login.title")}</h2>
       <div className="pin-dots" role="img" aria-label={`${pin.length}`}>
-        {Array.from({ length: Math.max(4, pin.length) }, (_, i) => (
+        {Array.from({ length: Math.max(PIN_DOTS_SHOWN, pin.length) }, (_, i) => (
           <span key={i} className={`dot ${i < pin.length ? "dot-on" : ""}`} />
         ))}
       </div>
