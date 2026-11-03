@@ -1,0 +1,71 @@
+# External feeds and the chat assistant. Values marked ASSUMED are engineering defaults chosen by
+# the build team, not given by the playbook or the brief; the owner may change them.
+version: 0.1.0-draft
+
+mandi:
+  provider: data_gov_in             # docs/price_feed.md explains why this is the primary route
+  base_url: https://api.data.gov.in/resource
+  # UNVERIFIED: remembered, not confirmed (needs DATA_GOV_IN_API_KEY). Check against
+  # https://data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi
+  resource_id: 9ef84268-d588-465a-a308-a864a43d0070
+  citation: >-
+    Directorate of Marketing & Inspection (DMI), Ministry of Agriculture and Farmers Welfare,
+    Government of India, via Open Government Data Platform India (data.gov.in); Agmarknet.
+  state: Karnataka
+  district: Bangalore
+  # Preferred first. The feed's own market names are matched case-insensitively.
+  markets: [Bangalore, Yeshwanthpur, Binny Mill, K.R. Market]
+  user_agent: "HaraBharaFresh/0.1 (decision-support prototype; synthetic data only)"
+  timeout_s: 15
+  page_limit: 100
+  kg_per_quintal: 100               # Agmarknet quotes Rs per quintal; the app shows Rs per kg
+  cache_ttl_hours: 6                # ASSUMED: reuse a cached fetch this long before asking again
+  stale_after_hours: 24             # ASSUMED: a cache older than this is shown as "stale"
+  drop_after_hours: 168             # ASSUMED: a cache older than this is not shown at all
+  history_keep_days: 60             # ASSUMED: how many days of fetched prices the disk cache keeps
+  price_max_age_days: 3             # ASSUMED: a price dated older than this is shown as "stale"
+  # Product name in the data pack -> commodity name in the feed.
+  products:
+    Tomato: Tomato
+    Onion: Onion
+    Potato: Potato
+    Banana: Banana
+    Apple: Apple
+    Mango: Mango
+    Papaya: Papaya
+    Pomegranate: Pomegranate
+    Grapes: Grapes
+    Water Melon: Water Melon
+    Coriander (Leaves): Coriander(Leaves)
+    Spinach: Spinach
+    Methi (Leaves): Methi(Leaves)
+    Curry Leaf: Curry Leaf
+    Green Chilli: Green Chilli
+    Ginger (Green): Ginger(Green)
+    Carrot: Carrot
+    Beans: Beans
+    Cauliflower: Cauliflower
+    Cabbage: Cabbage
+    Capsicum: Capsicum
+    Bhindi: Bhindi(Ladies Finger)
+    Lemon: Lemon
+  # Never quoted until the unit is verified against real rows (guardrail 11: never invent).
+  unverified_unit_products: [Tender Coconut]
+  price_shock:
+    lookback_days: 7                # brief T5 speaks of a week
+    ratio_threshold: 1.5            # ASSUMED: T5 names a doubling; 1.5 warns earlier. Owner to set.
+
+assistant:
+  provider: openai
+  # ASSUMED: owner/engineer to confirm a model their OpenAI account can use. Nothing in code.
+  model: gpt-4o-mini
+  base_url: https://api.openai.com/v1
+  timeout_s: 12
+  max_output_tokens: 250
+  temperature: 0
+  max_question_chars: 300
+  max_answer_chars: 600
+  rate_limit_calls: 10              # ASSUMED: per caller ...
+  rate_limit_window_s: 60           # ... per this many seconds
+  dont_have_answer: "I don't have that."
+  failure_message: "The assistant is not available right now. The stored reason is shown instead."

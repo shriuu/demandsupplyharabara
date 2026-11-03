@@ -8,9 +8,17 @@ from typing import Any
 
 import yaml
 
-from harabhara.settings.schema import AppConfig, Costs, Metrics, Rules, Schedule
+from harabhara.settings.schema import (
+    AppConfig,
+    Costs,
+    Feeds,
+    Metrics,
+    Modeling,
+    Rules,
+    Schedule,
+)
 
-CONFIG_FILES = ("rules", "schedule", "metrics", "costs")
+CONFIG_FILES = ("rules", "schedule", "metrics", "costs", "modeling", "feeds")
 
 
 class PlaceholderError(RuntimeError):
@@ -31,7 +39,7 @@ def _read(path: Path) -> tuple[dict[str, Any], bytes]:
 
 
 def load_config(config_dir: Path | None = None) -> AppConfig:
-    """Validate all four files and fingerprint them together."""
+    """Validate all the files and fingerprint them together."""
     directory = config_dir or default_config_dir()
     parsed: dict[str, dict[str, Any]] = {}
     digest = hashlib.sha256()
@@ -44,6 +52,8 @@ def load_config(config_dir: Path | None = None) -> AppConfig:
         schedule=Schedule.model_validate(parsed["schedule"]),
         metrics=Metrics.model_validate(parsed["metrics"]),
         costs=Costs.model_validate(parsed["costs"]),
+        modeling=Modeling.model_validate(parsed["modeling"]),
+        feeds=Feeds.model_validate(parsed["feeds"]),
         digest=digest.hexdigest(),
     )
 
