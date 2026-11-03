@@ -244,6 +244,10 @@ class DecisionParams(_Strict):
     waste_weight_exponent: float = Field(ge=0)
     allocation_steps: int = Field(ge=1)
     service_level_floor: float = Field(gt=0, lt=1)
+    markdown_demand_lift: float = Field(ge=0)
+    earlier_markdown_min_share: float = Field(gt=0, le=1)
+    transfer_trip_minutes: int = Field(ge=0)
+    alert_min_units: float = Field(ge=0)
 
 
 class Modeling(_Strict):

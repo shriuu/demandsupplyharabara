@@ -67,3 +67,13 @@ decisions:
   # says: a pure cost balance accepts frequent empty shelves while the basket allowance is unset.
   # Tuned on the TRAINING replay so stock-outs do not rise (docs/replay.md); never on the holdout.
   service_level_floor: 0.925
+  # Markdown response. A 15% promotion lifts demand by 42% in the data (31% for leafy greens,
+  # 47% for fruit). That is NOT extrapolated to 30% or 50% off; the lowest measured lift is used.
+  markdown_demand_lift: 0.30
+  # Suggest marking down a day early when at least this share of the lot is expected to expire.
+  earlier_markdown_min_share: 0.30
+  # Minutes a van needs to reach the receiving store. The pack has no distances or travel times.
+  transfer_trip_minutes: 60
+  # Do not raise an alert for fewer expected leftover or missing units than this.
+  alert_min_units: 5
+
