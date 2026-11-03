@@ -209,3 +209,33 @@ class Scorecard(_Frozen):
     stockout_pct: float
     farmer_share: float | None
     farmer_share_definition: str | None = None
+
+
+# ---- three-day projection ------------------------------------------------------------------
+
+
+class ProjectionDay(_Frozen):
+    """One day of the stock roll-forward. Every figure is a range over low/likely/high demand."""
+
+    day: int = Field(ge=1, le=3)
+    on: date
+    demand: Range
+    sold: Range
+    lost_sales: Range
+    expected_waste: Range
+    closing_stock: Range
+
+
+class Projection(_Frozen):
+    """Where stock, shelf life and demand lead over the next three days for one store-product."""
+
+    store_id: str
+    sku_id: str
+    as_of: date
+    days: list[ProjectionDay] = Field(min_length=1, max_length=3)
+    assumptions: list[str] = Field(
+        default_factory=list, description="e.g. 'lot ages inferred first-in first-out'"
+    )
+    model_version: str
+    data_snapshot_id: str
+    config_digest: str

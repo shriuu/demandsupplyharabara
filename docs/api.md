@@ -12,6 +12,7 @@ Base path `/api/v1`. All times are `Asia/Kolkata`. Every response carries `data_
 | `GET /health` | none | `{status, kill_switch}` |
 | `POST /admin/kill-switch` | area_manager | Stops new suggestions; manual process carries on (guardrail 12) |
 | `GET /forecasts?store_id&sku_id&date` | store_manager, dc_lead | `list[Forecast]` |
+| `GET /projections?store_id&sku_id` | store_manager, area_manager, dc_lead | `list[Projection]`: three-day stock roll-forward as ranges (sold, lost sales, expected waste, closing stock) |
 | `GET /suggestions?role&store_id&kind&state` | any (scoped) | `list[Suggestion]`, most urgent first |
 | `GET /suggestions/{id}` | any (scoped) | `Suggestion` with drivers |
 | `POST /suggestions/{id}/decision` | the suggestion's `approver_role` | body `Approval`; moves state; writes an `AuditEvent` |

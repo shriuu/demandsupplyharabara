@@ -8,7 +8,7 @@ open owner question), never a guess; see ``harabhara.settings.loader.require``.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -206,9 +206,14 @@ class HiddenDemandParams(_Strict):
     min_fraction_of_day: float = Field(gt=0, le=1)
 
 
+class ProjectionParams(_Strict):
+    sales_order: Literal["freshest_first", "oldest_first"]
+
+
 class Modeling(_Strict):
     version: str
     hidden_demand: HiddenDemandParams
+    projection: ProjectionParams
 
 
 # ---- whole config ---------------------------------------------------------------------------

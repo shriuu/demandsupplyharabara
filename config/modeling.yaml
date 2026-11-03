@@ -9,3 +9,8 @@ hidden_demand:
   intraday_profile_gamma: 1.0
   # Safety bound so a very early sell-out cannot produce an extreme estimate.
   min_fraction_of_day: 0.1
+
+projection:
+  # Which stock shoppers take first. The brief (s2) says shoppers pick the freshest and leave
+  # older stock behind, so the default is freshest first. "oldest_first" is a display-rule view.
+  sales_order: freshest_first
