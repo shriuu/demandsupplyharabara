@@ -198,6 +198,57 @@ class Costs(_Strict):
     cost_ratio_per_sku: str
 
 
+# ---- feeds.yaml -----------------------------------------------------------------------------
+
+
+class PriceShock(_Strict):
+    lookback_days: int = Field(ge=1)
+    ratio_threshold: float = Field(gt=1)
+
+
+class Mandi(_Strict):
+    provider: str
+    base_url: str
+    resource_id: str
+    citation: str = Field(min_length=1)
+    state: str
+    district: str
+    markets: list[str] = Field(min_length=1)
+    user_agent: str
+    timeout_s: float = Field(gt=0)
+    page_limit: int = Field(ge=1, le=1000)
+    kg_per_quintal: float = Field(gt=0)
+    cache_ttl_hours: float = Field(ge=0)
+    stale_after_hours: float = Field(gt=0)
+    drop_after_hours: float = Field(gt=0)
+    history_keep_days: int = Field(ge=1)
+    price_max_age_days: int = Field(ge=0)
+    products: dict[str, str]
+    unverified_unit_products: list[str]
+    price_shock: PriceShock
+
+
+class AssistantSettings(_Strict):
+    provider: str
+    model: str = Field(min_length=1)
+    base_url: str
+    timeout_s: float = Field(gt=0)
+    max_output_tokens: int = Field(ge=1)
+    temperature: float = Field(ge=0, le=2)
+    max_question_chars: int = Field(ge=1)
+    max_answer_chars: int = Field(ge=1)
+    rate_limit_calls: int = Field(ge=1)
+    rate_limit_window_s: float = Field(gt=0)
+    dont_have_answer: str = Field(min_length=1)
+    failure_message: str = Field(min_length=1)
+
+
+class Feeds(_Strict):
+    version: str
+    mandi: Mandi
+    assistant: AssistantSettings
+
+
 # ---- whole config ---------------------------------------------------------------------------
 
 
@@ -206,4 +257,5 @@ class AppConfig(_Strict):
     schedule: Schedule
     metrics: Metrics
     costs: Costs
-    digest: str = Field(description="SHA-256 over the four config files; pinned on every run")
+    feeds: Feeds
+    digest: str = Field(description="SHA-256 over the config files; pinned on every run")

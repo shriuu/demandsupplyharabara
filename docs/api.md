@@ -30,7 +30,11 @@ Base path `/api/v1`. All times are `Asia/Kolkata`. Every response carries `data_
   guess (guardrail 12).
 - **Assistant:** reads one stored `Suggestion` and its `drivers`; it can reword, never decide.
   Unknown questions get "I don't have that."
-- **Prices:** `PriceQuote.status = unavailable` carries no price.
+- **Prices:** `PriceQuote.status = unavailable` carries no price. Built in
+  `harabhara/data/external.py`; see `docs/price_feed.md`.
+- **Assistant wiring:** `harabhara.assistant.Assistant(cfg.feeds.assistant, OpenAIProvider(...),
+  reader)`; the reader is `harabhara.assistant.ports.SuggestionReader` (`get_suggestion(id)`).
+  The API checks role and store scope first, then calls `ask(caller, suggestion_id, question)`.
 
 ## Storage
 Firestore collections: `suggestions`, `approvals`, `audit` (create-only), `prices`,

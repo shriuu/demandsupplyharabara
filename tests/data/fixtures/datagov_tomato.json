@@ -1,0 +1,11 @@
+{
+  "_note": "Hand-built to match data.gov.in's documented record format; NOT a recording of a live answer (no API key was available when this was written).",
+  "total": 4,
+  "count": 4,
+  "records": [
+    {"state": "Karnataka", "district": "Bangalore", "market": "Yeshwanthpur", "commodity": "Tomato", "variety": "Other", "grade": "FAQ", "arrival_date": "03/11/2026", "min_price": "2000", "max_price": "3000", "modal_price": "2500"},
+    {"state": "Karnataka", "district": "Bangalore", "market": "Binny Mill (F&V)", "commodity": "Tomato", "variety": "Other", "grade": "FAQ", "arrival_date": "03/11/2026", "min_price": "1800", "max_price": "2800", "modal_price": "2300"},
+    {"state": "Karnataka", "district": "Bangalore", "market": "Bangalore", "commodity": "Tomato", "variety": "Other", "grade": "FAQ", "arrival_date": "03/11/2026", "min_price": "NA", "max_price": "NA", "modal_price": "NA"},
+    {"state": "Karnataka", "district": "Bangalore", "market": "Bangalore", "commodity": "Tomato", "variety": "Other", "grade": "FAQ", "arrival_date": "27/10/2026", "min_price": "1000", "max_price": "1400", "modal_price": "1200"}
+  ]
+}
