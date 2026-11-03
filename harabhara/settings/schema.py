@@ -253,6 +253,9 @@ class DecisionParams(_Strict):
     earlier_markdown_min_share: float = Field(gt=0, le=1)
     transfer_trip_minutes: int = Field(ge=0)
     alert_min_units: float = Field(ge=0)
+    heat_sensitive_skus: list[str]
+    surplus_horizon_hours: int = Field(ge=1)
+    major_festival_intensity: float = Field(gt=0, le=1)
 
 
 class Modeling(_Strict):

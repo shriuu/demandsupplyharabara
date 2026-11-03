@@ -18,6 +18,7 @@ first:
 
 phrases:
   thin_history: "there is little history for this product, so treat the number with care"
+  normal_day: "recent sales point to about this much"
   last_day: "it is on its last sellable day"
   two_day_life: "it only lasts two days"
   expires_soon: "much of it is expected to expire unsold"
