@@ -1,0 +1,39 @@
+# Sentences for suggestions, in English. Every user-visible sentence lives here so another
+# language is a copy of this file. A reason is: opener + " because " + one or two phrases.
+# Phrases are keyed by the driver code that justifies them; a driver with no phrase here is
+# never mentioned (the writer does not make up reasons).
+
+openers:
+  order: "Order {units} {unit} of {product} for {store}"
+  markdown: "Mark down {units} {unit} of {product} by {pct}% from {start}"
+  transfer: "Move {units} {unit} of {product} from {from_store} to {to_store}, leaving by {leave_by}"
+  surplus: "Offer {units} {unit} of {product} to {buyer} for pickup {window}"
+
+connector: " because "
+joiner: " and "
+
+# Shown first when present, so a number built on thin history is never presented as solid.
+first:
+  - thin_history
+
+phrases:
+  thin_history: "there is little history for this product, so treat the number with care"
+  last_day: "it is on its last sellable day"
+  two_day_life: "it only lasts two days"
+  expires_soon: "much of it is expected to expire unsold"
+  old_stock_lingers: "older stock is being left behind"
+  weekend: "weekend shoppers buy more"
+  heavy_rain_walk_in: "heavy rain keeps walk-in shoppers away"
+  heavy_rain_dark: "heavy rain sends more orders to the dark store"
+  hot_day: "hot weather lifts demand"
+  festival_eve: "tomorrow is a festival and this product sells much more before it"
+  festival_eve_flat: "tomorrow is a festival but this product barely changes"
+  sold_out_yesterday: "it sold out yesterday, so demand was higher than sales show"
+  price_up: "the shelf price is up, so fewer will sell"
+  promo_on: "it is on promotion"
+  surplus_expected: "more than the store will sell is expected"
+  shortage_expected: "the store is likely to run out"
+  van_pays: "the sales saved are worth more than the van trip"
+  buyer_fits: "the buyer takes this product and can collect in time"
+  below_cost_wait: "the price would be below cost, so the markdown waits until the evening"
+  spot_first: "only spot buying is trimmed, never farmer volume"
