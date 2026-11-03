@@ -18,7 +18,11 @@ The project ID and repository name come from a git-ignored `terraform.tfvars`
    gcloud secrets versions add data-gov-in-api-key --data-file=-
    ```
    A store manager entry also needs `"store_id"`. Delete `pins.json` afterwards.
-4. Re-apply with `-var mount_secrets=true` so the service reads them.
+4. Re-apply with `-var mount_secrets=true` so the service reads them. Secrets listed in
+   `unmounted_secrets` (by default `data-gov-in-api-key`) are left out because a secret with no
+   version stops the service from starting. Once you add its value, apply again with
+   `-var 'unmounted_secrets=[]'` so the service reads it too; until then live prices show as
+   unavailable.
 5. Copy `terraform output github_variables` into GitHub repository variables; pushes to
    `main` then deploy automatically.
 

@@ -16,6 +16,8 @@ locals {
     "openai-api-key"      = "OPENAI_API_KEY"
     "data-gov-in-api-key" = "DATA_GOV_IN_API_KEY"
   }
+
+  mounted_secrets = { for id, name in local.secret_env : id => name if !contains(var.unmounted_secrets, id) }
 }
 
 resource "google_project_service" "apis" {
@@ -172,7 +174,7 @@ resource "google_cloud_run_v2_service" "app" {
       }
 
       dynamic "env" {
-        for_each = var.mount_secrets ? local.secret_env : {}
+        for_each = var.mount_secrets ? local.mounted_secrets : {}
         content {
           name = env.value
           value_source {

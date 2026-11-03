@@ -31,7 +31,13 @@ variable "allow_public" {
 }
 
 variable "mount_secrets" {
-  description = "Set true only after a version has been added to every secret in secret_env."
+  description = "Set true only after a version has been added to every secret that is mounted (see unmounted_secrets)."
   type        = bool
   default     = false
+}
+
+variable "unmounted_secrets" {
+  description = "Secrets left out of the container until they have a version. A secret with no version stops the service from starting, so add it here until you have its value."
+  type        = list(string)
+  default     = ["data-gov-in-api-key"]
 }
