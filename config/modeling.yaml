@@ -1,0 +1,79 @@
+# Modelling assumptions. These are NOT from the playbook: each is an assumption, tuned (if at
+# all) on training data only, never on the holdout. See docs/hidden_demand.md.
+version: 0.1.0-draft
+
+hidden_demand:
+  # Share of a day's demand sold by hour h is taken as ((h - open) / (close - open)) ** gamma.
+  # The data has no hourly sales, so the real shape cannot be observed. 1.0 means an even pace.
+  # docs/hidden_demand.md shows how wrong the estimate is if the true shape differs.
+  intraday_profile_gamma: 1.0
+  # Safety bound so a very early sell-out cannot produce an extreme estimate.
+  min_fraction_of_day: 0.1
+
+projection:
+  # Which stock shoppers take first. The brief (s2) says shoppers pick the freshest and leave
+  # older stock behind, so the default is freshest first. "oldest_first" is a display-rule view.
+  sales_order: freshest_first
+
+shelf_life:
+  # Boosted trees, one model per quantile, on the QC measures taken at receipt.
+  # Weather is not a feature: ambient weather added nothing in the QC samples (docs/shelf_life.md).
+  quantiles: [0.1, 0.5, 0.9]
+  # Chosen on validation samples inside the training period (300 iterations under-fitted).
+  iterations: 1500
+  depth: 4
+  learning_rate: 0.05
+  seed: 0
+  # Model development uses QC samples up to this date for fitting and the rest of the training
+  # period for validation. QC samples dated in the holdout are not touched until the final run.
+  fit_until: 2026-05-31
+  training_period_end: 2026-08-05
+
+demand:
+  # One global model for all stores and products; horizon (1 to 3 days ahead) is a feature.
+  quantiles: [0.1, 0.5, 0.9]       # low, likely, high
+  iterations: 1200
+  depth: 6
+  learning_rate: 0.06
+  seed: 0
+  rolling_windows: [7, 14, 28]      # days, recent demand averages at the forecast origin
+  same_weekday_lags: [1, 2, 3, 4]   # weeks back from the target day
+  price_window_days: 28
+  stockout_window_days: 7
+  history_window_days: 28           # used to count how much history a series has
+  # Inner validation for model development. The holdout (calendar split) is not touched.
+  # The window mirrors the holdout length: eight weeks.
+  fit_until: 2026-06-09
+  validate_from: 2026-06-10
+  validate_to: 2026-08-05
+  # Weather for the target day is the observed value (a stand-in for a forecast); the
+  # robustness runs add noise to mimic a real forecast.
+  # Cold start: when a series has fewer observed days than this in the history window (new
+  # season, new product), the model is not used. The recent-average rule takes over, with a
+  # fixed-width range, and the forecast is flagged as thin history. Both numbers are assumptions.
+  min_history_days: 7
+  thin_history_range_width: 0.5
+  weather_noise_sd_temp_c: 0.0
+  weather_noise_sd_rain_mm: 0.0
+
+decisions:
+  # A leftover unit is not always lost: stock with several sellable days left can still sell.
+  # The cost of a leftover unit is its purchase cost times (1 / sellable days at arrival) to this
+  # power. 1.0 is the starting value; it is tuned on the TRAINING replay, never on the holdout.
+  waste_weight_exponent: 1.0
+  # Allocation hands out the fixed supply in this many steps (more steps, finer split).
+  allocation_steps: 400
+  # The order never covers less demand than this share of scenarios, whatever the cost balance
+  # says: a pure cost balance accepts frequent empty shelves while the basket allowance is unset.
+  # Tuned on the TRAINING replay so stock-outs do not rise (docs/replay.md); never on the holdout.
+  service_level_floor: 0.925
+  # Markdown response. A 15% promotion lifts demand by 42% in the data (31% for leafy greens,
+  # 47% for fruit). That is NOT extrapolated to 30% or 50% off; the lowest measured lift is used.
+  markdown_demand_lift: 0.30
+  # Suggest marking down a day early when at least this share of the lot is expected to expire.
+  earlier_markdown_min_share: 0.30
+  # Minutes a van needs to reach the receiving store. The pack has no distances or travel times.
+  transfer_trip_minutes: 60
+  # Do not raise an alert for fewer expected leftover or missing units than this.
+  alert_min_units: 5
+

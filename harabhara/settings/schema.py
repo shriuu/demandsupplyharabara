@@ -8,7 +8,7 @@ open owner question), never a guess; see ``harabhara.settings.loader.require``.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -198,6 +198,118 @@ class Costs(_Strict):
     cost_ratio_per_sku: str
 
 
+# ---- modeling.yaml --------------------------------------------------------------------------
+
+
+class HiddenDemandParams(_Strict):
+    intraday_profile_gamma: float = Field(gt=0)
+    min_fraction_of_day: float = Field(gt=0, le=1)
+
+
+class ProjectionParams(_Strict):
+    sales_order: Literal["freshest_first", "oldest_first"]
+
+
+class ShelfLifeParams(_Strict):
+    quantiles: tuple[float, float, float]
+    iterations: int = Field(ge=1)
+    depth: int = Field(ge=1)
+    learning_rate: float = Field(gt=0)
+    seed: int
+    fit_until: date
+    training_period_end: date
+
+
+class DemandParams(_Strict):
+    quantiles: tuple[float, float, float]
+    iterations: int = Field(ge=1)
+    depth: int = Field(ge=1)
+    learning_rate: float = Field(gt=0)
+    seed: int
+    rolling_windows: list[int]
+    same_weekday_lags: list[int]
+    price_window_days: int = Field(ge=1)
+    stockout_window_days: int = Field(ge=1)
+    history_window_days: int = Field(ge=1)
+    min_history_days: int = Field(ge=1)
+    thin_history_range_width: float = Field(gt=0, lt=1)
+    fit_until: date
+    validate_from: date
+    validate_to: date
+    weather_noise_sd_temp_c: float = Field(ge=0)
+    weather_noise_sd_rain_mm: float = Field(ge=0)
+
+
+class DecisionParams(_Strict):
+    waste_weight_exponent: float = Field(ge=0)
+    allocation_steps: int = Field(ge=1)
+    service_level_floor: float = Field(gt=0, lt=1)
+    markdown_demand_lift: float = Field(ge=0)
+    earlier_markdown_min_share: float = Field(gt=0, le=1)
+    transfer_trip_minutes: int = Field(ge=0)
+    alert_min_units: float = Field(ge=0)
+
+
+class Modeling(_Strict):
+    version: str
+    hidden_demand: HiddenDemandParams
+    projection: ProjectionParams
+    shelf_life: ShelfLifeParams
+    demand: DemandParams
+    decisions: DecisionParams
+
+
+# ---- feeds.yaml -----------------------------------------------------------------------------
+
+
+class PriceShock(_Strict):
+    lookback_days: int = Field(ge=1)
+    ratio_threshold: float = Field(gt=1)
+
+
+class Mandi(_Strict):
+    provider: str
+    base_url: str
+    resource_id: str
+    citation: str = Field(min_length=1)
+    state: str
+    district: str
+    markets: list[str] = Field(min_length=1)
+    user_agent: str
+    timeout_s: float = Field(gt=0)
+    page_limit: int = Field(ge=1, le=1000)
+    kg_per_quintal: float = Field(gt=0)
+    cache_ttl_hours: float = Field(ge=0)
+    stale_after_hours: float = Field(gt=0)
+    drop_after_hours: float = Field(gt=0)
+    history_keep_days: int = Field(ge=1)
+    price_max_age_days: int = Field(ge=0)
+    products: dict[str, str]
+    unverified_unit_products: list[str]
+    price_shock: PriceShock
+
+
+class AssistantSettings(_Strict):
+    provider: str
+    model: str = Field(min_length=1)
+    base_url: str
+    timeout_s: float = Field(gt=0)
+    max_output_tokens: int = Field(ge=1)
+    temperature: float = Field(ge=0, le=2)
+    max_question_chars: int = Field(ge=1)
+    max_answer_chars: int = Field(ge=1)
+    rate_limit_calls: int = Field(ge=1)
+    rate_limit_window_s: float = Field(gt=0)
+    dont_have_answer: str = Field(min_length=1)
+    failure_message: str = Field(min_length=1)
+
+
+class Feeds(_Strict):
+    version: str
+    mandi: Mandi
+    assistant: AssistantSettings
+
+
 # ---- whole config ---------------------------------------------------------------------------
 
 
@@ -206,4 +318,6 @@ class AppConfig(_Strict):
     schedule: Schedule
     metrics: Metrics
     costs: Costs
-    digest: str = Field(description="SHA-256 over the four config files; pinned on every run")
+    modeling: Modeling
+    feeds: Feeds
+    digest: str = Field(description="SHA-256 over the config files; pinned on every run")

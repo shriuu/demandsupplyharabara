@@ -1,0 +1,1939 @@
+{
+  "components": {
+    "schemas": {
+      "Approval": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "approve",
+              "edit",
+              "reject"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_id": {
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "actor_role": {
+            "enum": [
+              "store_manager",
+              "area_manager",
+              "dc_lead",
+              "farmer_coordinator"
+            ],
+            "title": "Actor Role",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "edited_units": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Units"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "suggestion_id": {
+            "title": "Suggestion Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggestion_id",
+          "action",
+          "actor_role",
+          "actor_id",
+          "at"
+        ],
+        "title": "Approval",
+        "type": "object"
+      },
+      "AskRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "suggestion_id": {
+            "title": "Suggestion Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggestion_id",
+          "question"
+        ],
+        "title": "AskRequest",
+        "type": "object"
+      },
+      "AskResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "suggestion_id": {
+            "title": "Suggestion Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggestion_id",
+          "answer",
+          "source"
+        ],
+        "title": "AskResponse",
+        "type": "object"
+      },
+      "AuditEvent": {
+        "additionalProperties": false,
+        "description": "Append-only. Never updated or deleted.",
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "data": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Data",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "suggestion_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion Id"
+          },
+          "type": {
+            "enum": [
+              "suggestion_created",
+              "approved",
+              "edited",
+              "rejected",
+              "expired",
+              "outcome",
+              "kill_switch"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "type",
+          "actor"
+        ],
+        "title": "AuditEvent",
+        "type": "object"
+      },
+      "DcTotals": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTotal"
+            },
+            "title": "Totals",
+            "type": "array"
+          },
+          "trimming": {
+            "items": {
+              "$ref": "#/components/schemas/TrimmingHint"
+            },
+            "title": "Trimming",
+            "type": "array"
+          }
+        },
+        "required": [
+          "on",
+          "totals",
+          "trimming",
+          "stale"
+        ],
+        "title": "DcTotals",
+        "type": "object"
+      },
+      "Driver": {
+        "additionalProperties": false,
+        "description": "A real cause behind a suggestion. Reasons are built only from these.",
+        "properties": {
+          "code": {
+            "description": "machine key, e.g. heavy_rain_walk_in",
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "default": "",
+            "description": "short human fact, e.g. '2 sellable days'",
+            "title": "Detail",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "up",
+              "down",
+              "none"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "weather",
+              "weekday",
+              "festival",
+              "stock_age",
+              "shelf_life",
+              "recent_sellout",
+              "price",
+              "promotion",
+              "rule"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "direction",
+          "code"
+        ],
+        "title": "Driver",
+        "type": "object"
+      },
+      "FarmerVolumeForecast": {
+        "additionalProperties": false,
+        "properties": {
+          "fpo_id": {
+            "title": "Fpo Id",
+            "type": "string"
+          },
+          "label": {
+            "const": "estimate",
+            "default": "estimate",
+            "title": "Label",
+            "type": "string"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "volume": {
+            "$ref": "#/components/schemas/Range"
+          }
+        },
+        "required": [
+          "fpo_id",
+          "sku_id",
+          "on",
+          "volume"
+        ],
+        "title": "FarmerVolumeForecast",
+        "type": "object"
+      },
+      "Forecast": {
+        "additionalProperties": false,
+        "properties": {
+          "config_digest": {
+            "title": "Config Digest",
+            "type": "string"
+          },
+          "data_snapshot_id": {
+            "title": "Data Snapshot Id",
+            "type": "string"
+          },
+          "demand": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "demand_estimated": {
+            "default": false,
+            "description": "True when history behind this used sold-out corrections",
+            "title": "Demand Estimated",
+            "type": "boolean"
+          },
+          "flags": {
+            "items": {
+              "enum": [
+                "new_season",
+                "new_store",
+                "new_product",
+                "missing_weather",
+                "missing_price"
+              ],
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "horizon_days": {
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Horizon Days",
+            "type": "integer"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          },
+          "target_date": {
+            "format": "date",
+            "title": "Target Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store_id",
+          "sku_id",
+          "target_date",
+          "horizon_days",
+          "demand",
+          "model_version",
+          "data_snapshot_id",
+          "config_digest"
+        ],
+        "title": "Forecast",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "kill_switch": {
+            "title": "Kill Switch",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "kill_switch"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "KillSwitchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on"
+        ],
+        "title": "KillSwitchRequest",
+        "type": "object"
+      },
+      "KillSwitchResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "kill_switch": {
+            "title": "Kill Switch",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "kill_switch"
+        ],
+        "title": "KillSwitchResponse",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "pin": {
+            "title": "Pin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pin"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "LoginResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_id": {
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "store_manager",
+              "area_manager",
+              "dc_lead",
+              "farmer_coordinator"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "store_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Store Id"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "role",
+          "actor_id",
+          "store_id"
+        ],
+        "title": "LoginResponse",
+        "type": "object"
+      },
+      "MarkdownPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "earlier_than_last_day": {
+            "default": false,
+            "title": "Earlier Than Last Day",
+            "type": "boolean"
+          },
+          "expected_recovery_inr": {
+            "minimum": 0.0,
+            "title": "Expected Recovery Inr",
+            "type": "number"
+          },
+          "kind": {
+            "const": "markdown",
+            "default": "markdown",
+            "title": "Kind",
+            "type": "string"
+          },
+          "start": {
+            "pattern": "^([01]\\d|2[0-3]|24):[0-5]\\d$",
+            "title": "Start",
+            "type": "string"
+          },
+          "step_pct": {
+            "exclusiveMaximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Step Pct",
+            "type": "number"
+          },
+          "units": {
+            "exclusiveMinimum": 0.0,
+            "title": "Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "units",
+          "step_pct",
+          "start",
+          "expected_recovery_inr"
+        ],
+        "title": "MarkdownPayload",
+        "type": "object"
+      },
+      "OrderPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "order",
+            "default": "order",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manager_rule_units": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Rule Units"
+          },
+          "range": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "recommended_units": {
+            "minimum": 0.0,
+            "title": "Recommended Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "recommended_units",
+          "range"
+        ],
+        "title": "OrderPayload",
+        "type": "object"
+      },
+      "PriceQuote": {
+        "additionalProperties": false,
+        "description": "A public mandi price. Never invented: unavailable means no price (guardrails 11, 12).",
+        "properties": {
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "max_inr": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Inr"
+          },
+          "min_inr": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Inr"
+          },
+          "modal_inr": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modal Inr"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "source": {
+            "description": "citation shown next to the price",
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "stale",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku_id",
+          "market",
+          "on",
+          "source",
+          "fetched_at",
+          "status"
+        ],
+        "title": "PriceQuote",
+        "type": "object"
+      },
+      "ProductTotal": {
+        "additionalProperties": false,
+        "properties": {
+          "config_digest": {
+            "title": "Config Digest",
+            "type": "string"
+          },
+          "data_snapshot_id": {
+            "title": "Data Snapshot Id",
+            "type": "string"
+          },
+          "demand": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "demand_estimated": {
+            "title": "Demand Estimated",
+            "type": "boolean"
+          },
+          "flags": {
+            "items": {
+              "enum": [
+                "new_season",
+                "new_store",
+                "new_product",
+                "missing_weather",
+                "missing_price"
+              ],
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "stores": {
+            "title": "Stores",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku_id",
+          "demand",
+          "stores",
+          "flags",
+          "demand_estimated",
+          "model_version",
+          "data_snapshot_id",
+          "config_digest"
+        ],
+        "title": "ProductTotal",
+        "type": "object"
+      },
+      "Range": {
+        "additionalProperties": false,
+        "description": "A forecast is always a range; screens may show ``likely`` only.",
+        "properties": {
+          "high": {
+            "minimum": 0.0,
+            "title": "High",
+            "type": "number"
+          },
+          "likely": {
+            "minimum": 0.0,
+            "title": "Likely",
+            "type": "number"
+          },
+          "low": {
+            "minimum": 0.0,
+            "title": "Low",
+            "type": "number"
+          }
+        },
+        "required": [
+          "low",
+          "likely",
+          "high"
+        ],
+        "title": "Range",
+        "type": "object"
+      },
+      "Scorecard": {
+        "additionalProperties": false,
+        "description": "Waste, empty shelves and farmer share travel together (guardrail 4).",
+        "properties": {
+          "farmer_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farmer Share"
+          },
+          "farmer_share_definition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farmer Share Definition"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "stockout_pct": {
+            "title": "Stockout Pct",
+            "type": "number"
+          },
+          "waste_pct": {
+            "title": "Waste Pct",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scope",
+          "period_start",
+          "period_end",
+          "waste_pct",
+          "stockout_pct",
+          "farmer_share"
+        ],
+        "title": "Scorecard",
+        "type": "object"
+      },
+      "Suggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "approver_role": {
+            "enum": [
+              "store_manager",
+              "area_manager",
+              "dc_lead",
+              "farmer_coordinator"
+            ],
+            "title": "Approver Role",
+            "type": "string"
+          },
+          "config_digest": {
+            "title": "Config Digest",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "data_snapshot_id": {
+            "title": "Data Snapshot Id",
+            "type": "string"
+          },
+          "deadline": {
+            "format": "date-time",
+            "title": "Deadline",
+            "type": "string"
+          },
+          "drivers": {
+            "items": {
+              "$ref": "#/components/schemas/Driver"
+            },
+            "minItems": 1,
+            "title": "Drivers",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "payload": {
+            "discriminator": {
+              "mapping": {
+                "markdown": "#/components/schemas/MarkdownPayload",
+                "order": "#/components/schemas/OrderPayload",
+                "surplus": "#/components/schemas/SurplusPayload",
+                "transfer": "#/components/schemas/TransferPayload"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrderPayload"
+              },
+              {
+                "$ref": "#/components/schemas/MarkdownPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TransferPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SurplusPayload"
+              }
+            ],
+            "title": "Payload"
+          },
+          "reason": {
+            "description": "one sentence a manager would say (guardrail 9)",
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "state": {
+            "default": "proposed",
+            "enum": [
+              "proposed",
+              "approved",
+              "edited",
+              "rejected",
+              "expired",
+              "done"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "store_id",
+          "sku_id",
+          "created_at",
+          "deadline",
+          "approver_role",
+          "reason",
+          "drivers",
+          "payload",
+          "model_version",
+          "data_snapshot_id",
+          "config_digest"
+        ],
+        "title": "Suggestion",
+        "type": "object"
+      },
+      "SurplusPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "buyer_id": {
+            "title": "Buyer Id",
+            "type": "string"
+          },
+          "expected_recovery_inr": {
+            "minimum": 0.0,
+            "title": "Expected Recovery Inr",
+            "type": "number"
+          },
+          "grade": {
+            "enum": [
+              "A",
+              "B",
+              "C"
+            ],
+            "title": "Grade",
+            "type": "string"
+          },
+          "kind": {
+            "const": "surplus",
+            "default": "surplus",
+            "title": "Kind",
+            "type": "string"
+          },
+          "pickup_window": {
+            "title": "Pickup Window",
+            "type": "string"
+          },
+          "units": {
+            "exclusiveMinimum": 0.0,
+            "title": "Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "buyer_id",
+          "units",
+          "grade",
+          "pickup_window",
+          "expected_recovery_inr"
+        ],
+        "title": "SurplusPayload",
+        "type": "object"
+      },
+      "TransferPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "from_store": {
+            "title": "From Store",
+            "type": "string"
+          },
+          "kind": {
+            "const": "transfer",
+            "default": "transfer",
+            "title": "Kind",
+            "type": "string"
+          },
+          "leave_by": {
+            "pattern": "^([01]\\d|2[0-3]|24):[0-5]\\d$",
+            "title": "Leave By",
+            "type": "string"
+          },
+          "to_store": {
+            "title": "To Store",
+            "type": "string"
+          },
+          "units": {
+            "exclusiveMinimum": 0.0,
+            "title": "Units",
+            "type": "number"
+          },
+          "van_cost_inr": {
+            "minimum": 0.0,
+            "title": "Van Cost Inr",
+            "type": "number"
+          }
+        },
+        "required": [
+          "from_store",
+          "to_store",
+          "units",
+          "leave_by",
+          "van_cost_inr"
+        ],
+        "title": "TransferPayload",
+        "type": "object"
+      },
+      "TrimmingHint": {
+        "additionalProperties": false,
+        "description": "Spot (mandi) buying is trimmed first; confirmed farmer volume is never touched (G03).",
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "spot_units_to_trim": {
+            "title": "Spot Units To Trim",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sku_id",
+          "spot_units_to_trim",
+          "reason"
+        ],
+        "title": "TrimmingHint",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "HaraBhara Fresh",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/admin/kill-switch": {
+      "post": {
+        "operationId": "kill_switch_api_v1_admin_kill_switch_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KillSwitchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KillSwitchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Kill Switch"
+      }
+    },
+    "/api/v1/assistant/ask": {
+      "post": {
+        "operationId": "ask_api_v1_assistant_ask_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask"
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "operationId": "audit_log_api_v1_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "suggestion_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Suggestion Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEvent"
+                  },
+                  "title": "Response Audit Log Api V1 Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit Log"
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login"
+      }
+    },
+    "/api/v1/dc/totals": {
+      "get": {
+        "operationId": "dc_totals_api_v1_dc_totals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcTotals"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dc Totals"
+      }
+    },
+    "/api/v1/farmers/forecast": {
+      "get": {
+        "operationId": "farmers_api_v1_farmers_forecast_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fpo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fpo Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FarmerVolumeForecast"
+                  },
+                  "title": "Response Farmers Api V1 Farmers Forecast Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Farmers"
+      }
+    },
+    "/api/v1/forecasts": {
+      "get": {
+        "operationId": "forecasts_api_v1_forecasts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "store_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Store Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sku_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sku Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Forecast"
+                  },
+                  "title": "Response Forecasts Api V1 Forecasts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forecasts"
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/v1/prices": {
+      "get": {
+        "operationId": "prices_route_api_v1_prices_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sku_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sku Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PriceQuote"
+                  },
+                  "title": "Response Prices Route Api V1 Prices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prices Route"
+      }
+    },
+    "/api/v1/scorecard": {
+      "get": {
+        "operationId": "scorecard_api_v1_scorecard_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Scorecard"
+                  },
+                  "title": "Response Scorecard Api V1 Scorecard Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scorecard"
+      }
+    },
+    "/api/v1/suggestions": {
+      "get": {
+        "operationId": "suggestions_api_v1_suggestions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "store_manager",
+                    "area_manager",
+                    "dc_lead",
+                    "farmer_coordinator"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "in": "query",
+            "name": "store_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Store Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "proposed",
+                    "approved",
+                    "edited",
+                    "rejected",
+                    "expired",
+                    "done"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Suggestion"
+                  },
+                  "title": "Response Suggestions Api V1 Suggestions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Suggestions"
+      }
+    },
+    "/api/v1/suggestions/{suggestion_id}": {
+      "get": {
+        "operationId": "suggestion_api_v1_suggestions__suggestion_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Suggestion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Suggestion"
+      }
+    },
+    "/api/v1/suggestions/{suggestion_id}/decision": {
+      "post": {
+        "operationId": "decision_api_v1_suggestions__suggestion_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Approval"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Suggestion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decision"
+      }
+    }
+  }
+}
