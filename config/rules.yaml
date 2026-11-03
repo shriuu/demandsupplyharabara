@@ -1,0 +1,77 @@
+# Playbook limits enforced by the rules engine.
+# Every value cites its source. "source: OWNER" means not in the playbook or brief:
+# it is a placeholder (null) until the owner answers (see docs/owner_questions.md).
+version: 0.1.0-draft
+playbook_version: "1.4 (June 2026)"
+
+grading:                       # playbook §3 table
+  A: {firmness_min: 7, colour_min: 7, defects_pct_max: 5, use: full_price}
+  B: {firmness_min: 5, firmness_max: 6.9, defects_pct_min: 5, defects_pct_max: 15, use: full_price_sell_first}
+  C: {firmness_below: 5, defects_pct_above: 15, use: b2b_or_process_only}   # guardrail 5
+  full_price_grades: [A, B]
+  note: "Data note: QC grades disagree with the firmness bands on ~12% of samples (README says grades are human-assigned). Engine trusts grade_assigned; flags disagreement."
+
+receiving:
+  hot_arrival_temp_c: 30            # playbook §3: warmer than this
+  hot_arrival_life_penalty_days: 1  # playbook §3: shelf life reduced by one day
+  no_cold_room_skus_source: shelf_life_rules.chilling_injury_risk   # playbook §3; data flags P04 P05 P08 P11 P23 P24
+  chilling_injury_below_c: 12       # playbook §3 "below about 12°C"
+  leafy_greens_max_crate_stack: 3   # playbook §3
+
+shelf_life:
+  rules_table: shelf_life_rules     # procurement workbook; days by grade and storage
+  count_starts: store_arrival_day   # playbook §4
+  model_may_exceed_rule: false      # guardrail 6 — rule wins, show both. NOTE: QC shows observed > rule on 20% of samples; see owner Q14
+
+markdown:                           # playbook §5
+  step_1_pct: 30
+  step_1_when: last_sellable_day_from_opening
+  step_2_pct: 50
+  step_2_after_hour: 18
+  step_2_categories_or_skus: ["Leafy greens", P04, P05]   # "leafy greens and bananas only"
+  floor_basis_before_step_2: purchase_cost   # "never below purchase cost before 6 pm"
+  approver_default: store_manager
+  area_manager_approval_if_share_of_days_delivery_above: 0.30
+  earlier_start_allowed: null       # source: OWNER (open Q8). Playbook says it is wanted; not yet a rule.
+  promo_pct_in_data: 15             # sales README: promo_flag = 15% promotion (existing; we do not create new prices)
+
+transfer:                           # playbook §6, brief T7
+  max_distance_km: 6
+  must_arrive_before_hour: 11
+  van_cost_inr: 300
+  min_units_low_value: 20           # "fewer than 20 units of a low-value product rarely pays"
+  low_value_threshold_inr: null     # source: OWNER — "low-value" is not defined
+  leafy_greens_no_transfer_after_hour: 12
+  approver: area_manager
+  approve_by_hour: 9                # playbook §13
+  store_distances: null             # GAP: stores sheet has no coordinates. Owner Q15.
+
+surplus:                            # playbook §7, §13
+  channel_order: [b2b_paying, food_bank_donation, animal_feed_or_compost]
+  landfill_edible_allowed: false
+  notice_hours_source: surplus_buyers.notice_needed_hours   # 2–12 h per buyer
+  store_confirms_plan_by_hour: 14
+  grade_c_channels: [b2b_paying, animal_feed_or_compost]    # guardrail 5; buyers' grades_accepted decides
+
+farmers:                            # playbook §8, guardrails 2–3
+  floor_prices_source: fpo_contracts.contract_floor_prices
+  never_below_floor: true
+  never_cancel_confirmed_volume: true
+  payment_terms_days: 2
+  trim_order_when_long: [mandi_spot]   # guardrail 3: spot first, as suggestion only. Owner Q3 to confirm.
+  share_forecast_horizon_days: 3
+
+ordering:
+  forecast_horizon_days: 3          # brief must-have, playbook §10
+  approval_required: true           # guardrail 1
+  big_edit_reason_threshold: null   # source: OWNER — playbook says "reason recorded for big edits"; CLAUDE.md says every edit
+
+automation:
+  auto_order_allowed: false         # playbook §10: only after beating managers ≥ 8 weeks in pilot
+  pilot_weeks_before_auto: 8
+
+managers_rule_baseline:             # playbook §2 — rebuild exactly for the baseline
+  avg_window_days: 7
+  weekend_bump_pct: 20
+  festival_bump_pct: 25             # playbook §9, flat for every product
+  extra_buffer_pct: null            # "a further buffer 'to be safe'" — size not stated; calibrate on train (data shows orders ~+9–10% above next-day sales)
