@@ -240,12 +240,19 @@ class DemandParams(_Strict):
     weather_noise_sd_rain_mm: float = Field(ge=0)
 
 
+class DecisionParams(_Strict):
+    waste_weight_exponent: float = Field(ge=0)
+    allocation_steps: int = Field(ge=1)
+    service_level_floor: float = Field(gt=0, lt=1)
+
+
 class Modeling(_Strict):
     version: str
     hidden_demand: HiddenDemandParams
     projection: ProjectionParams
     shelf_life: ShelfLifeParams
     demand: DemandParams
+    decisions: DecisionParams
 
 
 # ---- feeds.yaml -----------------------------------------------------------------------------

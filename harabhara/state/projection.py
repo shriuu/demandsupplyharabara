@@ -47,6 +47,41 @@ class DayOutcome:
     lost_sales: float
     binned: float
     closing_stock: float
+    sold_last_day: float = 0.0  # part of ``sold`` taken from stock on its last sellable day
+
+
+StockState = list[list[float]]  # [units, life_left] per lot; mutated by step_day
+
+
+def step_day(
+    stock: StockState, delivery: Lot | None, wanted: float, sales_order: SalesOrder
+) -> DayOutcome:
+    """Play one day on ``stock`` (changed in place): delivery, selling, closing, ageing."""
+    if delivery is not None and delivery.units > 0:
+        stock.append([delivery.units, float(delivery.life_left)])
+    stock.sort(key=lambda lot: lot[1], reverse=(sales_order == "freshest_first"))
+    wanted = max(wanted, 0.0)
+    remaining = wanted
+    sold = 0.0
+    sold_last_day = 0.0
+    for lot in stock:
+        take = min(lot[0], remaining)
+        lot[0] -= take
+        remaining -= take
+        sold += take
+        if lot[1] <= 1:
+            sold_last_day += take
+        if remaining <= 0:
+            break
+    binned = sum(lot[0] for lot in stock if lot[1] <= 1)
+    stock[:] = [[lot[0], lot[1] - 1] for lot in stock if lot[1] > 1 and lot[0] > 0]
+    return DayOutcome(
+        sold=sold,
+        lost_sales=wanted - sold,
+        binned=binned,
+        closing_stock=sum(lot[0] for lot in stock),
+        sold_last_day=sold_last_day,
+    )
 
 
 def roll_forward(
@@ -59,32 +94,11 @@ def roll_forward(
     if len(deliveries) != len(demand):
         msg = "deliveries and demand must cover the same days"
         raise ValueError(msg)
-    stock = [[lot.units, lot.life_left] for lot in opening if lot.units > 0]
-    outcomes: list[DayOutcome] = []
-    for delivery, wanted in zip(deliveries, demand, strict=True):
-        if delivery is not None and delivery.units > 0:
-            stock.append([delivery.units, delivery.life_left])
-        stock.sort(key=lambda lot: lot[1], reverse=(sales_order == "freshest_first"))
-        remaining = max(wanted, 0.0)
-        sold = 0.0
-        for lot in stock:
-            take = min(lot[0], remaining)
-            lot[0] -= take
-            remaining -= take
-            sold += take
-            if remaining <= 0:
-                break
-        binned = sum(lot[0] for lot in stock if lot[1] == 1)
-        stock = [[lot[0], lot[1] - 1] for lot in stock if lot[1] > 1 and lot[0] > 0]
-        outcomes.append(
-            DayOutcome(
-                sold=sold,
-                lost_sales=max(wanted, 0.0) - sold,
-                binned=binned,
-                closing_stock=sum(lot[0] for lot in stock),
-            )
-        )
-    return outcomes
+    stock: StockState = [[lot.units, float(lot.life_left)] for lot in opening if lot.units > 0]
+    return [
+        step_day(stock, delivery, wanted, sales_order)
+        for delivery, wanted in zip(deliveries, demand, strict=True)
+    ]
 
 
 def _range(low: float, likely: float, high: float) -> Range:

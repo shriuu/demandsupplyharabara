@@ -55,3 +55,15 @@ demand:
   thin_history_range_width: 0.5
   weather_noise_sd_temp_c: 0.0
   weather_noise_sd_rain_mm: 0.0
+
+decisions:
+  # A leftover unit is not always lost: stock with several sellable days left can still sell.
+  # The cost of a leftover unit is its purchase cost times (1 / sellable days at arrival) to this
+  # power. 1.0 is the starting value; it is tuned on the TRAINING replay, never on the holdout.
+  waste_weight_exponent: 1.0
+  # Allocation hands out the fixed supply in this many steps (more steps, finer split).
+  allocation_steps: 400
+  # The order never covers less demand than this share of scenarios, whatever the cost balance
+  # says: a pure cost balance accepts frequent empty shelves while the basket allowance is unset.
+  # Tuned on the TRAINING replay so stock-outs do not rise (docs/replay.md); never on the holdout.
+  service_level_floor: 0.925
