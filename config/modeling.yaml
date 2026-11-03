@@ -28,3 +28,30 @@ shelf_life:
   # period for validation. QC samples dated in the holdout are not touched until the final run.
   fit_until: 2026-05-31
   training_period_end: 2026-08-05
+
+demand:
+  # One global model for all stores and products; horizon (1 to 3 days ahead) is a feature.
+  quantiles: [0.1, 0.5, 0.9]       # low, likely, high
+  iterations: 1200
+  depth: 6
+  learning_rate: 0.06
+  seed: 0
+  rolling_windows: [7, 14, 28]      # days, recent demand averages at the forecast origin
+  same_weekday_lags: [1, 2, 3, 4]   # weeks back from the target day
+  price_window_days: 28
+  stockout_window_days: 7
+  history_window_days: 28           # used to count how much history a series has
+  # Inner validation for model development. The holdout (calendar split) is not touched.
+  # The window mirrors the holdout length: eight weeks.
+  fit_until: 2026-06-09
+  validate_from: 2026-06-10
+  validate_to: 2026-08-05
+  # Weather for the target day is the observed value (a stand-in for a forecast); the
+  # robustness runs add noise to mimic a real forecast.
+  # Cold start: when a series has fewer observed days than this in the history window (new
+  # season, new product), the model is not used. The recent-average rule takes over, with a
+  # fixed-width range, and the forecast is flagged as thin history. Both numbers are assumptions.
+  min_history_days: 7
+  thin_history_range_width: 0.5
+  weather_noise_sd_temp_c: 0.0
+  weather_noise_sd_rain_mm: 0.0

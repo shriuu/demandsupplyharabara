@@ -220,11 +220,32 @@ class ShelfLifeParams(_Strict):
     training_period_end: date
 
 
+class DemandParams(_Strict):
+    quantiles: tuple[float, float, float]
+    iterations: int = Field(ge=1)
+    depth: int = Field(ge=1)
+    learning_rate: float = Field(gt=0)
+    seed: int
+    rolling_windows: list[int]
+    same_weekday_lags: list[int]
+    price_window_days: int = Field(ge=1)
+    stockout_window_days: int = Field(ge=1)
+    history_window_days: int = Field(ge=1)
+    min_history_days: int = Field(ge=1)
+    thin_history_range_width: float = Field(gt=0, lt=1)
+    fit_until: date
+    validate_from: date
+    validate_to: date
+    weather_noise_sd_temp_c: float = Field(ge=0)
+    weather_noise_sd_rain_mm: float = Field(ge=0)
+
+
 class Modeling(_Strict):
     version: str
     hidden_demand: HiddenDemandParams
     projection: ProjectionParams
     shelf_life: ShelfLifeParams
+    demand: DemandParams
 
 
 # ---- feeds.yaml -----------------------------------------------------------------------------
