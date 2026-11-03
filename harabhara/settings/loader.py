@@ -8,9 +8,9 @@ from typing import Any
 
 import yaml
 
-from harabhara.settings.schema import AppConfig, Costs, Metrics, Rules, Schedule
+from harabhara.settings.schema import AppConfig, Costs, Metrics, Modeling, Rules, Schedule
 
-CONFIG_FILES = ("rules", "schedule", "metrics", "costs")
+CONFIG_FILES = ("rules", "schedule", "metrics", "costs", "modeling")
 
 
 class PlaceholderError(RuntimeError):
@@ -44,6 +44,7 @@ def load_config(config_dir: Path | None = None) -> AppConfig:
         schedule=Schedule.model_validate(parsed["schedule"]),
         metrics=Metrics.model_validate(parsed["metrics"]),
         costs=Costs.model_validate(parsed["costs"]),
+        modeling=Modeling.model_validate(parsed["modeling"]),
         digest=digest.hexdigest(),
     )
 

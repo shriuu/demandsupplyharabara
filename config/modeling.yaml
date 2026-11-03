@@ -1,0 +1,11 @@
+# Modelling assumptions. These are NOT from the playbook: each is an assumption, tuned (if at
+# all) on training data only, never on the holdout. See docs/hidden_demand.md.
+version: 0.1.0-draft
+
+hidden_demand:
+  # Share of a day's demand sold by hour h is taken as ((h - open) / (close - open)) ** gamma.
+  # The data has no hourly sales, so the real shape cannot be observed. 1.0 means an even pace.
+  # docs/hidden_demand.md shows how wrong the estimate is if the true shape differs.
+  intraday_profile_gamma: 1.0
+  # Safety bound so a very early sell-out cannot produce an extreme estimate.
+  min_fraction_of_day: 0.1

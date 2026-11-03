@@ -198,6 +198,19 @@ class Costs(_Strict):
     cost_ratio_per_sku: str
 
 
+# ---- modeling.yaml --------------------------------------------------------------------------
+
+
+class HiddenDemandParams(_Strict):
+    intraday_profile_gamma: float = Field(gt=0)
+    min_fraction_of_day: float = Field(gt=0, le=1)
+
+
+class Modeling(_Strict):
+    version: str
+    hidden_demand: HiddenDemandParams
+
+
 # ---- whole config ---------------------------------------------------------------------------
 
 
@@ -206,4 +219,5 @@ class AppConfig(_Strict):
     schedule: Schedule
     metrics: Metrics
     costs: Costs
+    modeling: Modeling
     digest: str = Field(description="SHA-256 over the four config files; pinned on every run")
