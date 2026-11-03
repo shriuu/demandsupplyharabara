@@ -13,3 +13,6 @@ export const MAX_ICONS = 12;
 
 /** Longest PIN the number pad accepts. */
 export const MAX_PIN_LENGTH = 8;
+
+/** Dots drawn before anything is typed. The row grows if a longer PIN is entered. */
+export const PIN_DOTS_SHOWN = 6;

@@ -57,6 +57,23 @@ describe("sign-in", () => {
     act(() => signalExpired());
     expect(await screen.findByText("Please sign in again.")).toBeInTheDocument();
   });
+  it("draws six dots before anything is typed", async () => {
+    const { container } = render(<App />);
+    await screen.findByRole("button", { name: "1" });
+    expect(container.querySelectorAll(".pin-dots .dot")).toHaveLength(6);
+    expect(container.querySelectorAll(".pin-dots .dot-on")).toHaveLength(0);
+  });
+
+  it("fills the dots as digits are pressed and stops at the longest PIN", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    for (const digit of "123456") await user.click(await screen.findByRole("button", { name: digit }));
+    expect(container.querySelectorAll(".pin-dots .dot-on")).toHaveLength(6);
+    for (const digit of "7890") await user.click(screen.getByRole("button", { name: digit }));
+    expect(container.querySelectorAll(".pin-dots .dot")).toHaveLength(8);
+    expect(container.querySelectorAll(".pin-dots .dot-on")).toHaveLength(8);
+  });
+
 });
 
 describe("store manager evening", () => {
