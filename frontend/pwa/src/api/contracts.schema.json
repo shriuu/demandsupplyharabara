@@ -1,0 +1,808 @@
+{
+  "$defs": {
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "approve",
+            "edit",
+            "reject"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "actor_id": {
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "actor_role": {
+          "enum": [
+            "store_manager",
+            "area_manager",
+            "dc_lead",
+            "farmer_coordinator"
+          ],
+          "title": "Actor Role",
+          "type": "string"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "edited_units": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Edited Units"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "suggestion_id": {
+          "title": "Suggestion Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "suggestion_id",
+        "action",
+        "actor_role",
+        "actor_id",
+        "at"
+      ],
+      "title": "Approval",
+      "type": "object"
+    },
+    "AuditEvent": {
+      "additionalProperties": false,
+      "description": "Append-only. Never updated or deleted.",
+      "properties": {
+        "actor": {
+          "title": "Actor",
+          "type": "string"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "data": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Data",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "suggestion_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggestion Id"
+        },
+        "type": {
+          "enum": [
+            "suggestion_created",
+            "approved",
+            "edited",
+            "rejected",
+            "expired",
+            "outcome",
+            "kill_switch"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "type",
+        "actor"
+      ],
+      "title": "AuditEvent",
+      "type": "object"
+    },
+    "Driver": {
+      "additionalProperties": false,
+      "description": "A real cause behind a suggestion. Reasons are built only from these.",
+      "properties": {
+        "code": {
+          "description": "machine key, e.g. heavy_rain_walk_in",
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "detail": {
+          "default": "",
+          "description": "short human fact, e.g. '2 sellable days'",
+          "title": "Detail",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "up",
+            "down",
+            "none"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "weather",
+            "weekday",
+            "festival",
+            "stock_age",
+            "shelf_life",
+            "recent_sellout",
+            "price",
+            "promotion",
+            "rule"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "code"
+      ],
+      "title": "Driver",
+      "type": "object"
+    },
+    "FarmerVolumeForecast": {
+      "additionalProperties": false,
+      "properties": {
+        "fpo_id": {
+          "title": "Fpo Id",
+          "type": "string"
+        },
+        "label": {
+          "const": "estimate",
+          "default": "estimate",
+          "title": "Label",
+          "type": "string"
+        },
+        "on": {
+          "format": "date",
+          "title": "On",
+          "type": "string"
+        },
+        "sku_id": {
+          "title": "Sku Id",
+          "type": "string"
+        },
+        "volume": {
+          "$ref": "#/$defs/Range"
+        }
+      },
+      "required": [
+        "fpo_id",
+        "sku_id",
+        "on",
+        "volume"
+      ],
+      "title": "FarmerVolumeForecast",
+      "type": "object"
+    },
+    "Forecast": {
+      "additionalProperties": false,
+      "properties": {
+        "config_digest": {
+          "title": "Config Digest",
+          "type": "string"
+        },
+        "data_snapshot_id": {
+          "title": "Data Snapshot Id",
+          "type": "string"
+        },
+        "demand": {
+          "$ref": "#/$defs/Range"
+        },
+        "demand_estimated": {
+          "default": false,
+          "description": "True when history behind this used sold-out corrections",
+          "title": "Demand Estimated",
+          "type": "boolean"
+        },
+        "flags": {
+          "items": {
+            "enum": [
+              "new_season",
+              "new_store",
+              "new_product",
+              "missing_weather",
+              "missing_price"
+            ],
+            "type": "string"
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "horizon_days": {
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Horizon Days",
+          "type": "integer"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "sku_id": {
+          "title": "Sku Id",
+          "type": "string"
+        },
+        "store_id": {
+          "title": "Store Id",
+          "type": "string"
+        },
+        "target_date": {
+          "format": "date",
+          "title": "Target Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "store_id",
+        "sku_id",
+        "target_date",
+        "horizon_days",
+        "demand",
+        "model_version",
+        "data_snapshot_id",
+        "config_digest"
+      ],
+      "title": "Forecast",
+      "type": "object"
+    },
+    "MarkdownPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "earlier_than_last_day": {
+          "default": false,
+          "title": "Earlier Than Last Day",
+          "type": "boolean"
+        },
+        "expected_recovery_inr": {
+          "minimum": 0,
+          "title": "Expected Recovery Inr",
+          "type": "number"
+        },
+        "kind": {
+          "const": "markdown",
+          "default": "markdown",
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "pattern": "^([01]\\d|2[0-3]|24):[0-5]\\d$",
+          "title": "Start",
+          "type": "string"
+        },
+        "step_pct": {
+          "exclusiveMaximum": 100,
+          "exclusiveMinimum": 0,
+          "title": "Step Pct",
+          "type": "number"
+        },
+        "units": {
+          "exclusiveMinimum": 0,
+          "title": "Units",
+          "type": "number"
+        }
+      },
+      "required": [
+        "units",
+        "step_pct",
+        "start",
+        "expected_recovery_inr"
+      ],
+      "title": "MarkdownPayload",
+      "type": "object"
+    },
+    "OrderPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "order",
+          "default": "order",
+          "title": "Kind",
+          "type": "string"
+        },
+        "manager_rule_units": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Manager Rule Units"
+        },
+        "range": {
+          "$ref": "#/$defs/Range"
+        },
+        "recommended_units": {
+          "minimum": 0,
+          "title": "Recommended Units",
+          "type": "number"
+        }
+      },
+      "required": [
+        "recommended_units",
+        "range"
+      ],
+      "title": "OrderPayload",
+      "type": "object"
+    },
+    "PriceQuote": {
+      "additionalProperties": false,
+      "description": "A public mandi price. Never invented: unavailable means no price (guardrails 11, 12).",
+      "properties": {
+        "fetched_at": {
+          "format": "date-time",
+          "title": "Fetched At",
+          "type": "string"
+        },
+        "market": {
+          "title": "Market",
+          "type": "string"
+        },
+        "max_inr": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Inr"
+        },
+        "min_inr": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Inr"
+        },
+        "modal_inr": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modal Inr"
+        },
+        "on": {
+          "format": "date",
+          "title": "On",
+          "type": "string"
+        },
+        "sku_id": {
+          "title": "Sku Id",
+          "type": "string"
+        },
+        "source": {
+          "description": "citation shown next to the price",
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "stale",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sku_id",
+        "market",
+        "on",
+        "source",
+        "fetched_at",
+        "status"
+      ],
+      "title": "PriceQuote",
+      "type": "object"
+    },
+    "Range": {
+      "additionalProperties": false,
+      "description": "A forecast is always a range; screens may show ``likely`` only.",
+      "properties": {
+        "high": {
+          "minimum": 0,
+          "title": "High",
+          "type": "number"
+        },
+        "likely": {
+          "minimum": 0,
+          "title": "Likely",
+          "type": "number"
+        },
+        "low": {
+          "minimum": 0,
+          "title": "Low",
+          "type": "number"
+        }
+      },
+      "required": [
+        "low",
+        "likely",
+        "high"
+      ],
+      "title": "Range",
+      "type": "object"
+    },
+    "Scorecard": {
+      "additionalProperties": false,
+      "description": "Waste, empty shelves and farmer share travel together (guardrail 4).",
+      "properties": {
+        "farmer_share": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Farmer Share"
+        },
+        "farmer_share_definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Farmer Share Definition"
+        },
+        "period_end": {
+          "format": "date",
+          "title": "Period End",
+          "type": "string"
+        },
+        "period_start": {
+          "format": "date",
+          "title": "Period Start",
+          "type": "string"
+        },
+        "scope": {
+          "title": "Scope",
+          "type": "string"
+        },
+        "stockout_pct": {
+          "title": "Stockout Pct",
+          "type": "number"
+        },
+        "waste_pct": {
+          "title": "Waste Pct",
+          "type": "number"
+        }
+      },
+      "required": [
+        "scope",
+        "period_start",
+        "period_end",
+        "waste_pct",
+        "stockout_pct",
+        "farmer_share"
+      ],
+      "title": "Scorecard",
+      "type": "object"
+    },
+    "Suggestion": {
+      "additionalProperties": false,
+      "properties": {
+        "approver_role": {
+          "enum": [
+            "store_manager",
+            "area_manager",
+            "dc_lead",
+            "farmer_coordinator"
+          ],
+          "title": "Approver Role",
+          "type": "string"
+        },
+        "config_digest": {
+          "title": "Config Digest",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "data_snapshot_id": {
+          "title": "Data Snapshot Id",
+          "type": "string"
+        },
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "drivers": {
+          "items": {
+            "$ref": "#/$defs/Driver"
+          },
+          "minItems": 1,
+          "title": "Drivers",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "payload": {
+          "discriminator": {
+            "mapping": {
+              "markdown": "#/$defs/MarkdownPayload",
+              "order": "#/$defs/OrderPayload",
+              "surplus": "#/$defs/SurplusPayload",
+              "transfer": "#/$defs/TransferPayload"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/OrderPayload"
+            },
+            {
+              "$ref": "#/$defs/MarkdownPayload"
+            },
+            {
+              "$ref": "#/$defs/TransferPayload"
+            },
+            {
+              "$ref": "#/$defs/SurplusPayload"
+            }
+          ],
+          "title": "Payload"
+        },
+        "reason": {
+          "description": "one sentence a manager would say (guardrail 9)",
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "sku_id": {
+          "title": "Sku Id",
+          "type": "string"
+        },
+        "state": {
+          "default": "proposed",
+          "enum": [
+            "proposed",
+            "approved",
+            "edited",
+            "rejected",
+            "expired",
+            "done"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "store_id": {
+          "title": "Store Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "store_id",
+        "sku_id",
+        "created_at",
+        "deadline",
+        "approver_role",
+        "reason",
+        "drivers",
+        "payload",
+        "model_version",
+        "data_snapshot_id",
+        "config_digest"
+      ],
+      "title": "Suggestion",
+      "type": "object"
+    },
+    "SurplusPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "buyer_id": {
+          "title": "Buyer Id",
+          "type": "string"
+        },
+        "expected_recovery_inr": {
+          "minimum": 0,
+          "title": "Expected Recovery Inr",
+          "type": "number"
+        },
+        "grade": {
+          "enum": [
+            "A",
+            "B",
+            "C"
+          ],
+          "title": "Grade",
+          "type": "string"
+        },
+        "kind": {
+          "const": "surplus",
+          "default": "surplus",
+          "title": "Kind",
+          "type": "string"
+        },
+        "pickup_window": {
+          "title": "Pickup Window",
+          "type": "string"
+        },
+        "units": {
+          "exclusiveMinimum": 0,
+          "title": "Units",
+          "type": "number"
+        }
+      },
+      "required": [
+        "buyer_id",
+        "units",
+        "grade",
+        "pickup_window",
+        "expected_recovery_inr"
+      ],
+      "title": "SurplusPayload",
+      "type": "object"
+    },
+    "TransferPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "from_store": {
+          "title": "From Store",
+          "type": "string"
+        },
+        "kind": {
+          "const": "transfer",
+          "default": "transfer",
+          "title": "Kind",
+          "type": "string"
+        },
+        "leave_by": {
+          "pattern": "^([01]\\d|2[0-3]|24):[0-5]\\d$",
+          "title": "Leave By",
+          "type": "string"
+        },
+        "to_store": {
+          "title": "To Store",
+          "type": "string"
+        },
+        "units": {
+          "exclusiveMinimum": 0,
+          "title": "Units",
+          "type": "number"
+        },
+        "van_cost_inr": {
+          "minimum": 0,
+          "title": "Van Cost Inr",
+          "type": "number"
+        }
+      },
+      "required": [
+        "from_store",
+        "to_store",
+        "units",
+        "leave_by",
+        "van_cost_inr"
+      ],
+      "title": "TransferPayload",
+      "type": "object"
+    }
+  },
+  "description": "One root so every contract type lands in a single schema.",
+  "properties": {
+    "approval": {
+      "$ref": "#/$defs/Approval"
+    },
+    "audit_event": {
+      "$ref": "#/$defs/AuditEvent"
+    },
+    "farmer_volume_forecast": {
+      "$ref": "#/$defs/FarmerVolumeForecast"
+    },
+    "forecast": {
+      "$ref": "#/$defs/Forecast"
+    },
+    "price_quote": {
+      "$ref": "#/$defs/PriceQuote"
+    },
+    "scorecard": {
+      "$ref": "#/$defs/Scorecard"
+    },
+    "suggestion": {
+      "$ref": "#/$defs/Suggestion"
+    }
+  },
+  "required": [
+    "forecast",
+    "suggestion",
+    "approval",
+    "audit_event",
+    "price_quote",
+    "farmer_volume_forecast",
+    "scorecard"
+  ],
+  "title": "Contracts",
+  "type": "object"
+}
