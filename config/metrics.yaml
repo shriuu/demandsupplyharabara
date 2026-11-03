@@ -1,0 +1,19 @@
+# Metric definitions (playbook §11, brief §7). Always reported together:
+# waste + stock-outs + farmer share (CLAUDE.md guardrail 4).
+version: 0.1.0-draft
+evaluation_rows: in_season_only        # sales README: exclude out-of-season zero-stock rows
+exclude_rows: [S07 2026-02-10..2026-02-12 POS outage]   # sales README
+
+wastage_rate: "units binned / units received"
+stockout_rate: "share of in-season store-product-days that sold out before closing"
+sell_through: "(full-price + markdown units) / units received"
+wape: "sum |forecast - actual sold| / sum actual sold"   # brief/playbook measure against units SOLD (censored); we also report vs estimated demand on non-sold-out rows
+bias: "sum (forecast - actual) / sum actual; positive = over-forecast"
+gross_margin: "(sales revenue - cost of produce received) / sales revenue; cost from purchases"
+shelf_life_mae: "mean |predicted - observed_sellable_days| on held-out QC samples"
+manager_acceptance: "share of suggested orders accepted unchanged (usability test, >= 5 people)"
+farmer_share: null   # source: OWNER — not defined in playbook. Candidates in docs/owner_questions.md Q16.
+
+baseline: {wape_pct: 23.6, bias_pct_orders_vs_sales: 9.0, wastage_pct: 8.2, stockout_pct: 9.1, gross_margin_pct: 34.7}   # brief §7; reproduced from data
+targets:  {wape_pct_max: 19, bias_pct_abs_max: 3, wastage_pct_max: 5.5, stockout_pct_max_hard: 9.1, stockout_pct_ideal: 7, gross_margin: higher_than_baseline, acceptance_min: 0.70}   # brief §7
+holdout: {start: 2026-08-06, end: 2026-09-30, days: 56}   # calendar.split

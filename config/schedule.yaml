@@ -1,0 +1,18 @@
+# Daily rhythm, local time (Asia/Kolkata). Sources: playbook §2, §6, §13; brief §2.
+version: 0.1.0-draft
+timezone: Asia/Kolkata
+evening_order_window: {start: "20:30", end: "21:30"}   # playbook §2
+dc_order_total_and_fpo_booking: "22:00"               # playbook §2
+mandi_purchase_window: {start: "04:00", end: "06:00"} # playbook §2
+dispatch_by: "06:30"                                  # playbook §2
+store_delivery_by: "07:00"                            # playbook §2
+transfer_approval_by: "09:00"                         # playbook §13
+transfer_van_cutoff: "11:00"                          # playbook §6
+leafy_greens_transfer_cutoff: "12:00"                 # playbook §6
+surplus_plan_confirm_by: "14:00"                      # playbook §13
+markdown_step2_from: "18:00"                          # playbook §5
+store_hours:                                          # stores sheet
+  Store: {open: "07:00", close: "22:00"}
+  Dark store: {open: "06:00", close: "24:00"}
+closing_record: null          # source: OWNER — time not stated (store close per format above)
+order_deadline_missed: null   # source: OWNER (open Q1)

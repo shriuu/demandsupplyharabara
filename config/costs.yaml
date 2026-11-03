@@ -1,0 +1,9 @@
+# Cost definitions for the order rule (CLAUDE.md §3). Owner-decided values are PLACEHOLDERS.
+version: 0.1.0-draft
+unit_cost_source: purchases.price_per_unit_inr   # weighted by quantity, per sku and date
+waste_cost: "unit cost of units expiring unsold, minus surplus-buyer recovery"
+lost_sale_margin_source: "selling_price - unit_cost"
+basket_allowance_per_lost_sale_inr: null   # PLACEHOLDER — owner Q5. Playbook §2/§12 says coriander/tomato stock-outs lose the basket, but gives no value.
+basket_allowance_skus_hint: [P01, P13]     # playbook §2, §12 name tomato and coriander
+waste_definition_includes: null            # PLACEHOLDER — owner Q4 (donated? discounted? surplus-sold?)
+cost_ratio_per_sku: derived                # tuned on train replay only, never on holdout

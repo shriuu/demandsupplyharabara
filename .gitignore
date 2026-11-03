@@ -1,0 +1,40 @@
+# Environments and caches
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# Data pack: belongs to the problem owner, never published from this repo (docs/adr/0004)
+source_readonly/
+work/
+outputs/
+*.xlsx
+*.parquet
+*.pkl
+*.csv
+
+# Secrets and local config
+.env
+.env.*
+*.pem
+*.key
+*.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+node_modules/
+
+# Third-party documents kept locally
+docs/*.pdf
