@@ -667,6 +667,8 @@ export interface components {
         SurplusPayload: {
             /** Buyer Id */
             buyer_id: string;
+            /** Buyer Name */
+            buyer_name?: string | null;
             /** Expected Recovery Inr */
             expected_recovery_inr: number;
             /**

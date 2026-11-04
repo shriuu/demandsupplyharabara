@@ -5,7 +5,12 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { RangeBar } from "../components/RangeBar";
 import { Empty, Loading, LoadError } from "../components/Status";
-import { productLabel, t } from "../i18n/strings";
+import { productLabel, t, unitOf } from "../i18n/strings";
+
+function dayLabel(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+}
 
 export function FarmerScreen() {
   const { state, reload } = useLoad(() => api.farmers(), []);
@@ -23,6 +28,7 @@ export function FarmerScreen() {
       <p className="notice">
         <Icon name="alert" /> {t("farmer.note")}
       </p>
+      <p className="small">{t("farmer.what")}</p>
       {[...bySku].map(([sku, rows]) => (
         <section key={sku} className="card">
           <div className="total-card">
@@ -33,9 +39,9 @@ export function FarmerScreen() {
           {rows.map((r) => (
             <div key={r.on} className="day-row">
               <span className="day">
-                <Icon name="calendar" size={20} /> {r.on}
+                <Icon name="calendar" size={20} /> {dayLabel(r.on)}
               </span>
-              <RangeBar range={r.volume} max={max} />
+              <RangeBar range={r.volume} max={max} unit={unitOf(sku)} />
             </div>
           ))}
         </section>

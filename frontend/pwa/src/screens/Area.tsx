@@ -7,14 +7,14 @@ import { useChatFocus } from "../components/chatContext";
 import { Gauge } from "../components/Gauge";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
-import { Empty, Loading, LoadError } from "../components/Status";
-import { productName, t } from "../i18n/strings";
+import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
+import { productName, storeLabel, t, unitOf } from "../i18n/strings";
 
 /** Waste, empty shelves and farmer share: always the same three gauges, side by side (G04). */
 export function Scoreboard({ card }: { card: Scorecard }) {
   return (
     <section className="card scoreboard" aria-label={t("area.scoreboard")} data-scope={card.scope}>
-      <h3>{card.scope}</h3>
+      <h3>{card.scope === "chain" ? t("area.chain") : storeLabel(card.scope)}</h3>
       <div className="gauges">
         <Gauge label="score.waste" icon="bag" value={card.waste_pct} goodWhen="low" />
         <Gauge label="score.stockout" icon="box" value={card.stockout_pct} goodWhen="low" />
@@ -30,16 +30,48 @@ export function Scoreboard({ card }: { card: Scorecard }) {
   );
 }
 
+/** How many cards to show before the rest: the queue is ordered by value, biggest first. */
+const SHORT_LIST = 8;
+
 function Scores() {
   const { state, reload } = useLoad(() => api.scorecard(), []);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
   if (!state.data.length) return <Empty />;
+  const chain = state.data.find((c) => c.scope === "chain") ?? (state.data.length === 1 ? state.data[0] : undefined);
+  const stores = state.data.filter((c) => c !== chain);
+  // Compared with the chain, so no fixed limit is needed here.
+  const gap = (c: Scorecard) =>
+    chain && c.waste_pct != null && chain.waste_pct != null && c.stockout_pct != null && chain.stockout_pct != null
+      ? c.waste_pct - chain.waste_pct + (c.stockout_pct - chain.stockout_pct)
+      : 0;
+  const ordered = [...stores].sort((a, b) => gap(b) - gap(a));
   return (
     <>
-      {state.data.map((c) => (
-        <Scoreboard key={c.scope} card={c} />
-      ))}
+      {chain && <Scoreboard card={chain} />}
+      <h3>{t("area.stores")}</h3>
+      <p className="small">{t("area.storesNote")}</p>
+      <ul className="stack">
+        {ordered.map((c) => {
+          const wasteWorse = !!chain && c.waste_pct != null && chain.waste_pct != null && c.waste_pct > chain.waste_pct;
+          const emptyWorse =
+            !!chain && c.stockout_pct != null && chain.stockout_pct != null && c.stockout_pct > chain.stockout_pct;
+          return (
+            <li key={c.scope} className="card" data-scope={c.scope}>
+              <h3>{storeLabel(c.scope)}</h3>
+              <TrafficLight light={wasteWorse && emptyWorse ? "red" : wasteWorse || emptyWorse ? "amber" : "green"} />
+              <p>
+                <Icon name="bag" size={22} /> {t("score.waste")}: {c.waste_pct == null ? t("score.unknown") : `${c.waste_pct.toFixed(1)}%`}
+                {" · "}
+                <Icon name="box" size={22} /> {t("score.stockout")}: {c.stockout_pct == null ? t("score.unknown") : `${c.stockout_pct.toFixed(1)}%`}
+              </p>
+              {wasteWorse && <p className="small">{t("area.worseWaste")}</p>}
+              {emptyWorse && <p className="small">{t("area.worseEmpty")}</p>}
+              {!wasteWorse && !emptyWorse && <p className="small">{t("area.fine")}</p>}
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }
@@ -62,7 +94,7 @@ function ApprovalCard({ s, onDone }: { s: Suggestion; onDone: () => void }) {
         <ProductIcon skuId={s.sku_id} size={72} />
         <div>
           <h3>
-            {productName(s.sku_id)} · {s.store_id}
+            {productName(s.sku_id)} · {storeLabel(s.store_id)}
           </h3>
           {!("to_store" in p) ? (
             <p>
@@ -70,7 +102,7 @@ function ApprovalCard({ s, onDone }: { s: Suggestion; onDone: () => void }) {
             </p>
           ) : (
             <p>
-              <Icon name="van" size={22} /> {t("alert.transferDetail", { units: p.units, store: p.to_store, time: p.leave_by })}
+              <Icon name="van" size={22} /> {t("alert.transferDetail", { units: `${Math.round(p.units)} ${unitOf(s.sku_id)}`, store: storeLabel(p.to_store), time: p.leave_by })}
             </p>
           )}
           <p className="small">{s.reason}</p>
@@ -83,17 +115,29 @@ function ApprovalCard({ s, onDone }: { s: Suggestion; onDone: () => void }) {
 }
 
 function Queue({ killed }: { killed: boolean }) {
+  const [all, setAll] = useState(false);
   const { state, reload } = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), String(killed));
   useChatFocus(state.status === "ready" ? (state.data[0]?.id ?? null) : null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
   if (!state.data.length) return <Empty />;
+  const worth = (s: Suggestion) =>
+    "expected_recovery_inr" in s.payload ? Number(s.payload.expected_recovery_inr) : 0;
+  const sorted = [...state.data].sort((a, b) => worth(b) - worth(a));
+  const shown = all ? sorted : sorted.slice(0, SHORT_LIST);
   return (
-    <ul className="stack">
-      {state.data.map((s) => (
-        <ApprovalCard key={s.id} s={s} onDone={reload} />
-      ))}
-    </ul>
+    <>
+      <ul className="stack">
+        {shown.map((s) => (
+          <ApprovalCard key={s.id} s={s} onDone={reload} />
+        ))}
+      </ul>
+      {!all && sorted.length > SHORT_LIST && (
+        <button className="btn btn-plain" onClick={() => setAll(true)}>
+          {t("area.showAll", { n: sorted.length })}
+        </button>
+      )}
+    </>
   );
 }
 
@@ -136,13 +180,14 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
   return (
     <div className="stack">
       <h2>
+        <Icon name="tick" /> {t("area.todo")}
+      </h2>
+      <p className="small">{t("area.todoNote")}</p>
+      <Queue killed={killed} />
+      <h2>
         <Icon name="chart" /> {t("area.scoreboard")}
       </h2>
       <Scores />
-      <h2>
-        <Icon name="tick" /> {t("area.queue")}
-      </h2>
-      <Queue killed={killed} />
       <KillSwitch killed={killed} onChange={onKilledChange} />
     </div>
   );
