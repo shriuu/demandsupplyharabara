@@ -84,3 +84,13 @@ decisions:
   # ASSUMED; the forecast evaluation used the same cut-off.
   major_festival_intensity: 0.8
 
+pipeline:
+  # Days of history behind the calibration of the forecast range, the scorecards and the
+  # farmer-group share. ASSUMED windows, one month each.
+  calibration_days: 28
+  scorecard_days: 28
+  farmer_share_days: 28
+  # Demo only: when the day the data ends is shown as "today", deadlines are kept at least this
+  # many hours ahead so suggestions are not already expired.
+  demo_keep_open_hours: 6
+

@@ -42,7 +42,7 @@ class ReplayParams:
     service_floor: float = 0.0
 
 
-def _warm_up(
+def warm_up(
     panel: pd.DataFrame, start: date, params: ReplayParams
 ) -> dict[tuple[str, str], StockState]:
     """Stock on every shelf at the start of the window, from the recorded deliveries."""
@@ -89,7 +89,7 @@ def replay(
     ``forecasts`` is indexed by (store_id, sku_id, target_date) with low, likely, high.
     ``fpo_share`` is indexed by (date, sku_id): the committed farmer-group share of the purchase.
     """
-    state = _warm_up(panel, start, params)
+    state = warm_up(panel, start, params)
     ranges = _forecast_map(forecasts)
     share = {
         (pd.Timestamp(r["date"]).date(), str(r["sku_id"])): float(r["fpo_share"])

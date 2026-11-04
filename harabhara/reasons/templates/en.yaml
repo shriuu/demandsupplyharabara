@@ -38,3 +38,7 @@ phrases:
   buyer_fits: "the buyer takes this product and can collect in time"
   below_cost_wait: "the price would be below cost, so the markdown waits until the evening"
   spot_first: "only spot buying is trimmed, never farmer volume"
+
+# Advice to the DC buying lead. Only spot (mandi) buying is ever trimmed, never farmer volume.
+trimming: "Managers ordered {managers} {unit} in total and stores need about {asks}; farmer groups are committed for {committed}, so buy up to {trim} {unit} less on the spot market"
+

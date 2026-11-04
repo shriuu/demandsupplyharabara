@@ -258,6 +258,13 @@ class DecisionParams(_Strict):
     major_festival_intensity: float = Field(gt=0, le=1)
 
 
+class PipelineParams(_Strict):
+    calibration_days: int = Field(ge=1)
+    scorecard_days: int = Field(ge=1)
+    farmer_share_days: int = Field(ge=1)
+    demo_keep_open_hours: float = Field(ge=0)
+
+
 class Modeling(_Strict):
     version: str
     hidden_demand: HiddenDemandParams
@@ -265,6 +272,7 @@ class Modeling(_Strict):
     shelf_life: ShelfLifeParams
     demand: DemandParams
     decisions: DecisionParams
+    pipeline: PipelineParams
 
 
 # ---- feeds.yaml -----------------------------------------------------------------------------
