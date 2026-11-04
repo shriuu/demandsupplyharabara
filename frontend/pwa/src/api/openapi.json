@@ -1039,6 +1039,17 @@
             "title": "Buyer Id",
             "type": "string"
           },
+          "buyer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buyer Name"
+          },
           "expected_recovery_inr": {
             "minimum": 0.0,
             "title": "Expected Recovery Inr",

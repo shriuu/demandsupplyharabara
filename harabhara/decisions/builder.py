@@ -401,6 +401,7 @@ def build_morning(
                     series=series,
                     payload=SurplusPayload(
                         buyer_id=match.buyer_id,
+                        buyer_name=names.buyers.get(match.buyer_id),
                         units=match.units,
                         grade=SURPLUS_GRADE,
                         pickup_window=match.window,

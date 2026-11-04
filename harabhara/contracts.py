@@ -110,6 +110,7 @@ class SurplusPayload(_Frozen):
     expected_recovery_inr: float = Field(ge=0)
     # What the buyer pays as a share of the shelf price, and the result against purchase cost
     # (negative = below cost, still better than binning). None when not known.
+    buyer_name: str | None = None
     price_share_of_retail: float | None = Field(default=None, ge=0, le=1)
     profit_vs_cost_inr: float | None = None
 

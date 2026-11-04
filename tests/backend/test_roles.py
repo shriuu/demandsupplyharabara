@@ -104,6 +104,18 @@ def test_dc_totals_sum_the_ranges_across_stores(env: Env) -> None:
     assert body["trimming"] == []  # nothing stored, nothing invented
 
 
+def test_dc_totals_default_to_tomorrow_when_only_the_evening_forecast_exists(env: Env) -> None:
+    from datetime import timedelta
+
+    tomorrow = TODAY + timedelta(days=1)
+    env.storage.put_forecasts([make_forecast("S1", on=tomorrow), make_forecast("S2", on=tomorrow)])
+    body = env.client.get(f"{V1}/dc/totals", headers=env.login("4444")).json()
+    assert body["on"] == tomorrow.isoformat()
+    assert body["totals"][0]["stores"] == 2
+    asked = env.client.get(f"{V1}/dc/totals?date={TODAY.isoformat()}", headers=env.login("4444"))
+    assert asked.json()["totals"] == []  # an explicit date is never moved
+
+
 def test_dc_totals_show_the_stored_trimming_for_that_date_only(env: Env) -> None:
     from datetime import timedelta
 

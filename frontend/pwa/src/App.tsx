@@ -73,6 +73,7 @@ export function App() {
           </span>
         )}
       </header>
+      {role && <p className="notice job">{t(`job.${role}`)}</p>}
       {killed && (
         <p className="notice notice-error" role="status">
           <Icon name="stop" /> {t("app.killed")}

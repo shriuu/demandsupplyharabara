@@ -7,7 +7,7 @@ import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError } from "../components/Status";
-import { productName, t } from "../i18n/strings";
+import { productName, storeLabel, t, unitOf } from "../i18n/strings";
 
 function SurplusCard({ suggestion, onDone }: { suggestion: Suggestion; onDone: () => void }) {
   const p = suggestion.payload as SurplusPayload;
@@ -29,16 +29,31 @@ function SurplusCard({ suggestion, onDone }: { suggestion: Suggestion; onDone: (
         </span>
         <ProductIcon skuId={suggestion.sku_id} size={72} />
         <div>
-          <h3>{productName(suggestion.sku_id)}</h3>
+          <h3>
+            {t("surplus.give", { units: Math.round(p.units), unit: unitOf(suggestion.sku_id), product: productName(suggestion.sku_id) })}
+          </h3>
           <p>
-            <Icon name="bag" size={22} /> {p.units} · {t("surplus.grade", { grade: p.grade })}
+            <Icon name="bag" size={22} /> {t("surplus.to", { buyer: p.buyer_name ?? p.buyer_id })}
+          </p>
+          <p>
+            <Icon name="home" size={22} /> {t("surplus.from", { store: storeLabel(suggestion.store_id) })}
           </p>
           <p>
             <Icon name="clock" size={22} /> {t("surplus.pickup", { window: p.pickup_window })}
           </p>
-          <p className="small">
-            <Icon name="coin" size={18} /> {t("surplus.recovery", { inr: p.expected_recovery_inr })}
+          <p>
+            <Icon name="coin" size={22} /> {t("surplus.youGet", { inr: Math.round(p.expected_recovery_inr) })}
           </p>
+          {p.price_share_of_retail != null && (
+            <p className="small">{t("surplus.share", { pct: Math.round(p.price_share_of_retail * 100) })}</p>
+          )}
+          {p.profit_vs_cost_inr != null && (
+            <p className="small">
+              {p.profit_vs_cost_inr < 0
+                ? t("surplus.vsCostBelow", { n: Math.round(-p.profit_vs_cost_inr) })
+                : t("surplus.vsCostAbove", { n: Math.round(p.profit_vs_cost_inr) })}
+            </p>
+          )}
         </div>
       </div>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}

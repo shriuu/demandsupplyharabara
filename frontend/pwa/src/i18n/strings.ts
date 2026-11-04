@@ -72,7 +72,6 @@ export const en = {
   "surplus.buyer": "Buyer {id}",
   "surplus.grade": "Grade {grade}",
   "surplus.pickup": "Pickup {window}",
-  "surplus.recovery": "About ₹{inr}",
   "area.queue": "To approve",
   "area.scoreboard": "Scoreboard",
   "score.waste": "Wasted",
@@ -85,7 +84,7 @@ export const en = {
   "dc.prices": "Mandi prices",
   "dc.trim": "Buy less on the spot market",
   "dc.trimNote": "A suggestion only. Farmer group volumes are not touched.",
-  "dc.trimUnits": "Buy {n} less at the mandi",
+  "dc.trimUnits": "Buy {n} {unit} less at the mandi",
   "price.modal": "₹{n} per kg",
   "price.band": "₹{min} to ₹{max}",
   "price.unavailable": "Price unavailable",
@@ -95,7 +94,33 @@ export const en = {
   "farmer.title": "Expected volumes",
   "farmer.estimate": "Estimate",
   "farmer.note": "An estimate for information. Not a promise to buy.",
-  "range.band": "{low} to {high}",
+  "range.likely": "About {n} {unit}",
+  "range.band": "Could be {low} to {high} {unit}",
+  "farmer.what": "How much of each product the stores are expected to sell, so how much may be needed from farmer groups. Per day.",
+  "dc.forDay": "Buying for {date}",
+  "dc.totalsNote": "All stores together. The bar shows the usual range; the number is the most likely.",
+  "dc.noPrices": "No price feed is connected yet, so no mandi prices are shown. Prices are never guessed.",
+  "dc.noTrim": "No spot buying to cut today.",
+  "area.todo": "Decide these",
+  "area.todoNote": "Big markdowns and store moves need your tick or cross. Biggest first.",
+  "area.chain": "All stores together",
+  "area.stores": "How each store is doing",
+  "area.storesNote": "Stores worse than the chain are listed first.",
+  "area.showAll": "Show all {n}",
+  "area.worseWaste": "More waste than the chain: check the markdowns",
+  "area.worseEmpty": "More empty shelves than the chain: check the stock moves",
+  "area.fine": "Not worse than the chain",
+  "surplus.give": "Give {units} {unit} of {product}",
+  "surplus.to": "to {buyer}",
+  "surplus.from": "From the {store} store",
+  "surplus.share": "Pays {pct}% of the shelf price",
+  "surplus.vsCostBelow": "₹{n} below what it cost us, but better than throwing it away",
+  "surplus.vsCostAbove": "₹{n} above what it cost us",
+  "surplus.youGet": "You get about ₹{inr}",
+  "job.store_manager": "Your job: tick or cross tonight's orders, tomorrow morning's alerts and the surplus pickups.",
+  "job.area_manager": "Your job: approve big markdowns and store moves, and watch which stores are doing worse.",
+  "job.dc_lead": "Your job: plan tomorrow's buying from the store totals, and decide on the spot-buying cuts suggested.",
+  "job.farmer_coordinator": "Your job: share these expected volumes with the farmer groups. They are estimates, not orders.",
   "chat.open": "Ask",
   "chat.title": "Ask about this suggestion",
   "chat.placeholder": "Type your question",
@@ -170,4 +195,29 @@ export function productName(skuId: string): string {
 export function productLabel(skuId: string): string {
   const name = productName(skuId);
   return name === skuId ? skuId : `${name} · ${skuId}`;
+}
+
+/** Selling unit per product, from the product list. Unknown products show no unit. */
+export const productUnits: Record<string, string> = {
+  P01: "kg", P02: "kg", P03: "kg", P04: "dozen", P05: "kg", P06: "kg", P07: "kg", P08: "kg",
+  P09: "kg", P10: "kg", P11: "kg", P12: "piece", P13: "bunch", P14: "bunch", P15: "bunch",
+  P16: "bunch", P17: "pack", P18: "pack", P19: "kg", P20: "kg", P21: "piece", P22: "kg",
+  P23: "kg", P24: "kg", P25: "pack",
+};
+
+export function unitOf(skuId: string): string {
+  return productUnits[skuId.toUpperCase()] ?? "";
+}
+
+/** Where each store is, so a manager reads a place and not a code. */
+export const storeLocalities: Record<string, string> = {
+  S01: "Jayanagar", S02: "Indiranagar", S03: "Koramangala", S04: "HSR Layout",
+  S05: "Whitefield", S06: "Malleshwaram", S07: "Banashankari", S08: "Yelahanka",
+  D01: "Bellandur", D02: "Electronic City", D03: "Hebbal", D04: "Marathahalli",
+};
+
+export function storeLabel(storeId: string): string {
+  const place = storeLocalities[storeId];
+  if (!place) return storeId;
+  return storeId.startsWith("D") ? `${place} dark store (${storeId})` : `${place} (${storeId})`;
 }

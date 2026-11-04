@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from harabhara.api import ports
 from harabhara.api.schemas import (
@@ -211,6 +211,11 @@ class Service:
         self.require_role(user, "dc_lead")
         day = on or self.now().date()
         served = self.forecasts(user, None, None, day)
+        if on is None and not served.items and not served.stale:
+            # Buying is for tomorrow: the evening run forecasts from the next day on
+            tomorrow = self.forecasts(user, None, None, day + timedelta(days=1))
+            if tomorrow.items:
+                day, served = day + timedelta(days=1), tomorrow
         by_sku: dict[str, list[Forecast]] = {}
         for f in served.items:
             by_sku.setdefault(f.sku_id, []).append(f)

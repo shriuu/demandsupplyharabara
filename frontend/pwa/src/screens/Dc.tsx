@@ -5,7 +5,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { RangeBar } from "../components/RangeBar";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
-import { productName, t } from "../i18n/strings";
+import { productName, t, unitOf } from "../i18n/strings";
 
 /** Never shows a number for an unavailable price (guardrails 11, 12). */
 export function PriceCard({ quote }: { quote: PriceQuote }) {
@@ -48,6 +48,11 @@ export function DcScreen() {
       <h2>
         <Icon name="box" /> {t("dc.totals")}
       </h2>
+      {totals.state.status === "ready" && (
+        <p className="small">
+          <Icon name="calendar" size={18} /> {t("dc.forDay", { date: totals.state.data.on })} · {t("dc.totalsNote")}
+        </p>
+      )}
       {totals.state.status === "ready" && totals.state.data.stale && (
         <p className="notice notice-error" role="status">
           <Icon name="clock" /> {t("app.stale")}
@@ -65,7 +70,7 @@ export function DcScreen() {
                   <ProductIcon skuId={row.sku_id} size={64} />
                   <div className="grow">
                     <h3>{productName(row.sku_id)}</h3>
-                    <RangeBar range={row.demand} max={max} />
+                    <RangeBar range={row.demand} max={max} unit={unitOf(row.sku_id)} />
                   </div>
                 </li>
               ))}
@@ -78,6 +83,11 @@ export function DcScreen() {
       </h2>
       {prices.state.status === "loading" && <Loading />}
       {prices.state.status === "error" && <LoadError onRetry={prices.reload} />}
+      {prices.state.status === "ready" && !prices.state.data.length && (
+        <p className="notice" role="status">
+          <Icon name="alert" /> {t("dc.noPrices")}
+        </p>
+      )}
       {prices.state.status === "ready" && (
         <ul className="stack">
           {prices.state.data.map((q) => (
@@ -99,7 +109,7 @@ export function DcScreen() {
                 <div>
                   <h3>{productName(tr.sku_id)}</h3>
                   <p>
-                    <Icon name="minus" size={22} /> {t("dc.trimUnits", { n: tr.spot_units_to_trim })}
+                    <Icon name="minus" size={22} /> {t("dc.trimUnits", { n: Math.round(tr.spot_units_to_trim), unit: unitOf(tr.sku_id) })}
                   </p>
                   <p className="small">{tr.reason}</p>
                 </div>

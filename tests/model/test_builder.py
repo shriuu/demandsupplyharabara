@@ -265,6 +265,7 @@ def test_what_a_markdown_will_not_sell_is_offered_to_a_buyer() -> None:
     assert "Prime Pickle" in offers[0].reason
     payload = offers[0].payload
     assert payload.price_share_of_retail == 0.35  # type: ignore[union-attr]
+    assert payload.buyer_name == "Prime Pickle"  # type: ignore[union-attr]
     assert "35% of the shelf price" in offers[0].reason
     cost = payload.units * _store("S01", [], DEMAND).series.unit_cost  # type: ignore[union-attr]
     assert payload.profit_vs_cost_inr == pytest.approx(  # type: ignore[union-attr]
