@@ -32,7 +32,7 @@ markdown:                           # playbook §5
   floor_basis_before_step_2: purchase_cost   # "never below purchase cost before 6 pm"
   approver_default: store_manager
   area_manager_approval_if_share_of_days_delivery_above: 0.30
-  earlier_start_allowed: null       # source: OWNER (open Q8). Playbook says it is wanted; not yet a rule.
+  earlier_start_allowed: true       # source: OWNER answer to Q8 (4 Nov 2026): a day-early start is allowed, using only the existing promotion step, with approval
   promo_pct_in_data: 15             # sales README: promo_flag = 15% promotion (existing; we do not create new prices)
 
 transfer:                           # playbook §6, brief T7

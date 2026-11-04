@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Projections */
+        get: operations["projections_api_v1_projections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/scorecard": {
         parameters: {
             query?: never;
@@ -518,6 +535,52 @@ export interface components {
             stores: number;
         };
         /**
+         * Projection
+         * @description Where stock, shelf life and demand lead over the next three days for one store-product.
+         */
+        Projection: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Assumptions
+             * @description e.g. 'lot ages inferred first-in first-out'
+             */
+            assumptions?: string[];
+            /** Config Digest */
+            config_digest: string;
+            /** Data Snapshot Id */
+            data_snapshot_id: string;
+            /** Days */
+            days: components["schemas"]["ProjectionDay"][];
+            /** Model Version */
+            model_version: string;
+            /** Sku Id */
+            sku_id: string;
+            /** Store Id */
+            store_id: string;
+        };
+        /**
+         * ProjectionDay
+         * @description One day of the stock roll-forward. Every figure is a range over low/likely/high demand.
+         */
+        ProjectionDay: {
+            closing_stock: components["schemas"]["Range"];
+            /** Day */
+            day: number;
+            demand: components["schemas"]["Range"];
+            expected_waste: components["schemas"]["Range"];
+            lost_sales: components["schemas"]["Range"];
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            sold: components["schemas"]["Range"];
+        };
+        /**
          * Range
          * @description A forecast is always a range; screens may show ``likely`` only.
          */
@@ -618,6 +681,10 @@ export interface components {
             kind: "surplus";
             /** Pickup Window */
             pickup_window: string;
+            /** Price Share Of Retail */
+            price_share_of_retail?: number | null;
+            /** Profit Vs Cost Inr */
+            profit_vs_cost_inr?: number | null;
             /** Units */
             units: number;
         };
@@ -950,6 +1017,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PriceQuote"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projections_api_v1_projections_get: {
+        parameters: {
+            query?: {
+                store_id?: string | null;
+                sku_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Projection"][];
                 };
             };
             /** @description Validation Error */

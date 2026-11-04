@@ -68,3 +68,23 @@ def test_a_day_early_markdown_is_flagged_and_needs_enough_expected_waste() -> No
     assert early[0].earlier_than_last_day
     assert early[0].units == 20.0
     assert _plan(last_day_units=0.0, second_day_units=40.0, expected_unsold_second_day=5.0) == []
+
+
+def test_a_day_early_markdown_uses_the_existing_promotion_step_not_the_deeper_cut() -> None:
+    (early,) = _plan(last_day_units=0.0, second_day_units=40.0, expected_unsold_second_day=20.0)
+    assert early.step_pct == RULES.promo_pct_in_data
+    assert early.step_pct < RULES.step_1_pct
+    assert early.price_after == pytest.approx(40 * (1 - RULES.promo_pct_in_data / 100))
+
+
+def test_a_day_early_markdown_still_respects_the_cost_floor() -> None:
+    assert (
+        _plan(
+            last_day_units=0.0,
+            second_day_units=40.0,
+            expected_unsold_second_day=20.0,
+            price=40.0,
+            unit_cost=36.0,  # 15% off is 34, below cost
+        )
+        == []
+    )

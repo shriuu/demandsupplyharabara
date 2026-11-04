@@ -84,6 +84,20 @@ def _opener(payload: Payload, store_id: str, names: Names, templates: Mapping[st
             )
         )
     if isinstance(payload, SurplusPayload):
+        if payload.price_share_of_retail is not None and payload.profit_vs_cost_inr is not None:
+            gain = payload.profit_vs_cost_inr
+            return str(
+                openers["surplus_priced"].format(
+                    units=_n(payload.units),
+                    product=names.product,
+                    unit=names.unit,
+                    buyer=names.buyers.get(payload.buyer_id, payload.buyer_id),
+                    window=payload.pickup_window,
+                    share=_n(payload.price_share_of_retail * 100),
+                    amount=_n(abs(gain)),
+                    versus=templates["versus"]["above" if gain >= 0 else "below"],
+                )
+            )
         return str(
             openers["surplus"].format(
                 units=_n(payload.units),

@@ -32,7 +32,7 @@ from harabhara.decisions.transfer import plan_transfers
 from harabhara.reasons.writer import Names, NoReasonError, write_reason
 from harabhara.rules.guardrails import Facts
 from harabhara.settings.schema import AppConfig
-from harabhara.state.projection import Lot, project
+from harabhara.state.projection import Lot, expected_value, project
 
 SURPLUS_GRADE = "B"  # lot grades are not in the sales data; B is assumed and flagged in the docs
 
@@ -254,9 +254,9 @@ def build_morning(
             config_digest=prov.config_digest,
         )
         today, tomorrow = projection.days[0], projection.days[1]
-        unsold[st.series.store_id] = today.expected_waste.likely
-        short[st.series.store_id] = today.lost_sales.likely
-        second_day[st.series.store_id] = tomorrow.expected_waste.likely
+        unsold[st.series.store_id] = expected_value(today.expected_waste)
+        short[st.series.store_id] = expected_value(today.lost_sales)
+        second_day[st.series.store_id] = expected_value(tomorrow.expected_waste)
 
     out: list[tuple[Suggestion, Facts]] = []
     by_id = {st.series.store_id: st for st in stores}
@@ -347,7 +347,10 @@ def build_morning(
             if st.thin_history:
                 drivers.insert(0, _driver("rule", "none", "thin_history"))
             suggestion = _suggest(
-                kind_id=f"markdown:{sid}:{series.sku_id}:{as_of}:{p.step_pct:g}:{p.start}",
+                kind_id=(
+                    f"markdown:{sid}:{series.sku_id}:{as_of}:{p.step_pct:g}:{p.start}"
+                    f"{':early' if p.earlier_than_last_day else ''}"
+                ),
                 series=series,
                 payload=MarkdownPayload(
                     units=p.units,
@@ -402,6 +405,9 @@ def build_morning(
                         grade=SURPLUS_GRADE,
                         pickup_window=match.window,
                         expected_recovery_inr=match.expected_recovery_inr,
+                        price_share_of_retail=match.price_share,
+                        profit_vs_cost_inr=match.expected_recovery_inr
+                        - match.units * series.unit_cost,
                     ),
                     drivers=[
                         _driver("rule", "none", "surplus_expected"),

@@ -5,7 +5,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { RangeBar } from "../components/RangeBar";
 import { Empty, Loading, LoadError } from "../components/Status";
-import { productName, t } from "../i18n/strings";
+import { productLabel, t } from "../i18n/strings";
 
 export function FarmerScreen() {
   const { state, reload } = useLoad(() => api.farmers(), []);
@@ -27,7 +27,7 @@ export function FarmerScreen() {
         <section key={sku} className="card">
           <div className="total-card">
             <ProductIcon skuId={sku} size={64} />
-            <h3>{productName(sku)}</h3>
+            <h3>{productLabel(sku)}</h3>
             <span className="badge">{t("farmer.estimate")}</span>
           </div>
           {rows.map((r) => (

@@ -108,6 +108,10 @@ class SurplusPayload(_Frozen):
     grade: Literal["A", "B", "C"]
     pickup_window: str
     expected_recovery_inr: float = Field(ge=0)
+    # What the buyer pays as a share of the shelf price, and the result against purchase cost
+    # (negative = below cost, still better than binning). None when not known.
+    price_share_of_retail: float | None = Field(default=None, ge=0, le=1)
+    profit_vs_cost_inr: float | None = None
 
 
 Payload = Annotated[

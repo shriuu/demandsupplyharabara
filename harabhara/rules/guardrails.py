@@ -127,6 +127,10 @@ def check_markdown(s: Suggestion, facts: Facts, cfg: AppConfig) -> list[Violatio
     found: list[Violation] = []
     second_hour = rules.step_2_after_hour * 60
     allowed_steps = {rules.step_1_pct, rules.step_2_pct}
+    if payload.earlier_than_last_day:
+        if not rules.earlier_start_allowed:
+            found.append(Violation("PB07", "a day-early markdown is not allowed by the owner"))
+        allowed_steps = {rules.promo_pct_in_data}  # a day early uses only the existing promotion
     if payload.step_pct not in allowed_steps:
         found.append(Violation("PB07", f"{payload.step_pct}% is not one of the playbook steps"))
     starts = _minutes(payload.start)

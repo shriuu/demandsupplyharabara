@@ -135,8 +135,39 @@ export const productNames: Record<string, string> = {
   BANANA: "Banana",
   ONION: "Onion",
   MANGO: "Mango",
+  P01: "Tomato",
+  P02: "Onion",
+  P03: "Potato",
+  P04: "Banana (Robusta)",
+  P05: "Banana (Yelakki)",
+  P06: "Apple (Shimla)",
+  P07: "Mango (Alphonso)",
+  P08: "Papaya",
+  P09: "Pomegranate",
+  P10: "Grapes (green)",
+  P11: "Watermelon",
+  P12: "Tender coconut",
+  P13: "Coriander",
+  P14: "Spinach (palak)",
+  P15: "Methi",
+  P16: "Curry leaves",
+  P17: "Green chilli (250 g)",
+  P18: "Ginger (250 g)",
+  P19: "Carrot (Ooty)",
+  P20: "Beans",
+  P21: "Cauliflower",
+  P22: "Cabbage",
+  P23: "Capsicum (green)",
+  P24: "Lady finger (bhindi)",
+  P25: "Lemon (pack of 6)",
 };
 
 export function productName(skuId: string): string {
   return productNames[skuId.toUpperCase()] ?? skuId;
+}
+
+/** Name with its id beside it ("Tomato · P01"), for sheets that people cross-check against ids. */
+export function productLabel(skuId: string): string {
+  const name = productName(skuId);
+  return name === skuId ? skuId : `${name} · ${skuId}`;
 }
