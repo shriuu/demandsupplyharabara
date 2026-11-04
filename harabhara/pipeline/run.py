@@ -52,6 +52,7 @@ from harabhara.rules.engine import Blocked, RulesEngine
 from harabhara.rules.guardrails import Facts
 from harabhara.settings import load_config
 from harabhara.sim.replay import ReplayParams, warm_up
+from harabhara.sim.scorecard import together
 from harabhara.state.projection import Lot, project
 
 
@@ -143,7 +144,7 @@ def scorecards(pack: PackData, upto: date, share: dict[str, float]) -> list[Scor
     )
 
     def card(scope: str, frame: pd.DataFrame) -> Scorecard:
-        return Scorecard(
+        return together(
             scope=scope,
             period_start=start,
             period_end=upto,

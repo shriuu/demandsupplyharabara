@@ -227,6 +227,13 @@ class Scorecard(_Frozen):
     farmer_share: float | None
     farmer_share_definition: str | None = None
 
+    @model_validator(mode="after")
+    def _farmer_share_is_explained(self) -> Scorecard:
+        if self.farmer_share is None and not self.farmer_share_definition:
+            msg = "an unknown farmer share must say why it is unknown"
+            raise ValueError(msg)
+        return self
+
 
 # ---- three-day projection ------------------------------------------------------------------
 
