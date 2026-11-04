@@ -6,12 +6,13 @@ disagree, this file and the evidence it points to win. Update it at the end of e
 ## UPDATE 4 Nov, deadline moved to 6 Nov (this section wins over everything below)
 | Day | Work | Done when |
 |---|---|---|
-| **4 Nov** | Guardrail 4 module and test; matrix repointed to real tests; T04 scenario test; T03/T05 findings written; holdout script with a dry run | PR merged; `docs/scenarios_dev.md`; dry run output reviewed |
-| **5 Nov** | Feature freeze in the morning. Holdout read ONCE (`scripts/holdout_run.py --holdout`): T01, T03, T10 into `docs/final_results.md`. Business case, pilot plan, handover guide | `final_results.md` committed; lock file present |
+| **4 Nov (done)** | Guardrail 4 module and test; matrix repointed to real tests; T04 scenario test; T03/T05 findings written; holdout script with a dry run | PR merged; `docs/scenarios_dev.md`; dry run output reviewed |
+| **5 Nov (done 4 Nov)** | Feature freeze in the morning. Holdout read ONCE (`scripts/holdout_run.py --holdout`): T01, T03, T10 into `docs/final_results.md`. Business case, pilot plan, handover guide | `final_results.md` committed; lock file present |
 | **6 Nov** | Go-live check on the live site as each role; handover walkthrough; ownership transfer | Live checks pass; new owner has the guide and the billing steps |
 
 Done since 3 Nov: guardrail engine, reason writer, alerts, farmer forecast, pipeline, demo day loaded,
 markdown ladder (owner Q8 yes), screens made clearer, driver ablation, this update.
+Holdout read once on 4 Nov (`docs/final_results.md`); business case and pilot plan: `docs/business_case_and_pilot.md`; handover guide: `docs/handover.md`.
 Still open: owner questions (lost-sale value, waste definition, deadline miss, farmer share definition),
 chat assistant never called OpenAI, no mandi price feed, transfer distance not enforceable.
 Cut for the new deadline (written for the next owner instead): voice, translations, offline mode, usability test,
