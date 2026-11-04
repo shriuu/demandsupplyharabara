@@ -17,6 +17,7 @@ from harabhara.api.schemas import (
     HealthResponse,
     KillSwitchResponse,
     ProductTotal,
+    TrimmingHint,
 )
 from harabhara.api.settings import User
 from harabhara.api.storage import AlreadyExistsError, Storage
@@ -26,6 +27,7 @@ from harabhara.contracts import (
     FarmerVolumeForecast,
     Forecast,
     PriceQuote,
+    Projection,
     Range,
     Role,
     Scorecard,
@@ -231,9 +233,33 @@ class Service:
                     config_digest=first.config_digest,
                 )
             )
-        # Spot-first trimming needs the decision layer's output; none is stored yet, so none
-        # is shown. Never guess (guardrail 12); confirmed farmer volume is never touched (G03).
-        return DcTotals(on=day, totals=totals, trimming=[], stale=served.stale)
+        # Trimming is advice about spot (mandi) buying only, never confirmed farmer volume (G03).
+        # It is a suggestion, so the kill switch hides it; if it can't be read, show none.
+        trimming: list[TrimmingHint] = []
+        stale = served.stale
+        if not self._killed():
+            stored = fallback.attempt(lambda: self.storage.list_trimming(day))
+            stale = stale or stored.stale
+            trimming = [
+                TrimmingHint(
+                    sku_id=t.sku_id, spot_units_to_trim=t.spot_units_to_trim, reason=t.reason
+                )
+                for t in stored.items
+            ]
+        return DcTotals(on=day, totals=totals, trimming=trimming, stale=stale)
+
+    def projections(
+        self, user: User, store_id: str | None, sku_id: str | None
+    ) -> Served[Projection]:
+        self.require_role(user, "store_manager", "area_manager", "dc_lead")
+        if user.role == "store_manager":
+            if store_id not in (None, user.store_id):
+                raise ApiError(403, "a store manager sees only their own store")
+            store_id = user.store_id
+        served = fallback.attempt(lambda: self.storage.list_projections(store_id, sku_id))
+        if served.stale:
+            return served
+        return fallback.fresh_projections(served.items, self.now().date())
 
     # ---- prices, farmers, scorecard, audit -----------------------------------------------
 

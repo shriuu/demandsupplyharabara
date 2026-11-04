@@ -15,9 +15,11 @@ from harabhara.contracts import (
     FarmerVolumeForecast,
     Forecast,
     PriceQuote,
+    Projection,
     Scorecard,
     Suggestion,
     SuggestionState,
+    TrimmingSuggestion,
 )
 
 
@@ -60,6 +62,16 @@ class Storage(Protocol):
     def put_scorecards(self, rows: list[Scorecard]) -> None: ...
     def list_scorecards(self, scope: str | None = None) -> list[Scorecard]: ...
 
+    def put_trimming(self, rows: list[TrimmingSuggestion]) -> None:
+        """Replace-write by date: advice for a date in ``rows`` replaces all stored for it."""
+        ...
+
+    def list_trimming(self, on: date | None = None) -> list[TrimmingSuggestion]: ...
+    def put_projections(self, rows: list[Projection]) -> None: ...
+    def list_projections(
+        self, store_id: str | None = None, sku_id: str | None = None
+    ) -> list[Projection]: ...
+
     # control
     def kill_switch_on(self) -> bool: ...
     def set_kill_switch(self, on: bool) -> None: ...
@@ -75,6 +87,14 @@ def price_key(q: PriceQuote) -> str:
 
 def farmer_key(r: FarmerVolumeForecast) -> str:
     return f"{r.fpo_id}|{r.sku_id}|{r.on.isoformat()}"
+
+
+def trimming_key(t: TrimmingSuggestion) -> str:
+    return f"{t.on.isoformat()}|{t.sku_id}"
+
+
+def projection_key(p: Projection) -> str:
+    return f"{p.store_id}|{p.sku_id}|{p.as_of.isoformat()}"
 
 
 def scorecard_key(s: Scorecard) -> str:
@@ -93,6 +113,8 @@ class InMemoryStorage:
         self._prices: dict[str, PriceQuote] = {}
         self._farmers: dict[str, FarmerVolumeForecast] = {}
         self._scorecards: dict[str, Scorecard] = {}
+        self._trimming: dict[str, TrimmingSuggestion] = {}
+        self._projections: dict[str, Projection] = {}
         self._kill = False
 
     def get_suggestion(self, suggestion_id: str) -> Suggestion | None:
@@ -171,6 +193,30 @@ class InMemoryStorage:
 
     def list_scorecards(self, scope: str | None = None) -> list[Scorecard]:
         return [s for s in self._scorecards.values() if scope in (None, s.scope)]
+
+    def put_trimming(self, rows: list[TrimmingSuggestion]) -> None:
+        dates = {r.on for r in rows}
+        for key in [k for k, v in self._trimming.items() if v.on in dates]:
+            del self._trimming[key]
+        for r in rows:
+            self._trimming[trimming_key(r)] = r
+
+    def list_trimming(self, on: date | None = None) -> list[TrimmingSuggestion]:
+        rows = [t for t in self._trimming.values() if on in (None, t.on)]
+        return sorted(rows, key=lambda t: (t.on, t.sku_id))
+
+    def put_projections(self, rows: list[Projection]) -> None:
+        for p in rows:
+            self._projections[projection_key(p)] = p
+
+    def list_projections(
+        self, store_id: str | None = None, sku_id: str | None = None
+    ) -> list[Projection]:
+        return [
+            p
+            for p in self._projections.values()
+            if store_id in (None, p.store_id) and sku_id in (None, p.sku_id)
+        ]
 
     def kill_switch_on(self) -> bool:
         return self._kill

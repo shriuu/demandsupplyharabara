@@ -19,8 +19,10 @@ from tests.backend.conftest import (
     Env,
     decision_body,
     make_forecast,
+    make_projection,
     make_quote,
     make_suggestion,
+    make_trimming,
 )
 
 V1 = "/api/v1"
@@ -34,6 +36,7 @@ class BrokenStorage(InMemoryStorage):
         raise ConnectionError("firestore unreachable")
 
     list_suggestions = get_suggestion = list_forecasts = list_prices = _boom  # type: ignore[assignment]
+    list_projections = list_trimming = _boom  # type: ignore[assignment]
     list_audit = list_scorecards = list_farmer_forecasts = kill_switch_on = _boom  # type: ignore[assignment]
     transition = create_approval = append_audit = _boom  # type: ignore[assignment]
 
@@ -166,3 +169,45 @@ def test_sign_in_not_configured_is_a_clear_503_not_open_access() -> None:
     assert client.post(f"{V1}/auth/login", json={"pin": "1111"}).status_code == 503
     assert client.get(f"{V1}/suggestions", headers={"Authorization": "Bearer x"}).status_code == 503
     assert client.get(f"{V1}/health").status_code == 200
+
+
+def test_storage_down_projections_are_empty_and_stale() -> None:
+    client, headers = broken_client()
+    r = client.get(f"{V1}/projections", headers=headers)
+    assert (r.status_code, r.json(), r.headers[STALE]) == (200, [], "true")
+
+
+def test_projections_that_are_wholly_in_the_past_are_dropped_and_marked_stale(env: Env) -> None:
+    old = make_projection(as_of=TODAY - timedelta(days=10))
+    env.storage.put_projections([old, make_projection("S1", "onion")])
+    r = env.client.get(f"{V1}/projections", headers=env.login("1111"))
+    assert [p["sku_id"] for p in r.json()] == ["onion"]
+    assert r.headers[STALE] == "true"
+    fresh = env.client.get(f"{V1}/projections?sku_id=onion", headers=env.login("1111"))
+    assert fresh.headers[STALE] == "false"
+
+
+def test_storage_down_dc_totals_show_no_trimming_and_say_stale() -> None:
+    client = TestClient(
+        create_app(
+            cast(Storage, BrokenStorage()),
+            ApiSettings(signing_key="k", pins=PINS),
+            clock=Clock(),
+        )
+    )
+    token = client.post(f"{V1}/auth/login", json={"pin": "4444"}).json()["token"]
+    body = client.get(f"{V1}/dc/totals", headers={"Authorization": f"Bearer {token}"}).json()
+    assert (body["totals"], body["trimming"], body["stale"]) == ([], [], True)
+
+
+def test_a_trimming_read_failure_alone_hides_trimming_and_marks_stale(env: Env) -> None:
+    env.storage.put_forecasts([make_forecast()])
+    env.storage.put_trimming([make_trimming()])
+
+    def boom(*_: object) -> list[object]:
+        raise ConnectionError
+
+    env.storage.list_trimming = boom  # type: ignore[method-assign,assignment]
+    body = env.client.get(f"{V1}/dc/totals", headers=env.login("4444")).json()
+    assert len(body["totals"]) == 1  # the rest still shows
+    assert (body["trimming"], body["stale"]) == ([], True)

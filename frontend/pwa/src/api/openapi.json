@@ -724,6 +724,108 @@
         "title": "ProductTotal",
         "type": "object"
       },
+      "Projection": {
+        "additionalProperties": false,
+        "description": "Where stock, shelf life and demand lead over the next three days for one store-product.",
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "assumptions": {
+            "description": "e.g. 'lot ages inferred first-in first-out'",
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "config_digest": {
+            "title": "Config Digest",
+            "type": "string"
+          },
+          "data_snapshot_id": {
+            "title": "Data Snapshot Id",
+            "type": "string"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectionDay"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Days",
+            "type": "array"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store_id",
+          "sku_id",
+          "as_of",
+          "days",
+          "model_version",
+          "data_snapshot_id",
+          "config_digest"
+        ],
+        "title": "Projection",
+        "type": "object"
+      },
+      "ProjectionDay": {
+        "additionalProperties": false,
+        "description": "One day of the stock roll-forward. Every figure is a range over low/likely/high demand.",
+        "properties": {
+          "closing_stock": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "day": {
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Day",
+            "type": "integer"
+          },
+          "demand": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "expected_waste": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "lost_sales": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "sold": {
+            "$ref": "#/components/schemas/Range"
+          }
+        },
+        "required": [
+          "day",
+          "on",
+          "demand",
+          "sold",
+          "lost_sales",
+          "expected_waste",
+          "closing_stock"
+        ],
+        "title": "ProjectionDay",
+        "type": "object"
+      },
       "Range": {
         "additionalProperties": false,
         "description": "A forecast is always a range; screens may show ``likely`` only.",
@@ -1619,6 +1721,88 @@
           }
         },
         "summary": "Prices Route"
+      }
+    },
+    "/api/v1/projections": {
+      "get": {
+        "operationId": "projections_api_v1_projections_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "store_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Store Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sku_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sku Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Projection"
+                  },
+                  "title": "Response Projections Api V1 Projections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Projections"
       }
     },
     "/api/v1/scorecard": {

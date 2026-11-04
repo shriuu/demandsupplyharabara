@@ -1,8 +1,8 @@
 """Firestore implementation of ``Storage``.
 
 Collections: suggestions, approvals, audit, prices, forecasts, plus farmer_forecasts,
-scorecards and control (the kill switch). Approvals and audit use ``create`` so a second write
-fails; nothing here updates or deletes them.
+scorecards, trimming, projections and control (the kill switch). Approvals and audit use
+``create`` so a second write fails; nothing here updates or deletes them.
 """
 
 from __future__ import annotations
@@ -19,7 +19,9 @@ from harabhara.api.storage import (
     farmer_key,
     forecast_key,
     price_key,
+    projection_key,
     scorecard_key,
+    trimming_key,
 )
 from harabhara.contracts import (
     Approval,
@@ -27,9 +29,11 @@ from harabhara.contracts import (
     FarmerVolumeForecast,
     Forecast,
     PriceQuote,
+    Projection,
     Scorecard,
     Suggestion,
     SuggestionState,
+    TrimmingSuggestion,
 )
 
 SUGGESTIONS = "suggestions"
@@ -39,6 +43,8 @@ PRICES = "prices"
 FORECASTS = "forecasts"
 FARMER_FORECASTS = "farmer_forecasts"
 SCORECARDS = "scorecards"
+TRIMMING = "trimming"
+PROJECTIONS = "projections"
 CONTROL = "control"
 KILL_SWITCH_DOC = "kill_switch"
 
@@ -155,6 +161,26 @@ class FirestoreStorage:
 
     def list_scorecards(self, scope: str | None = None) -> list[Scorecard]:
         return self._stream(SCORECARDS, Scorecard, scope=scope)
+
+    def put_trimming(self, rows: list[TrimmingSuggestion]) -> None:
+        keep = {_id(trimming_key(r)) for r in rows}
+        for day in {r.on for r in rows}:
+            for doc in self._col(TRIMMING).where("on", "==", day.isoformat()).stream():
+                if doc.id not in keep:
+                    doc.reference.delete()
+        self._set_all(TRIMMING, [(trimming_key(r), r) for r in rows])
+
+    def list_trimming(self, on: date | None = None) -> list[TrimmingSuggestion]:
+        rows = self._stream(TRIMMING, TrimmingSuggestion, on=on.isoformat() if on else None)
+        return sorted(rows, key=lambda t: (t.on, t.sku_id))
+
+    def put_projections(self, rows: list[Projection]) -> None:
+        self._set_all(PROJECTIONS, [(projection_key(p), p) for p in rows])
+
+    def list_projections(
+        self, store_id: str | None = None, sku_id: str | None = None
+    ) -> list[Projection]:
+        return self._stream(PROJECTIONS, Projection, store_id=store_id, sku_id=sku_id)
 
     # control
     def kill_switch_on(self) -> bool:

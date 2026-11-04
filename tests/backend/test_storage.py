@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import timedelta
 
 import pytest
 
@@ -14,8 +15,10 @@ from tests.backend.conftest import (
     TODAY,
     farmer_row,
     make_forecast,
+    make_projection,
     make_quote,
     make_suggestion,
+    make_trimming,
     scorecard_row,
 )
 from tests.backend.fake_firestore import FakeFirestoreClient
@@ -123,3 +126,24 @@ def test_firestore_transition_loses_to_a_concurrent_write() -> None:
     stored = store.get_suggestion("sg-1")
     assert stored is not None
     assert stored.state == "rejected"
+
+
+def test_trimming_is_replaced_by_date(store: Storage) -> None:
+    tomorrow = TODAY + timedelta(days=1)
+    store.put_trimming(
+        [make_trimming("tomato"), make_trimming("onion"), make_trimming("tomato", tomorrow)]
+    )
+    store.put_trimming([make_trimming("tomato", units=5)])  # re-run for today: onion withdrawn
+    today = store.list_trimming(TODAY)
+    assert [(t.sku_id, t.spot_units_to_trim) for t in today] == [("tomato", 5)]
+    assert len(store.list_trimming(tomorrow)) == 1  # other dates untouched
+    assert len(store.list_trimming()) == 2
+
+
+def test_projections_replace_per_store_product_and_date(store: Storage) -> None:
+    store.put_projections([make_projection("S1"), make_projection("S2")])
+    store.put_projections([make_projection("S1")])
+    assert len(store.list_projections()) == 2
+    assert [p.store_id for p in store.list_projections(store_id="S2")] == ["S2"]
+    assert store.list_projections(sku_id="onion") == []
+    assert store.list_projections(store_id="S1") == [make_projection("S1")]

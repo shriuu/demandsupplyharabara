@@ -6,7 +6,16 @@ from datetime import timedelta
 from pathlib import Path
 
 from harabhara.api.loader import load_directory
-from tests.backend.conftest import NOW, Env, decision_body, make_forecast, make_suggestion
+from tests.backend.conftest import (
+    NOW,
+    TODAY,
+    Env,
+    decision_body,
+    make_forecast,
+    make_projection,
+    make_suggestion,
+    make_trimming,
+)
 
 KILL = "/api/v1/admin/kill-switch"
 
@@ -73,3 +82,23 @@ def test_expiry_still_runs_while_it_is_on(env: Env) -> None:
     stored = env.storage.get_suggestion("sg-1")
     assert stored is not None
     assert stored.state == "expired"
+
+
+def test_trimming_advice_is_a_suggestion_so_the_switch_hides_it(env: Env) -> None:
+    env.storage.put_forecasts([make_forecast()])
+    env.storage.put_trimming([make_trimming()])
+    env.client.post(KILL, json={"on": True}, headers=env.login("3333"))
+    body = env.client.get("/api/v1/dc/totals", headers=env.login("4444")).json()
+    assert len(body["totals"]) == 1  # information still shows
+    assert body["trimming"] == []
+
+
+def test_no_trimming_is_loaded_while_it_is_on_but_projections_are(env: Env, tmp_path: Path) -> None:
+    (tmp_path / "trimming.json").write_text(f"[{make_trimming().model_dump_json()}]")
+    (tmp_path / "projections.json").write_text(f"[{make_projection().model_dump_json()}]")
+    env.storage.set_kill_switch(True)
+    report = load_directory(env.storage, tmp_path, NOW)
+    assert report.trimming_blocked_by_kill_switch == 1
+    assert env.storage.list_trimming(TODAY) == []
+    assert report.projections == 1
+    assert len(env.storage.list_projections()) == 1

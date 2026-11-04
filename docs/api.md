@@ -13,11 +13,11 @@ Base path `/api/v1`. All times are `Asia/Kolkata`. Every response carries `data_
 | `GET /health` | none | `{status, kill_switch}`; `status` is `degraded` (and `kill_switch` true) if storage can't be read |
 | `POST /admin/kill-switch` | area_manager | body `{on: bool}`. While on: no new suggestion is loaded, proposed suggestions are hidden, decisions get 423. Manual process carries on (guardrail 12) |
 | `GET /forecasts?store_id&sku_id&date` | store_manager, dc_lead | `list[Forecast]` |
-| `GET /projections?store_id&sku_id` | store_manager, area_manager, dc_lead | `list[Projection]`: three-day stock roll-forward as ranges (sold, lost sales, expected waste, closing stock) |
+| `GET /projections?store_id&sku_id` | store_manager, area_manager, dc_lead | `list[Projection]`: three-day stock roll-forward as ranges (sold, lost sales, expected waste, closing stock). A store manager sees only their own store; only the latest `as_of` per store and product is returned; projections wholly in the past are dropped and the response is marked `X-Data-Stale: true` |
 | `GET /suggestions?role&store_id&kind&state` | any (scoped) | `list[Suggestion]`, most urgent first |
 | `GET /suggestions/{id}` | any (scoped) | `Suggestion` with drivers |
 | `POST /suggestions/{id}/decision` | the suggestion's `approver_role` | body `Approval`; returns the `Suggestion` in its new state; writes an `AuditEvent`. `actor_id` and `at` are set by the server from the sign-in and clock. 409 if not `proposed` or past its deadline |
-| `GET /dc/totals?date` | dc_lead | `{on, totals: [{sku_id, demand: Range, stores, flags, ...}], trimming, stale}`; `trimming` is empty until the decision layer stores spot-first trimming output |
+| `GET /dc/totals?date` | dc_lead | `{on, totals: [{sku_id, demand: Range, stores, flags, ...}], trimming, stale}`; `trimming` is the stored spot-first advice for that date as `[{sku_id, spot_units_to_trim, reason}]` (spot/mandi buying only, never confirmed farmer volume); empty if none, if the kill switch is on, or if it can't be read (then `stale` is true) |
 | `GET /prices?sku_id` | dc_lead | `list[PriceQuote]` incl. a price-shock flag |
 | `GET /farmers/forecast?fpo_id` | farmer_coordinator | `list[FarmerVolumeForecast]`, always labelled "estimate" |
 | `GET /scorecard?scope` | area_manager | `list[Scorecard]`; waste, stock-outs and farmer share always together |
@@ -44,9 +44,12 @@ Base path `/api/v1`. All times are `Asia/Kolkata`. Every response carries `data_
 
 ## Storage
 Firestore collections: `suggestions`, `approvals`, `audit` (create-only), `prices`,
-`forecasts`, plus `farmer_forecasts`, `scorecards` and `control` (the kill switch).
+`forecasts`, plus `farmer_forecasts`, `scorecards`, `trimming` (one document per date and
+product; a load replaces everything stored for the dates it contains), `projections` (one per
+store, product and `as_of`) and `control` (the kill switch).
 Precomputed output is loaded by the nightly job (`python -m harabhara.api.loader <dir>` with
-`forecasts.json`, `suggestions.json`, `farmer_forecasts.json`, `scorecards.json`, each a JSON
+`forecasts.json`, `suggestions.json`, `farmer_forecasts.json`, `scorecards.json`,
+`trimming.json` (`TrimmingSuggestion`), `projections.json` (`Projection`), each a JSON
 list of the contract type). Loading never overwrites a suggestion that already exists.
 `approvals` and `audit` are create-only.
 
