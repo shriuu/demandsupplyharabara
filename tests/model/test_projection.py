@@ -115,3 +115,19 @@ def test_projection_reports_ranges_with_likely_between() -> None:
     first = result.days[0]
     assert first.expected_waste.high >= first.expected_waste.low
     assert first.lost_sales.high > 0  # high demand outruns the 50 units on hand
+
+
+def test_expected_value_weights_the_three_scenarios_by_swanson() -> None:
+    from harabhara.state.projection import expected_value
+
+    assert expected_value(Range(low=20, likely=30, high=40)) == pytest.approx(30.0)
+    assert expected_value(Range(low=0, likely=0, high=100)) == pytest.approx(30.0)
+    assert expected_value(Range(low=10, likely=10, high=10)) == pytest.approx(10.0)
+
+
+def test_a_risk_only_in_the_tail_still_counts_in_the_expected_value() -> None:
+    from harabhara.state.projection import expected_value
+
+    tail = Range(low=0, likely=0, high=60)  # runs out only if demand is high
+    assert tail.likely == 0
+    assert expected_value(tail) == pytest.approx(18.0)

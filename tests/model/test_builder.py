@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from harabhara.contracts import Range, Suggestion
+from harabhara.contracts import MarkdownPayload, Range, Suggestion, TransferPayload
 from harabhara.decisions.builder import (
     MorningStore,
     OrderInputs,
@@ -309,3 +309,41 @@ def test_no_morning_suggestion_is_ever_past_its_last_sellable_day() -> None:
 @pytest.mark.parametrize("n", [0])
 def test_nothing_is_built_for_no_stores(n: int) -> None:
     assert _morning([]) == []
+
+
+def test_a_store_with_a_real_chance_of_running_out_is_helped_even_if_the_likely_case_is_fine() -> (
+    None
+):
+    donor = _store("S01", [Lot(80, 1)], DEMAND)
+    # likely demand (45) is below its 50 on hand, so the likely case shows no shortage, but the
+    # tail (110) leaves it 60 short, which is an expected shortfall of 18 units
+    receiver = _store("S03", [Lot(50, 3)], Range(low=30, likely=45, high=110))
+    out = _morning([donor, receiver])
+    transfers = [s for s, _ in out if s.payload.kind == "transfer"]
+    assert len(transfers) == 1
+    payload = transfers[0].payload
+    assert isinstance(payload, TransferPayload)
+    assert payload.to_store == "S03"
+    assert 0 < payload.units <= 18.0 + 1e-6
+
+
+def test_a_small_risk_is_not_worth_a_van_trip() -> None:
+    donor = _store("S01", [Lot(80, 1)], DEMAND)
+    receiver = _store("S03", [Lot(50, 3)], Range(low=30, likely=45, high=75))  # about 7 units
+    out = _morning([donor, receiver])
+    assert not [s for s, _ in out if s.payload.kind == "transfer"]
+
+
+def test_a_last_day_markdown_and_a_day_early_markdown_never_share_an_id() -> None:
+    """Both can be 30% from opening for the same store and product; the loader skips repeats."""
+    lots = [Lot(60, 1), Lot(80, 2)]  # stock on its last day and stock a day behind it
+    out = _morning([_store("S01", lots, Range(low=10, likely=15, high=20))], pairs=set())
+    markdowns = [(s, s.payload) for s, _ in out if isinstance(s.payload, MarkdownPayload)]
+    ids = [s.id for s, _ in markdowns]
+    assert len(ids) == len(set(ids))
+    early = [s for s, payload in markdowns if payload.earlier_than_last_day]
+    standard = [s for s, payload in markdowns if not payload.earlier_than_last_day]
+    assert early
+    assert standard
+    assert all(s.id.endswith(":early") for s in early)
+    assert not any(s.id.endswith(":early") for s in standard)

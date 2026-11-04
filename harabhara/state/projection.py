@@ -101,6 +101,17 @@ def roll_forward(
     ]
 
 
+def expected_value(outcome: Range) -> float:
+    """The expected outcome from its low, likely and high values (Swanson's rule).
+
+    The three scenarios are the 10th, 50th and 90th percentile of demand, and Swanson's rule
+    weights them 0.3, 0.4 and 0.3. It matters for alerts: judging "will it run out" or "will it
+    be left over" from the likely case alone hides real risk, because the risk sits in the
+    tails. Outcomes move monotonically with demand, so the weights apply to the sorted range.
+    """
+    return 0.3 * outcome.low + 0.4 * outcome.likely + 0.3 * outcome.high
+
+
 def _range(low: float, likely: float, high: float) -> Range:
     values = sorted((low, likely, high))
     return Range(low=values[0], likely=likely, high=values[2])

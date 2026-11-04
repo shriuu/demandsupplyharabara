@@ -440,6 +440,13 @@ def write_outputs(out: Outputs, directory: Path) -> dict[str, int]:
     return {name: len(items) for name, items in files.items()} | {"blocked.json": len(report)}
 
 
+def check_not_holdout(day: date, last_training: date) -> None:
+    """The holdout is read once, at the end: no run may start inside it."""
+    if day > last_training:
+        msg = f"{day} is inside the holdout; the holdout is read once, at the end"
+        raise ValueError(msg)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the pipeline for one as-of day.")
     parser.add_argument("--work", type=Path, default=Path("work"))
@@ -451,9 +458,10 @@ def main() -> None:
     cfg = load_config()
     pack = load_pack(args.work, cfg)
     day = args.as_of or last_training_day(pack.panel)
-    if pd.Timestamp(day) > pd.Timestamp(last_training_day(pack.panel)):
-        msg = f"{day} is inside the holdout; the holdout is read once, at the end"
-        raise SystemExit(msg)
+    try:
+        check_not_holdout(day, last_training_day(pack.panel))
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
     fc = fit_forecaster(pack, day - timedelta(days=1))
     out = build_outputs(pack, fc, day)
     if args.demo_today:

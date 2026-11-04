@@ -67,6 +67,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-markers -ra"
+markers = ["slow: trains models on the data pack; skipped where the pack is absent"]
 
 [tool.coverage.run]
 source = ["harabhara"]
