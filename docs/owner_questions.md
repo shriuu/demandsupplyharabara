@@ -11,7 +11,7 @@ Status key: **Answered** = playbook or brief settles it (we follow that). **Part
 | 5 | What is one lost sale worth, including the basket? | **Partly** | §2 and §12 say a tomato or coriander stock-out "loses the customer's whole basket", but give no value. | order rule cost ratio |
 | 6 | Can stores record lot or arrival age? | **Partly** | The DC records `days_since_harvest_at_receipt` and grade per purchase. Sales data has **no lot, age or grade per store-day**. The ledger must infer age (FIFO from delivery dates). | state/stock_ledger |
 | 7 | Where does the weather forecast come from? | **Open** | Data has observed weather from one station only. We'll train on actuals plus noise to imitate a forecast. A live source is undecided. | features/weather, deployment |
-| 8 | Can discounts start before the last day, using only existing steps? | **Partly** | §5 says it is "what we want", but the current rule is last day only. Brief lists optimised markdown timing as a stretch goal. | decisions/discount |
+| 8 | Can discounts start before the last day, using only existing steps? | **Yes (owner, 4 Nov 2026)** | A day-early start is allowed with approval. We use only the existing 15% promotion step a day early; the playbook's 30% stays for the last day. | decisions/discount |
 | 9 | How are one-off shocks reported? | **Open** | Only the S07 outage is documented, in the README. | data/validate |
 | 10 | How often can the FPO forecast change, and how is it labelled? | **Partly** | §8: a three-day forecast is shared and confirmed orders can't be cancelled. No refresh cadence. | farmer screen |
 | 11 | Food-safety or recall procedure? | **Open** | Nothing beyond grading, storage and the chilling-injury rule. | rules/guardrails #8 |

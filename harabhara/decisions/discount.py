@@ -4,8 +4,9 @@ Standard: on a product's last sellable day, 30% off from opening; a second step 
 second-step hour for leafy greens and bananas only. The floor is the purchase cost: before the
 second-step hour a markdown that would sell below cost waits until that hour.
 
-Optimised timing: when a large share of a lot is expected to expire unsold, suggest the first
-step a day early. That start is not in the playbook (owner question 8), so it is flagged
+Optimised timing: when a large share of a lot is expected to expire unsold, suggest the existing
+promotion step (the data's 15% promotion, the smallest cut) a day early; the playbook's 30% stays
+for the last day. The owner allowed a day-early start (question 8), so it is flagged
 ``earlier_than_last_day`` and needs approval. The response to a markdown is an assumption (the
 lowest lift measured in the 15% promotion rows), never extrapolated to deeper cuts.
 """
@@ -93,17 +94,21 @@ def plan_markdown(
                 )
             )
 
-    if second_day_units > 0 and expected_unsold_second_day >= earlier_min_share * second_day_units:
-        price_1 = price * (1 - rules.step_1_pct / 100)
-        if price_1 >= unit_cost:  # the floor applies to an early markdown too
+    if (
+        rules.earlier_start_allowed
+        and second_day_units > 0
+        and expected_unsold_second_day >= earlier_min_share * second_day_units
+    ):
+        price_early = price * (1 - rules.promo_pct_in_data / 100)
+        if price_early >= unit_cost:  # the floor applies to an early markdown too
             proposals.append(
                 MarkdownProposal(
-                    step_pct=rules.step_1_pct,
+                    step_pct=rules.promo_pct_in_data,
                     start=opening,
                     units=min(expected_unsold_second_day, second_day_units),
-                    price_after=price_1,
+                    price_after=price_early,
                     expected_recovery_inr=_recovery(
-                        expected_unsold_second_day, baseline_demand, lift, price_1
+                        expected_unsold_second_day, baseline_demand, lift, price_early
                     ),
                     earlier_than_last_day=True,
                     note="much of this stock is expected to expire unsold, so start a day early",

@@ -11,7 +11,8 @@ export function RangeBar({ range, max }: { range: Range; max: number }) {
         <div className="rangebar-mark" style={{ left: pct(range.likely) }} />
       </div>
       <p className="digits">
-        <strong>{range.likely}</strong> <small>{t("range.band", { low: range.low, high: range.high })}</small>
+        <strong>{Math.round(range.likely)}</strong>{" "}
+        <small>{t("range.band", { low: Math.round(range.low), high: Math.round(range.high) })}</small>
       </p>
     </div>
   );

@@ -8,6 +8,11 @@ openers:
   markdown: "Mark down {units} {unit} of {product} by {pct}% from {start}"
   transfer: "Move {units} {unit} of {product} from {from_store} to {to_store}, leaving by {leave_by}"
   surplus: "Offer {units} {unit} of {product} to {buyer} for pickup {window}"
+  surplus_priced: "Offer {units} {unit} of {product} to {buyer} for pickup {window} at {share}% of the shelf price, Rs {amount} {versus} cost"
+
+versus:
+  above: "above"
+  below: "below"
 
 connector: " because "
 joiner: " and "

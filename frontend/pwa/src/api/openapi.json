@@ -1063,6 +1063,30 @@
             "title": "Pickup Window",
             "type": "string"
           },
+          "price_share_of_retail": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Share Of Retail"
+          },
+          "profit_vs_cost_inr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Vs Cost Inr"
+          },
           "units": {
             "exclusiveMinimum": 0.0,
             "title": "Units",

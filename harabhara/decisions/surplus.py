@@ -48,6 +48,7 @@ class SurplusMatch:
     pickup_start: datetime
     window: str
     expected_recovery_inr: float
+    price_share: float
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,7 @@ def plan_surplus(
                 pickup_start=pickup,
                 window=f"{buyer.window_start:%H:%M}{DASH}{buyer.window_end:%H:%M}",
                 expected_recovery_inr=take * buyer.price_share * retail_price,
+                price_share=buyer.price_share,
             )
         )
         remaining -= take

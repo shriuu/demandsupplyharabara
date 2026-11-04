@@ -405,6 +405,9 @@ def build_morning(
                         grade=SURPLUS_GRADE,
                         pickup_window=match.window,
                         expected_recovery_inr=match.expected_recovery_inr,
+                        price_share_of_retail=match.price_share,
+                        profit_vs_cost_inr=match.expected_recovery_inr
+                        - match.units * series.unit_cost,
                     ),
                     drivers=[
                         _driver("rule", "none", "surplus_expected"),
