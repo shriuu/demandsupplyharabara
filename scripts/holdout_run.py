@@ -45,6 +45,17 @@ def summarise(res: pd.DataFrame) -> dict[str, float]:
     }
 
 
+def markdown_table(frame: pd.DataFrame) -> str:
+    """A plain markdown table (no optional packages needed)."""
+    head = "| " + " | ".join(str(c) for c in frame.columns) + " |"
+    rule = "|" + "---|" * len(frame.columns)
+    rows = [
+        "| " + " | ".join(f"{v:.3f}" if isinstance(v, float) else str(v) for v in r) + " |"
+        for r in frame.itertuples(index=False)
+    ]
+    return "\n".join([head, rule, *rows])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     mode = ap.add_mutually_exclusive_group(required=True)
@@ -111,7 +122,7 @@ def main() -> None:
     ):
         if col in sold.columns:
             table = by_slice(sold, col, {"Model": "f_likely", "Managers": "f_managers"}, "y_sold")
-            out += [f"### By {title}", table.to_markdown(index=False), ""]
+            out += [f"### By {title}", markdown_table(table), ""]
 
     # T03: festival eve uplift against the same product on ordinary days
     eve = sold[sold["t_eve_intensity"] > 0]
