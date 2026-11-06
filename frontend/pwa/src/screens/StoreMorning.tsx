@@ -8,7 +8,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight, type Light } from "../components/Status";
 import { productName, t } from "../i18n/strings";
-import { biggestFirst } from "./priority";
+import { biggestGroupFirst, groupSteps, type Group } from "./priority";
 
 /** Transfers and starts on the last day are urgent (red); an early markdown is a check (amber). */
 export function lightFor(s: Suggestion): Light {
@@ -16,49 +16,49 @@ export function lightFor(s: Suggestion): Light {
   return "red";
 }
 
-export function AlertCard({
-  suggestion,
-  role,
-  onDone,
-}: {
-  suggestion: Suggestion;
-  role: Role;
-  onDone: () => void;
-}) {
+export function AlertCard({ group, role, onDone }: { group: Group; role: Role; onDone: () => void }) {
   const [failed, setFailed] = useState(false);
-  const p = suggestion.payload as MarkdownPayload | TransferPayload;
+  const first = group.items[0] as Suggestion;
   async function decide(action: "approve" | "reject") {
     setFailed(false);
+    let done = 0;
     try {
-      await api.decide(role, suggestion.id, { action });
+      for (const s of group.items) {
+        await api.decide(role, s.id, { action });
+        done += 1;
+      }
       onDone();
     } catch {
-      setFailed(true);
+      if (done > 0) onDone();
+      else setFailed(true);
     }
   }
   return (
     <li className="card alert-card">
-      <TrafficLight light={lightFor(suggestion)} />
+      <TrafficLight light={lightFor(first)} />
       <div className="alert-body">
-        <ProductIcon skuId={suggestion.sku_id} size={72} />
+        <ProductIcon skuId={first.sku_id} size={72} />
         <div>
-          <h3>{productName(suggestion.sku_id)}</h3>
-          {!("to_store" in p) ? (
-            <p>
-              <Icon name="tag" size={22} /> {t("alert.markdown")} · {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
-            </p>
-          ) : (
-            <p>
-              <Icon name="van" size={22} /> {t("alert.transfer")} ·{" "}
-              {t("alert.transferDetail", { units: p.units, store: p.to_store, time: p.leave_by })}
-            </p>
-          )}
-          {!("to_store" in p) && p.earlier_than_last_day && (
+          <h3>{productName(first.sku_id)}</h3>
+          {group.items.map((s) => {
+            const p = s.payload as MarkdownPayload | TransferPayload;
+            return !("to_store" in p) ? (
+              <p key={s.id}>
+                <Icon name="tag" size={22} /> {t("alert.markdown")} · {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
+              </p>
+            ) : (
+              <p key={s.id}>
+                <Icon name="van" size={22} /> {t("alert.transfer")} ·{" "}
+                {t("alert.transferDetail", { units: p.units, store: p.to_store, time: p.leave_by })}
+              </p>
+            );
+          })}
+          {first.payload.kind === "markdown" && first.payload.earlier_than_last_day && (
             <p className="small">
               <Icon name="clock" size={18} /> {t("alert.earlier")}
             </p>
           )}
-          <p className="small">{suggestion.reason}</p>
+          <p className="small">{first.reason}</p>
         </div>
       </div>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
@@ -72,24 +72,25 @@ export function StoreMorning({ storeId }: { storeId: string }) {
     () => api.suggestions({ role: "store_manager", store_id: storeId, state: "proposed" }),
     [storeId],
   );
-  useChatFocus(state.status === "ready" ? (alerts(state.data)[0]?.id ?? null) : null);
+  useChatFocus(state.status === "ready" ? (alerts(state.data)[0]?.items[0]?.id ?? null) : null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
   const list = alerts(state.data);
   if (!list.length) return <Empty />;
   return (
     <ul className="tiles-2">
-      {list.map((s) => (
-        <AlertCard key={s.id} suggestion={s} role="store_manager" onDone={reload} />
+      {list.map((g) => (
+        <AlertCard key={g.key} group={g} role="store_manager" onDone={reload} />
       ))}
     </ul>
   );
 }
 
-/** Red first, then the biggest at stake: most urgent at the top. */
-function alerts(all: Suggestion[]): Suggestion[] {
+/** Red first, then the biggest at stake: most urgent at the top. A product's markdown steps are one card. */
+function alerts(all: Suggestion[]): Group[] {
   const rank: Record<Light, number> = { red: 0, amber: 1, green: 2 };
-  return all
-    .filter((s) => s.payload.kind === "markdown" || s.payload.kind === "transfer")
-    .sort((a, b) => rank[lightFor(a)] - rank[lightFor(b)] || biggestFirst(a, b));
+  const shown = all.filter((s) => s.payload.kind === "markdown" || s.payload.kind === "transfer");
+  return groupSteps(shown).sort(
+    (a, b) => rank[lightFor(a.items[0] as Suggestion)] - rank[lightFor(b.items[0] as Suggestion)] || biggestGroupFirst(a, b),
+  );
 }

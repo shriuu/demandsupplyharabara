@@ -9,7 +9,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
-import { biggestFirst } from "./priority";
+import { biggestGroupFirst, groupSteps, type Group } from "./priority";
 
 /** Waste, empty shelves and farmer share: always the same three gauges, side by side (G04). */
 export function Scoreboard({ card, title }: { card: Scorecard; title?: string }) {
@@ -104,36 +104,42 @@ function StoreNote({ card, chain }: { card: Scorecard; chain: Scorecard | undefi
   );
 }
 
-function ApprovalCard({ s, onDone }: { s: Suggestion; onDone: () => void }) {
+function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: boolean; onDone: () => void }) {
   const [failed, setFailed] = useState(false);
-  const p = s.payload as MarkdownPayload | TransferPayload;
+  const first = group.items[0] as Suggestion;
   async function decide(action: "approve" | "reject") {
     setFailed(false);
+    let done = 0;
     try {
-      await api.decide("area_manager", s.id, { action });
+      for (const s of group.items) {
+        await api.decide("area_manager", s.id, { action });
+        done += 1;
+      }
       onDone();
     } catch {
-      setFailed(true);
+      if (done > 0) onDone();
+      else setFailed(true);
     }
   }
   return (
     <li className="card alert-card">
       <div className="alert-body">
-        <ProductIcon skuId={s.sku_id} size={72} />
+        <ProductIcon skuId={first.sku_id} size={72} />
         <div>
-          <h3>
-            {productName(s.sku_id)} · {storeLabel(s.store_id)}
-          </h3>
-          {!("to_store" in p) ? (
-            <p>
-              <Icon name="tag" size={22} /> {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
-            </p>
-          ) : (
-            <p>
-              <Icon name="van" size={22} /> {t("alert.transferDetail", { units: `${Math.round(p.units)} ${unitOf(s.sku_id)}`, store: storeLabel(p.to_store), time: p.leave_by })}
-            </p>
-          )}
-          <p className="small">{s.reason}</p>
+          <h3>{showStore ? `${productName(first.sku_id)} · ${storeLabel(first.store_id)}` : productName(first.sku_id)}</h3>
+          {group.items.map((s) => {
+            const p = s.payload as MarkdownPayload | TransferPayload;
+            return !("to_store" in p) ? (
+              <p key={s.id}>
+                <Icon name="tag" size={22} /> {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
+              </p>
+            ) : (
+              <p key={s.id}>
+                <Icon name="van" size={22} /> {t("alert.transferDetail", { units: `${Math.round(p.units)} ${unitOf(s.sku_id)}`, store: storeLabel(p.to_store), time: p.leave_by })}
+              </p>
+            );
+          })}
+          <p className="small">{first.reason}</p>
         </div>
       </div>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
@@ -151,13 +157,13 @@ function Queue({ killed, scope }: { killed: boolean; scope: string }) {
   if (!state.data.length) return <Empty />;
   const mine = state.data.filter((s) => scope === "chain" || s.store_id === scope);
   if (!mine.length) return <Empty />;
-  const sorted = [...mine].sort(biggestFirst);
+  const sorted = groupSteps(mine).sort(biggestGroupFirst);
   const shown = all ? sorted : sorted.slice(0, SHORT_LIST);
   return (
     <>
       <ul className="tiles-2">
-        {shown.map((s) => (
-          <ApprovalCard key={s.id} s={s} onDone={reload} />
+        {shown.map((g) => (
+          <ApprovalCard key={g.key} group={g} showStore={scope === "chain"} onDone={reload} />
         ))}
       </ul>
       {!all && sorted.length > SHORT_LIST && (
