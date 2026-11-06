@@ -249,13 +249,23 @@ describe("dc lead purchases", () => {
     expect(await screen.findByText("What you bought today")).toBeInTheDocument();
     const tile = (await screen.findAllByRole("button", { name: /Tomato/ })).at(-1) as HTMLElement;
     await user.click(tile);
-    for (let i = 0; i < 2; i++) await user.click(screen.getByRole("button", { name: "From the mandi: More" }));
+    for (let i = 0; i < 2; i++) await user.click(screen.getByRole("button", { name: "From K.R. Market: More" }));
     await user.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(mock.outcomes).toHaveLength(2));
-    expect(mock.outcomes.map((o) => [o.source, o.units_bought])).toEqual([
-      ["farmer_group", 0],
-      ["spot", 10],
+    await waitFor(() => expect(mock.outcomes).toHaveLength(3));
+    expect(mock.outcomes.map((o) => [o.source, o.market ?? null, o.units_bought])).toEqual([
+      ["farmer_group", null, 0],
+      ["spot", "APMC Yeshwanthpur", 0],
+      ["spot", "K.R. Market", 10],
     ]);
+  });
+});
+
+describe("dc lead sees what the stores ordered", () => {
+  it("adds up the stores' decided orders and says who is still deciding", async () => {
+    await openRole("DC buying lead");
+    expect(await screen.findByText("What the stores ordered")).toBeInTheDocument();
+    expect(await screen.findByText(/Some stores are still deciding/)).toBeInTheDocument();
+    expect(screen.getAllByText(/of \d+ stores decided/).length).toBeGreaterThan(0);
   });
 });
 

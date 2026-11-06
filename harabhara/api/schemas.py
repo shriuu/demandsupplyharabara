@@ -77,6 +77,33 @@ class DcTotals(_Body):
     stale: bool
 
 
+class ProductOrders(_Body):
+    """What the stores have ordered of one product for the DC to buy."""
+
+    sku_id: str
+    confirmed_units: float  # approved, or edited to the manager's own amount
+    waiting_units: float  # the suggested amount where nobody has decided yet
+    stores_decided: int
+    stores_waiting: int
+    stores_rejected: int
+
+
+class BoughtRow(_Body):
+    sku_id: str
+    source: Literal["farmer_group", "spot"]
+    market: str | None
+    units: float
+
+
+class DcOrders(_Body):
+    on: date | None
+    products: list[ProductOrders]
+    bought: list[BoughtRow]
+    markets: list[str]
+    all_decided: bool
+    stale: bool
+
+
 class OutcomeInput(_Body):
     """What a person enters. Who and when come from the sign-in and the server clock."""
 
@@ -89,4 +116,5 @@ class OutcomeInput(_Body):
     sold_out: bool | None = None
     units_bought: float | None = Field(default=None, ge=0)
     source: Literal["farmer_group", "spot"] | None = None
+    market: str | None = Field(default=None, max_length=60)
     suggestion_id: str | None = None

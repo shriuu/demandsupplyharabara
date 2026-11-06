@@ -3,6 +3,7 @@ import { clearSession, loadSession, saveSession, signalExpired, signalSwitchedOf
 import type {
   Approval,
   AskResponse,
+  DcOrders,
   DcTotals,
   FarmerVolumeForecast,
   Health,
@@ -84,6 +85,7 @@ export const api = {
       body: JSON.stringify(approval),
     });
   },
+  dcOrders: () => request<DcOrders>("/dc/orders"),
   dcTotals: () => request<DcTotals>("/dc/totals"),
   prices: () => request<PriceQuote[]>("/prices"),
   farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),

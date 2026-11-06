@@ -37,3 +37,9 @@ together (guardrail 4), over the scorecard window in `config/modeling.yaml`.
   the real daily feed replaces the data pack (the records and the feed should then be one source).
 - No screen lists past records, and there is no edit or delete beyond saving again.
 - The step size for entering units (`ENTRY_STEP_UNITS`) is a screen setting, not a business rule.
+
+## DC lead: what the stores ordered, and which mandi
+
+- `GET /api/v1/dc/orders` (DC lead only) adds up the newest evening's orders per product. **Confirmed** is what stores approved, or edited to their own amount. **Waiting** is the suggested amount where a store has not decided. Rejected orders add nothing. It is information only: nothing is ordered, changed or reduced from it (guardrails 1, 3).
+- Spot purchases now name the mandi: `APMC Yeshwanthpur` or `K.R. Market`, the two the data pack's purchases use (`config/feeds.yaml`, `buying_markets`). Farmer-group purchases name no market. One record per day, product, source and market.
+- The mandi price feed (`/prices`) is a separate thing: it says what the market charges. Where the DC bought comes only from what the DC lead records.
