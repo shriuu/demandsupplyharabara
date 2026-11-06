@@ -1,3 +1,8 @@
 # Copy to terraform.tfvars (git-ignored) and fill in. Never commit the real file.
 project_id        = "your-gcp-project-id"
 github_repository = "owner/repo"
+
+# Keep these in the real file once they are true for the live service. Without them a plain
+# `terraform apply` removes the secrets from the service (PIN sign-in stops) and destroys the daily job.
+mount_secrets     = true   # after every mounted secret has a version
+daily_job_enabled = true   # the daily run (see docs/daily_job.md)
