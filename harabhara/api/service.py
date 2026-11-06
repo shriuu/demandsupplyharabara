@@ -36,6 +36,7 @@ from harabhara.contracts import (
     Suggestion,
     SuggestionState,
 )
+from harabhara.settings.contacts import StoreContact
 from harabhara.sim.recorded import scorecards_from_outcomes
 from harabhara.workflow import audit, fallback
 from harabhara.workflow.approvals import DecisionError, due_for_expiry, may_decide, next_state
@@ -61,8 +62,10 @@ class Service:
         assistant: ports.AssistantPort,
         clock: Callable[[], datetime] | None = None,
         scorecard_days: int = 28,
+        contacts: list[StoreContact] | None = None,
     ) -> None:
         self.storage = storage
+        self._contacts = contacts or []
         self.scorecard_days = scorecard_days
         self.prices = prices
         self.assistant = assistant
@@ -299,6 +302,11 @@ class Service:
         return fallback.attempt(
             lambda: scorecards_from_outcomes(self.storage.list_outcomes(), today, days)
         )
+
+    def contacts(self, user: User) -> list[StoreContact]:
+        """Who to call at each store: the area manager only (staff details are not for everyone)."""
+        self.require_role(user, "area_manager")
+        return list(self._contacts)
 
     def audit_log(self, user: User, suggestion_id: str | None) -> Served[AuditEvent]:
         self.require_role(user, "area_manager")

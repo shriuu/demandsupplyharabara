@@ -1,4 +1,5 @@
 import { Icon } from "./Icons";
+import { NumberField } from "./NumberField";
 import { t } from "../i18n/strings";
 
 /** A number you change with big plus and minus buttons; the digits are small beside them. */
@@ -27,9 +28,7 @@ export function Counter({
         >
           <Icon name="minus" size={36} />
         </button>
-        <output className="counter-value" aria-live="polite">
-          <strong>{value}</strong> {unit && <small>{unit}</small>}
-        </output>
+        <NumberField label={label} value={value} onChange={onChange} unit={unit} />
         <button className="btn btn-step" aria-label={`${label}: ${t("action.plus")}`} onClick={() => onChange(value + step)}>
           <Icon name="plus" size={36} />
         </button>

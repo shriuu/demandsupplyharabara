@@ -207,7 +207,7 @@ export const farmerForecast: FarmerVolumeForecast[] = ["TOMATO", "BANANA"].flatM
 
 export const scorecards: Scorecard[] = [
   {
-    scope: "All stores",
+    scope: "chain",
     period_start: "2026-10-01",
     period_end: "2026-10-31",
     waste_pct: 6.2,
@@ -215,4 +215,6 @@ export const scorecards: Scorecard[] = [
     farmer_share: 0.62,
     farmer_share_definition: "Share of purchases from farmer groups (mock)",
   },
+  { scope: "S01", period_start: "2026-10-01", period_end: "2026-10-31", waste_pct: 7.5, stockout_pct: 2.0, farmer_share: null },
+  { scope: "S02", period_start: "2026-10-01", period_end: "2026-10-31", waste_pct: 5.0, stockout_pct: 3.0, farmer_share: null },
 ];

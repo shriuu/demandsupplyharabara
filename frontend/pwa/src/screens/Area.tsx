@@ -9,6 +9,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
+import { decideAll } from "./decide";
 import { biggestGroupFirst, groupSteps, type Group } from "./priority";
 
 /** Waste, empty shelves and farmer share: always the same three gauges, side by side (G04). */
@@ -104,21 +105,68 @@ function StoreNote({ card, chain }: { card: Scorecard; chain: Scorecard | undefi
   );
 }
 
+/** A tap to call the store's manager. No number in the file means no button: nothing is guessed. */
+function CallStore({ storeId }: { storeId: string }) {
+  const { state } = useLoad(() => api.contacts(), []);
+  if (state.status !== "ready") return null;
+  const row = state.data.find((c) => c.store_id === storeId);
+  const phone = row?.phone;
+  return (
+    <section className="card contact" aria-label={t("area.callTitle")}>
+      {phone ? (
+        <a className="btn btn-yes btn-call" href={`tel:${phone.replace(/[^+\d]/g, "")}`}>
+          <Icon name="phone" size={32} /> {t("area.call", { who: row?.name ?? t("area.callWho") })}
+          <small>{phone}</small>
+        </a>
+      ) : (
+        <p className="small">{t("area.callNone")}</p>
+      )}
+    </section>
+  );
+}
+
+/** What the store managers have already decided, so the area manager sees the other roles' work. */
+function StoresDecided({ scope }: { scope: string }) {
+  const { state } = useLoad(() => api.suggestions({}), []);
+  if (state.status !== "ready") return null;
+  const mine = state.data.filter((s) => s.approver_role === "store_manager" && (scope === "chain" || s.store_id === scope));
+  if (!mine.length) return null;
+  const rows = new Map<string, { ok: number; edit: number; no: number; wait: number }>();
+  for (const s of mine) {
+    const row = rows.get(s.store_id) ?? { ok: 0, edit: 0, no: 0, wait: 0 };
+    if (s.state === "approved" || s.state === "done") row.ok += 1;
+    else if (s.state === "edited") row.edit += 1;
+    else if (s.state === "rejected") row.no += 1;
+    else if (s.state === "proposed") row.wait += 1;
+    rows.set(s.store_id, row);
+  }
+  return (
+    <section className="card" aria-label={t("area.decided")}>
+      <h3>{t("area.decided")}</h3>
+      <p className="small">{t("area.decidedNote")}</p>
+      {[...rows.entries()].map(([store, r]) => (
+        <p key={store} className="decided-row">
+          <strong>{storeLabel(store)}</strong>
+          <span>{t("area.decidedRow", { ok: r.ok, edit: r.edit, no: r.no, wait: r.wait })}</span>
+        </p>
+      ))}
+    </section>
+  );
+}
+
 function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: boolean; onDone: () => void }) {
   const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
   const first = group.items[0] as Suggestion;
   async function decide(action: "approve" | "reject") {
+    if (busy) return;
     setFailed(false);
-    let done = 0;
-    try {
-      for (const s of group.items) {
-        await api.decide("area_manager", s.id, { action });
-        done += 1;
-      }
-      onDone();
-    } catch {
-      if (done > 0) onDone();
-      else setFailed(true);
+    setBusy(true);
+    const result = await decideAll("area_manager", group.items.map((s) => s.id), { action });
+    if (result === "done") onDone();
+    else {
+      setFailed(true);
+      setBusy(false);
     }
   }
   return (
@@ -143,7 +191,7 @@ function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: b
         </div>
       </div>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} />
+      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />
     </li>
   );
 }
@@ -233,6 +281,8 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
           <StoreNote card={shown} chain={chain} />
         </>
       )}
+      {scope !== "chain" && <CallStore storeId={scope} />}
+      <StoresDecided scope={scope} />
       {recorded.state.status === "ready" && (
         <>
           <h3>{t("area.recorded")}</h3>

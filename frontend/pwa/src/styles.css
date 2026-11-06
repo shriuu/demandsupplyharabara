@@ -143,5 +143,11 @@ p { margin: 4px 0; }
 .counter-label { font-weight: 800; margin: 8px 0 2px; }
 .counter-value { min-width: 96px; display: grid; place-items: center; text-align: center; }
 .counter-value strong { font-size: 1.8rem; }
+.step { margin: 2px 0; font-weight: 700; }
+.contact { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.btn-call { text-decoration: none; display: inline-flex; align-items: center; gap: 12px; }
+.decided-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #dfe3d6; padding: 8px 0; }
+.number-field { flex: 1; display: grid; place-items: center; gap: 2px; min-width: 96px; }
+.number-input { text-align: center; font-size: 1.8rem; font-weight: 800; min-height: 64px; }
 .btn-dim { opacity: 0.4; }
 .buy-row { display: grid; gap: 8px; }

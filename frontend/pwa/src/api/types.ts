@@ -19,6 +19,7 @@ export type PriceQuote = S["PriceQuote"];
 export type ProductTotal = S["ProductTotal"];
 export type Range = S["Range"];
 export type Scorecard = S["Scorecard"];
+export type StoreContact = S["StoreContact"];
 export type Suggestion = S["Suggestion"];
 export type SurplusPayload = S["SurplusPayload"];
 export type TransferPayload = S["TransferPayload"];

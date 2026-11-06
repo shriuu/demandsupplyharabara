@@ -61,6 +61,18 @@ def expired(suggestion: Suggestion, at: datetime) -> AuditEvent:
     )
 
 
+def superseded(suggestion: Suggestion, at: datetime) -> AuditEvent:
+    """A newer run replaced this proposal before anyone decided it."""
+    return AuditEvent(
+        id=f"expired:{suggestion.id}",
+        at=at,
+        type="expired",
+        suggestion_id=suggestion.id,
+        actor="system",
+        data={"reason": "superseded by a newer run"},
+    )
+
+
 def kill_switch(on: bool, actor: str, at: datetime) -> AuditEvent:
     return AuditEvent(id=_new_id(), at=at, type="kill_switch", actor=actor, data={"on": on})
 

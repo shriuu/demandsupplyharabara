@@ -106,3 +106,44 @@ def test_bad_trimming_or_projection_data_is_rejected_before_any_write(tmp_path: 
     with pytest.raises(ValueError, match="days"):
         load_directory(storage, tmp_path, NOW)
     assert storage.list_forecasts() == []
+
+
+def test_a_newer_run_retires_undecided_older_proposals_for_the_same_product(tmp_path: Path) -> None:
+    storage = InMemoryStorage()
+    old = make_suggestion("old@demo1")
+    write(tmp_path, "suggestions.json", [old])
+    load_directory(storage, tmp_path, NOW)
+    newer = make_suggestion("new@demo2").model_copy(
+        update={"created_at": old.created_at.replace(day=old.created_at.day + 1)}
+    )
+    write(tmp_path, "suggestions.json", [newer])
+    report = load_directory(storage, tmp_path, NOW)
+    assert report.suggestions_superseded == 1
+    assert storage.get_suggestion("old@demo1").state == "expired"  # type: ignore[union-attr]
+    assert storage.get_suggestion("new@demo2").state == "proposed"  # type: ignore[union-attr]
+    reasons = [e.data.get("reason") for e in storage.list_audit() if e.type == "expired"]
+    assert reasons == ["superseded by a newer run"]
+
+
+def test_a_decided_proposal_and_other_products_are_never_retired(tmp_path: Path) -> None:
+    storage = InMemoryStorage()
+    decided = make_suggestion("decided@demo1")
+    other_store = make_suggestion("other@demo1", store="S2")
+    write(tmp_path, "suggestions.json", [decided, other_store])
+    load_directory(storage, tmp_path, NOW)
+    assert storage.transition("decided@demo1", "proposed", "approved")
+    newer = make_suggestion("new@demo2").model_copy(
+        update={"created_at": decided.created_at.replace(day=decided.created_at.day + 1)}
+    )
+    write(tmp_path, "suggestions.json", [newer])
+    report = load_directory(storage, tmp_path, NOW)
+    assert report.suggestions_superseded == 0
+    assert storage.get_suggestion("decided@demo1").state == "approved"  # type: ignore[union-attr]
+    assert storage.get_suggestion("other@demo1").state == "proposed"  # type: ignore[union-attr]
+
+
+def test_loading_the_same_run_again_retires_nothing(tmp_path: Path) -> None:
+    storage = InMemoryStorage()
+    write(tmp_path, "suggestions.json", [make_suggestion("a"), make_suggestion("b")])
+    load_directory(storage, tmp_path, NOW)
+    assert load_directory(storage, tmp_path, NOW).suggestions_superseded == 0
