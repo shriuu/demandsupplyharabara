@@ -534,6 +534,10 @@ export interface components {
         LoginResponse: {
             /** Actor Id */
             actor_id: string;
+            /** Area Id */
+            area_id?: string | null;
+            /** Area Name */
+            area_name?: string | null;
             /**
              * Role
              * @enum {string}

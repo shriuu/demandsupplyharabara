@@ -17,6 +17,8 @@ class User:
     actor_id: str
     role: Role
     store_id: str | None = None
+    # An area manager looks after one area; None means every store.
+    area_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -46,7 +48,12 @@ def parse_pins(raw: str) -> dict[str, User]:
         if role == "store_manager" and not spec.get("store_id"):
             msg = "a store_manager needs a store_id"
             raise ValueError(msg)
-        users[str(pin)] = User(spec["actor_id"], cast(Role, role), spec.get("store_id"))
+        if spec.get("area_id") and role != "area_manager":
+            msg = "only an area_manager has an area_id"
+            raise ValueError(msg)
+        users[str(pin)] = User(
+            spec["actor_id"], cast(Role, role), spec.get("store_id"), spec.get("area_id")
+        )
     return users
 
 

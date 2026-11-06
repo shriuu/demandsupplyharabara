@@ -46,6 +46,7 @@ from harabhara.contracts import (
     SuggestionState,
 )
 from harabhara.settings import AppConfig, load_config
+from harabhara.settings.areas import load_areas
 from harabhara.settings.contacts import StoreContact, load_contacts
 from harabhara.workflow.approvals import assert_manual_only
 from harabhara.workflow.fallback import STALE_HEADER, Served
@@ -83,6 +84,11 @@ def create_app(
     token_clock: Callable[[], float] | None = None,
 ) -> FastAPI:
     assert_manual_only(config or load_config())  # guardrail 1: refuse to start otherwise
+    areas = load_areas()
+    for pin_user in settings.pins.values():
+        if pin_user.area_id and pin_user.area_id not in areas:
+            msg = f"{pin_user.actor_id} has an unknown area {pin_user.area_id!r}"
+            raise ValueError(msg)
     service = Service(
         storage,
         prices or ports.NotConfiguredPrices(),
@@ -91,6 +97,7 @@ def create_app(
         (config or load_config()).modeling.pipeline.scorecard_days,
         load_contacts(),
         (config or load_config()).feeds.mandi.buying_markets,
+        areas,
     )
     auth = Authenticator(settings, token_clock) if token_clock else Authenticator(settings)
     app = FastAPI(title="HaraBhara Fresh", docs_url=None, redoc_url=None, openapi_url=None)
@@ -123,8 +130,14 @@ def create_app(
             raise HTTPException(429, "too many attempts; wait and try again") from exc
         except AuthError as exc:
             raise HTTPException(401, "wrong PIN") from exc
+        area = areas.get(user.area_id) if user.area_id else None
         return LoginResponse(
-            token=token, role=user.role, actor_id=user.actor_id, store_id=user.store_id
+            token=token,
+            role=user.role,
+            actor_id=user.actor_id,
+            store_id=user.store_id,
+            area_id=user.area_id,
+            area_name=area.name if area else None,
         )
 
     @router.post("/admin/kill-switch")

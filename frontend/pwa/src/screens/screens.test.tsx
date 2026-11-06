@@ -8,6 +8,7 @@ import { installMockFetch } from "../mock/handlers";
 const PIN_FOR: Record<string, string> = {
   "Store manager": "1111",
   "Area manager": "3333",
+  "North area manager": "6666",
   "DC buying lead": "4444",
   "Farmer group": "5555",
 };
@@ -231,6 +232,18 @@ describe("area manager", () => {
     await user.click(screen.getByRole("button", { name: "Yes" }));
     expect(await screen.findByRole("button", { name: /Stop all suggestions/ })).toBeInTheDocument();
     expect(await state()).toBe(false);
+  });
+});
+
+describe("an area manager with their own area", () => {
+  it("is named by area, sees only their stores and cannot stop everything", async () => {
+    await openRole("North area manager");
+    expect(await screen.findByText(/Area manager · North/)).toBeInTheDocument();
+    const nav = within(await screen.findByRole("navigation"));
+    expect(nav.getByRole("button", { name: /North/ })).toBeInTheDocument();
+    expect(nav.queryByRole("button", { name: /All stores together/ })).not.toBeInTheDocument();
+    expect(await screen.findByText("Pick a store above to see its scoreboard.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Stop all suggestions/ })).not.toBeInTheDocument();
   });
 });
 

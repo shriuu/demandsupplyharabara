@@ -40,6 +40,7 @@ from harabhara.contracts import (
     Suggestion,
     SuggestionState,
 )
+from harabhara.settings.areas import Area
 from harabhara.settings.contacts import StoreContact
 from harabhara.sim.recorded import scorecards_from_outcomes
 from harabhara.workflow import audit, fallback
@@ -78,8 +79,10 @@ class Service:
         scorecard_days: int = 28,
         contacts: list[StoreContact] | None = None,
         buying_markets: list[str] | None = None,
+        areas: dict[str, Area] | None = None,
     ) -> None:
         self.storage = storage
+        self._areas = areas or {}
         self._markets = buying_markets or []
         self._contacts = contacts or []
         self.scorecard_days = scorecard_days
@@ -97,10 +100,17 @@ class Service:
         if user.role not in roles:
             raise ApiError(403, "this role cannot use this endpoint")
 
-    @staticmethod
-    def _visible(user: User, s: Suggestion) -> bool:
+    def _area_stores(self, user: User) -> set[str] | None:
+        """The stores an area manager looks after; None means all of them."""
+        if user.role != "area_manager" or not user.area_id:
+            return None
+        area = self._areas.get(user.area_id)
+        return set(area.stores) if area else set()
+
+    def _visible(self, user: User, s: Suggestion) -> bool:
         if user.role == "area_manager":
-            return True
+            stores = self._area_stores(user)
+            return stores is None or s.store_id in stores
         if user.role == "store_manager":
             return s.store_id == user.store_id
         return s.approver_role == user.role
@@ -116,6 +126,8 @@ class Service:
 
     def set_kill_switch(self, user: User, on: bool) -> KillSwitchResponse:
         self.require_role(user, "area_manager")
+        if user.area_id:
+            raise ApiError(403, "only the area manager for all stores can stop every suggestion")
         try:
             self.storage.set_kill_switch(on)
             self.storage.append_audit(audit.kill_switch(on, user.actor_id, self.now()))
@@ -382,24 +394,48 @@ class Service:
 
     def scorecard(self, user: User, scope: str | None) -> Served[Scorecard]:
         self.require_role(user, "area_manager")
-        return fallback.attempt(lambda: _latest_per_scope(self.storage.list_scorecards(scope)))
+        stores = self._area_stores(user)
+
+        def rows() -> list[Scorecard]:
+            found = _latest_per_scope(self.storage.list_scorecards(scope))
+            # a chain-wide card covers stores outside this area, so an area sees its stores only
+            return found if stores is None else [c for c in found if c.scope in stores]
+
+        return fallback.attempt(rows)
 
     def recorded_scorecard(self, user: User) -> Served[Scorecard]:
         """Waste, empty shelves and farmer share from what people recorded, not the data pack."""
         self.require_role(user, "area_manager")
         today, days = self.now().date(), self.scorecard_days
-        return fallback.attempt(
-            lambda: scorecards_from_outcomes(self.storage.list_outcomes(), today, days)
-        )
+        stores = self._area_stores(user)
+
+        def rows() -> list[Scorecard]:
+            records = self.storage.list_outcomes()
+            if stores is not None:
+                records = [r for r in records if r.kind == "closing" and r.store_id in stores]
+            cards = scorecards_from_outcomes(records, today, days)
+            return cards if stores is None else [c for c in cards if c.scope in stores]
+
+        return fallback.attempt(rows)
 
     def contacts(self, user: User) -> list[StoreContact]:
         """Who to call at each store: the area manager only (staff details are not for everyone)."""
         self.require_role(user, "area_manager")
-        return list(self._contacts)
+        stores = self._area_stores(user)
+        return [c for c in self._contacts if stores is None or c.store_id in stores]
 
     def audit_log(self, user: User, suggestion_id: str | None) -> Served[AuditEvent]:
         self.require_role(user, "area_manager")
-        return fallback.attempt(lambda: self.storage.list_audit(suggestion_id))
+        stores = self._area_stores(user)
+
+        def rows() -> list[AuditEvent]:
+            events = self.storage.list_audit(suggestion_id)
+            if stores is None:
+                return events
+            mine = {s.id for s in self.storage.list_suggestions() if s.store_id in stores}
+            return [e for e in events if e.suggestion_id in mine]
+
+        return fallback.attempt(rows)
 
     # ---- outcomes ------------------------------------------------------------------------
 
@@ -451,7 +487,17 @@ class Service:
             store_id, kind = user.store_id, "closing"
         elif user.role == "dc_lead":
             kind = "purchase"
-        return fallback.attempt(lambda: self.storage.list_outcomes(kind, store_id, on))
+        area = self._area_stores(user)
+        if area is not None:
+            if store_id is not None and store_id not in area:
+                raise ApiError(403, "that store is not in your area")
+            kind = "closing"
+
+        def rows() -> list[OutcomeRecord]:
+            found = self.storage.list_outcomes(kind, store_id, on)
+            return found if area is None else [r for r in found if r.store_id in area]
+
+        return fallback.attempt(rows)
 
     # ---- assistant -----------------------------------------------------------------------
 

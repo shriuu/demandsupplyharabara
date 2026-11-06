@@ -65,6 +65,7 @@ class Authenticator:
                     "a": match.actor_id,
                     "r": match.role,
                     "s": match.store_id,
+                    "g": match.area_id,
                     "exp": int(now) + self._s.token_ttl_seconds,
                 }
             ).encode()
@@ -83,7 +84,7 @@ class Authenticator:
             if claims["exp"] < self._clock():
                 raise AuthError("expired")
             role: Role = claims["r"]
-            return User(claims["a"], role, claims["s"])
+            return User(claims["a"], role, claims["s"], claims.get("g"))
         except AuthError:
             raise
         except Exception as exc:
