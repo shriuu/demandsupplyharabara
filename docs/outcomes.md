@@ -18,8 +18,22 @@ ordered, priced or moved.
   machine already reserved). A proposed order or another store's is never touched.
 - Recording keeps working while the kill switch is on: it states a fact, not a suggestion.
 
+## What reads the records now
+The area manager's screen shows **"What stores recorded"** beside the data-pack scoreboard
+(`GET /api/v1/scorecard/recorded`, code in `harabhara/sim/recorded.py`, tests in
+`tests/model/test_recorded_scorecard.py`). Waste, empty shelves and farmer share are always
+together (guardrail 4), over the scorecard window in `config/modeling.yaml`.
+- **Waste** is thrown away out of sold plus thrown away. Units received are not recorded, so this
+  is not the same figure as the data-pack one (binned over received); the screen says so.
+- **Empty shelves** is the share of closing records marked "ran out".
+- **Farmer share** is farmer-group kilos over all kilos the DC recorded, chain-wide only. With no
+  purchases recorded it says "not known" and why. It uses the open owner definition (Q16).
+- Nothing recorded means no scorecard and a plain notice, never zeros.
+
 ## Not done yet
-- Nothing reads these records back. The forecast, the scorecards and farmer share still come from
-  the data pack. Feeding outcomes into the next forecast and the scorecards is the next step.
+- **Forecasts do not learn from the records.** The demand model trains on the data pack. The
+  recorded sold-out flag and units are the right input for the hidden-demand step, but the demo
+  cycles past data days, so mixing November records into that history would be wrong. Do this when
+  the real daily feed replaces the data pack (the records and the feed should then be one source).
 - No screen lists past records, and there is no edit or delete beyond saving again.
 - The step size for entering units (`ENTRY_STEP_UNITS`) is a screen setting, not a business rule.

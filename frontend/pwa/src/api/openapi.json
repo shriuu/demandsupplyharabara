@@ -2302,6 +2302,56 @@
         "summary": "Scorecard"
       }
     },
+    "/api/v1/scorecard/recorded": {
+      "get": {
+        "operationId": "recorded_scorecard_api_v1_scorecard_recorded_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Scorecard"
+                  },
+                  "title": "Response Recorded Scorecard Api V1 Scorecard Recorded Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recorded Scorecard"
+      }
+    },
     "/api/v1/suggestions": {
       "get": {
         "operationId": "suggestions_api_v1_suggestions_get",

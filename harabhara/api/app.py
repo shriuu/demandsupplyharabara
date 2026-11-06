@@ -86,6 +86,7 @@ def create_app(
         prices or ports.NotConfiguredPrices(),
         assistant or ports.NotConfiguredAssistant(),
         clock,
+        (config or load_config()).modeling.pipeline.scorecard_days,
     )
     auth = Authenticator(settings, token_clock) if token_clock else Authenticator(settings)
     app = FastAPI(title="HaraBhara Fresh", docs_url=None, redoc_url=None, openapi_url=None)
@@ -189,6 +190,10 @@ def create_app(
         user: CurrentUser, response: Response, scope: str | None = None
     ) -> list[Scorecard]:
         return _mark(service.scorecard(user, scope), response)
+
+    @router.get("/scorecard/recorded")
+    def recorded_scorecard(user: CurrentUser, response: Response) -> list[Scorecard]:
+        return _mark(service.recorded_scorecard(user), response)
 
     @router.post("/outcomes")
     def record_outcome(body: OutcomeInput, user: CurrentUser) -> OutcomeRecord:

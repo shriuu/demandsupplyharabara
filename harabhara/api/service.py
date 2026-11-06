@@ -36,6 +36,7 @@ from harabhara.contracts import (
     Suggestion,
     SuggestionState,
 )
+from harabhara.sim.recorded import scorecards_from_outcomes
 from harabhara.workflow import audit, fallback
 from harabhara.workflow.approvals import DecisionError, due_for_expiry, may_decide, next_state
 from harabhara.workflow.deadlines import LOCAL_TZ, aware
@@ -59,8 +60,10 @@ class Service:
         prices: ports.PricePort,
         assistant: ports.AssistantPort,
         clock: Callable[[], datetime] | None = None,
+        scorecard_days: int = 28,
     ) -> None:
         self.storage = storage
+        self.scorecard_days = scorecard_days
         self.prices = prices
         self.assistant = assistant
         self._clock = clock or (lambda: datetime.now(LOCAL_TZ))
@@ -288,6 +291,14 @@ class Service:
     def scorecard(self, user: User, scope: str | None) -> Served[Scorecard]:
         self.require_role(user, "area_manager")
         return fallback.attempt(lambda: self.storage.list_scorecards(scope))
+
+    def recorded_scorecard(self, user: User) -> Served[Scorecard]:
+        """Waste, empty shelves and farmer share from what people recorded, not the data pack."""
+        self.require_role(user, "area_manager")
+        today, days = self.now().date(), self.scorecard_days
+        return fallback.attempt(
+            lambda: scorecards_from_outcomes(self.storage.list_outcomes(), today, days)
+        )
 
     def audit_log(self, user: User, suggestion_id: str | None) -> Served[AuditEvent]:
         self.require_role(user, "area_manager")

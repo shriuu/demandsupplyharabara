@@ -12,10 +12,10 @@ import { productName, storeLabel, t, unitOf } from "../i18n/strings";
 import { biggestFirst } from "./priority";
 
 /** Waste, empty shelves and farmer share: always the same three gauges, side by side (G04). */
-export function Scoreboard({ card }: { card: Scorecard }) {
+export function Scoreboard({ card, title }: { card: Scorecard; title?: string }) {
   return (
     <section className="card scoreboard" aria-label={t("area.scoreboard")} data-scope={card.scope}>
-      <h3>{card.scope === "chain" ? t("area.chain") : storeLabel(card.scope)}</h3>
+      <h3>{title ?? (card.scope === "chain" ? t("area.chain") : storeLabel(card.scope))}</h3>
       <div className="gauges">
         <Gauge label="score.waste" icon="bag" value={card.waste_pct} goodWhen="low" />
         <Gauge label="score.stockout" icon="box" value={card.stockout_pct} goodWhen="low" />
@@ -206,6 +206,7 @@ function KillSwitch({ killed, onChange }: { killed: boolean; onChange: (killed: 
 
 export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKilledChange: (killed: boolean) => void }) {
   const scores = useLoad(() => api.scorecard(), []);
+  const recorded = useLoad(() => api.recordedScorecard(), []);
   const [scope, setScope] = useState("chain");
   const cards = scores.state.status === "ready" ? scores.state.data : [];
   const chain = cards.find((c) => c.scope === "chain") ?? (cards.length === 1 ? cards[0] : undefined);
@@ -224,6 +225,24 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
         <>
           <Scoreboard card={shown} />
           <StoreNote card={shown} chain={chain} />
+        </>
+      )}
+      {recorded.state.status === "ready" && (
+        <>
+          <h3>{t("area.recorded")}</h3>
+          {(() => {
+            const mine = recorded.state.data.find((c) => c.scope === scope);
+            return mine ? (
+              <>
+                <Scoreboard card={mine} title={t("area.recorded")} />
+                <p className="small">{t("area.recordedNote")}</p>
+              </>
+            ) : (
+              <p className="notice" role="status">
+                {t("area.recordedNone")}
+              </p>
+            );
+          })()}
         </>
       )}
       <h2>
