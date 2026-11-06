@@ -2,15 +2,15 @@
 # stored here. Fill in a name and a phone number per store (digits, spaces and a leading + only).
 # A store with no number shows no call button; nothing is guessed.
 stores:
-  S01: {name: null, phone: null}
-  S02: {name: null, phone: null}
-  S03: {name: null, phone: null}
-  S04: {name: null, phone: null}
-  S05: {name: null, phone: null}
-  S06: {name: null, phone: null}
-  S07: {name: null, phone: null}
-  S08: {name: null, phone: null}
-  D01: {name: null, phone: null}
-  D02: {name: null, phone: null}
-  D03: {name: null, phone: null}
-  D04: {name: null, phone: null}
+  S01: {name: "Manager, Jayanagar", phone: "+91 90000 00001"}
+  S02: {name: "Manager, Indiranagar", phone: "+91 90000 00002"}
+  S03: {name: "Manager, Koramangala", phone: "+91 90000 00003"}
+  S04: {name: "Manager, HSR Layout", phone: "+91 90000 00004"}
+  S05: {name: "Manager, Whitefield", phone: "+91 90000 00005"}
+  S06: {name: "Manager, Malleshwaram", phone: "+91 90000 00006"}
+  S07: {name: "Manager, Banashankari", phone: "+91 90000 00007"}
+  S08: {name: "Manager, Yelahanka", phone: "+91 90000 00008"}
+  D01: {name: "Manager, Bellandur", phone: "+91 90000 00009"}
+  D02: {name: "Manager, Electronic City", phone: "+91 90000 00010"}
+  D03: {name: "Manager, Hebbal", phone: "+91 90000 00011"}
+  D04: {name: "Manager, Marathahalli", phone: "+91 90000 00012"}

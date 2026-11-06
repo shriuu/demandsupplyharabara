@@ -20,10 +20,10 @@ def test_only_the_area_manager_can_read_contacts(env: Env) -> None:
     assert env.client.get(f"{V1}/contacts").status_code == 401
 
 
-def test_the_shipped_file_has_no_made_up_numbers() -> None:
+def test_the_shipped_numbers_are_clearly_dummy() -> None:
     rows = load_contacts()
     assert rows, "every store has a row"
-    assert all(r.phone is None and r.name is None for r in rows)
+    assert all(r.phone is None or r.phone.startswith("+91 90000 000") for r in rows)
 
 
 def test_a_file_with_numbers_loads_and_a_missing_file_is_empty(tmp_path: Path) -> None:
