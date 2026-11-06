@@ -40,7 +40,7 @@ def test_last_day_stock_is_marked_down_from_opening_by_the_playbook_step() -> No
 def test_leafy_greens_get_a_second_step_after_the_evening_hour() -> None:
     steps = _plan(sku_id="P13", category="Leafy greens", price=13.0, unit_cost=6.0)
     assert [s.step_pct for s in steps] == [RULES.step_1_pct, RULES.step_2_pct]
-    assert steps[1].start == f"{RULES.step_2_after_hour:02d}:00"
+    assert steps[1].start == f"{RULES.step_2_start_hour:02d}:00"
 
 
 def test_bananas_get_the_second_step_but_tomatoes_do_not() -> None:

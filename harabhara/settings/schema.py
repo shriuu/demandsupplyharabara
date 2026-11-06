@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Hour = Field(ge=0, le=24)
 
@@ -49,12 +49,21 @@ class Markdown(_Strict):
     step_1_when: str
     step_2_pct: float = Field(gt=0, lt=100)
     step_2_after_hour: int = Hour
+    step_2_start_hour: int = (
+        Hour  # when the 50% step is actually proposed; never before step_2_after_hour
+    )
     step_2_categories_or_skus: list[str]
     floor_basis_before_step_2: str
     approver_default: str
     area_manager_approval_if_share_of_days_delivery_above: float = Field(ge=0, le=1)
     earlier_start_allowed: bool | None
     promo_pct_in_data: float = Field(ge=0, lt=100)
+
+    @model_validator(mode="after")
+    def _second_step_not_before_the_rule(self) -> Markdown:
+        if self.step_2_start_hour < self.step_2_after_hour:
+            raise ValueError("step_2_start_hour cannot be before step_2_after_hour")
+        return self
 
 
 class Transfer(_Strict):

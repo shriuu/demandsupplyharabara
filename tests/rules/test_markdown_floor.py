@@ -48,3 +48,9 @@ def test_an_early_markdown_below_cost_is_not_suggested() -> None:
         expected_unsold_second_day=30.0,
     )
     assert early == []
+
+
+def test_the_two_steps_never_start_in_the_same_hour_on_a_below_cost_product() -> None:
+    first, second = _steps(price=40.0, cost=35.0, sku_id="P04", category="Fruit")[:2]
+    assert first.start < second.start
+    assert second.start >= f"{RULES.step_2_after_hour:02d}:00"
