@@ -2,7 +2,7 @@
 
 The area manager can call a store's manager from the Area screen: pick a store, tap the green call button.
 
-- Numbers live in `config/contacts.yaml` (store id, optional name, optional phone). The file ships **empty**: this is a synthetic project and no real people or numbers are stored. Fill it in per store; a store without a number shows a short note instead of a button.
+- Numbers live in `config/contacts.yaml` (store id, optional name, optional phone). The file ships with **dummy** numbers (all `+91 90000 000nn`, not real) and generic names so the call buttons can be tried; this is a synthetic project and no real people or numbers are stored. Replace them with real ones. Fill it in per store; a store without a number shows a short note instead of a button.
 - A phone is digits, spaces and an optional leading `+` only. Anything else is refused when the app starts.
 - Only the area manager can read `GET /api/v1/contacts`. Other roles get 403.
 - The button is a plain `tel:` link: the phone dials, the app records nothing.
