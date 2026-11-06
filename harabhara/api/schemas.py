@@ -79,6 +79,17 @@ class DcTotals(_Body):
     stale: bool
 
 
+class StoreOrder(_Body):
+    """One store's order of one product: what the DC would send there."""
+
+    store_id: str
+    area_id: str | None
+    area_name: str | None
+    confirmed_units: float
+    waiting_units: float
+    rejected: bool
+
+
 class ProductOrders(_Body):
     """What the stores have ordered of one product for the DC to buy."""
 
@@ -88,6 +99,7 @@ class ProductOrders(_Body):
     stores_decided: int
     stores_waiting: int
     stores_rejected: int
+    stores: list[StoreOrder]
 
 
 class BoughtRow(_Body):

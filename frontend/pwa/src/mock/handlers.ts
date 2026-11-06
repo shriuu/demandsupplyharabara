@@ -116,18 +116,26 @@ export function createMockApi() {
       const denied = need("dc_lead");
       if (denied) return denied;
       const orders = items.filter((s) => s.payload.kind === "order" && s.state !== "expired");
+      const mockArea = (id: string) => (["S06", "S08", "D03"].includes(id) ? ["north", "North"] : ["S05", "D01", "D04"].includes(id) ? ["east", "East"] : ["south_central", "South and central"]);
+      const lines = new Map<string, Map<string, { store_id: string; area_id: string; area_name: string; confirmed_units: number; waiting_units: number; rejected: boolean }>>();
       const bySku = new Map<string, { confirmed: number; waiting: number; decided: number; waitingN: number; rejected: number }>();
       for (const s of orders) {
         const units = (s.payload as { recommended_units: number }).recommended_units;
         const row = bySku.get(s.sku_id) ?? { confirmed: 0, waiting: 0, decided: 0, waitingN: 0, rejected: 0 };
-        if (s.state === "proposed") { row.waiting += units; row.waitingN += 1; }
-        else if (s.state === "rejected") row.rejected += 1;
-        else { row.confirmed += units; row.decided += 1; }
+        const [area_id, area_name] = mockArea(s.store_id);
+        const perStore = lines.get(s.sku_id) ?? new Map();
+        const line = perStore.get(s.store_id) ?? { store_id: s.store_id, area_id, area_name, confirmed_units: 0, waiting_units: 0, rejected: false };
+        if (s.state === "proposed") { row.waiting += units; row.waitingN += 1; line.waiting_units += units; }
+        else if (s.state === "rejected") { row.rejected += 1; line.rejected = true; }
+        else { row.confirmed += units; row.decided += 1; line.confirmed_units += units; }
+        perStore.set(s.store_id, line);
+        lines.set(s.sku_id, perStore);
         bySku.set(s.sku_id, row);
       }
       const products = [...bySku.entries()].map(([sku_id, r]) => ({
         sku_id, confirmed_units: r.confirmed, waiting_units: r.waiting,
         stores_decided: r.decided, stores_waiting: r.waitingN, stores_rejected: r.rejected,
+        stores: [...(lines.get(sku_id)?.values() ?? [])],
       }));
       const bought = outcomes
         .filter((o) => o.kind === "purchase" && o.units_bought)

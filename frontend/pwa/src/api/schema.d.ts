@@ -705,6 +705,8 @@ export interface components {
             confirmed_units: number;
             /** Sku Id */
             sku_id: string;
+            /** Stores */
+            stores: components["schemas"]["StoreOrder"][];
             /** Stores Decided */
             stores_decided: number;
             /** Stores Rejected */
@@ -824,6 +826,24 @@ export interface components {
             phone?: string | null;
             /** Store Id */
             store_id: string;
+        };
+        /**
+         * StoreOrder
+         * @description One store's order of one product: what the DC would send there.
+         */
+        StoreOrder: {
+            /** Area Id */
+            area_id: string | null;
+            /** Area Name */
+            area_name: string | null;
+            /** Confirmed Units */
+            confirmed_units: number;
+            /** Rejected */
+            rejected: boolean;
+            /** Store Id */
+            store_id: string;
+            /** Waiting Units */
+            waiting_units: number;
         };
         /** Suggestion */
         Suggestion: {

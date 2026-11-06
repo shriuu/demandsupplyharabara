@@ -1060,6 +1060,13 @@
             "title": "Sku Id",
             "type": "string"
           },
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/StoreOrder"
+            },
+            "title": "Stores",
+            "type": "array"
+          },
           "stores_decided": {
             "title": "Stores Decided",
             "type": "integer"
@@ -1083,7 +1090,8 @@
           "waiting_units",
           "stores_decided",
           "stores_waiting",
-          "stores_rejected"
+          "stores_rejected",
+          "stores"
         ],
         "title": "ProductOrders",
         "type": "object"
@@ -1372,6 +1380,60 @@
           "store_id"
         ],
         "title": "StoreContact",
+        "type": "object"
+      },
+      "StoreOrder": {
+        "additionalProperties": false,
+        "description": "One store's order of one product: what the DC would send there.",
+        "properties": {
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Id"
+          },
+          "area_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Name"
+          },
+          "confirmed_units": {
+            "title": "Confirmed Units",
+            "type": "number"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "boolean"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          },
+          "waiting_units": {
+            "title": "Waiting Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "store_id",
+          "area_id",
+          "area_name",
+          "confirmed_units",
+          "waiting_units",
+          "rejected"
+        ],
+        "title": "StoreOrder",
         "type": "object"
       },
       "Suggestion": {
