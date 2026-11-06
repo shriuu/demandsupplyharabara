@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from harabhara.contracts import Approval, AuditEvent, Suggestion
+from harabhara.contracts import Approval, AuditEvent, OutcomeRecord, Suggestion
 
 _ACTION_EVENT = {"approve": "approved", "edit": "edited", "reject": "rejected"}
 
@@ -63,3 +63,25 @@ def expired(suggestion: Suggestion, at: datetime) -> AuditEvent:
 
 def kill_switch(on: bool, actor: str, at: datetime) -> AuditEvent:
     return AuditEvent(id=_new_id(), at=at, type="kill_switch", actor=actor, data={"on": on})
+
+
+def outcome(record: OutcomeRecord) -> AuditEvent:
+    """One event per submission, so a correction leaves the first entry in the history."""
+    return AuditEvent(
+        id=_new_id(),
+        at=record.recorded_at,
+        type="outcome",
+        suggestion_id=record.suggestion_id,
+        actor=record.recorded_by,
+        data={
+            "kind": record.kind,
+            "on": record.on.isoformat(),
+            "store_id": record.store_id,
+            "sku_id": record.sku_id,
+            "units_sold": record.units_sold,
+            "units_wasted": record.units_wasted,
+            "sold_out": record.sold_out,
+            "units_bought": record.units_bought,
+            "source": record.source,
+        },
+    )

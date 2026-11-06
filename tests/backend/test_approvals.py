@@ -165,6 +165,7 @@ def test_the_only_state_changing_routes_are_the_documented_ones(env: Env) -> Non
         ("POST", "/api/v1/admin/kill-switch"),
         ("POST", "/api/v1/suggestions/{suggestion_id}/decision"),
         ("POST", "/api/v1/assistant/ask"),
+        ("POST", "/api/v1/outcomes"),  # a person enters what happened; moves nothing
     }
 
 

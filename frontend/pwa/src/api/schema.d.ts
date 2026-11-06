@@ -140,6 +140,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/outcomes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcomes */
+        get: operations["outcomes_api_v1_outcomes_get"];
+        put?: never;
+        /** Record Outcome */
+        post: operations["record_outcome_api_v1_outcomes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/prices": {
         parameters: {
             query?: never;
@@ -479,6 +497,77 @@ export interface components {
             range: components["schemas"]["Range"];
             /** Recommended Units */
             recommended_units: number;
+        };
+        /**
+         * OutcomeInput
+         * @description What a person enters. Who and when come from the sign-in and the server clock.
+         */
+        OutcomeInput: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "closing" | "purchase";
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Sku Id */
+            sku_id: string;
+            /** Sold Out */
+            sold_out?: boolean | null;
+            /** Source */
+            source?: ("farmer_group" | "spot") | null;
+            /** Store Id */
+            store_id?: string | null;
+            /** Suggestion Id */
+            suggestion_id?: string | null;
+            /** Units Bought */
+            units_bought?: number | null;
+            /** Units Sold */
+            units_sold?: number | null;
+            /** Units Wasted */
+            units_wasted?: number | null;
+        };
+        /**
+         * OutcomeRecord
+         * @description Entered by a person after the fact: a store's closing counts, or what the DC bought.
+         */
+        OutcomeRecord: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "closing" | "purchase";
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+            /** Recorded By */
+            recorded_by: string;
+            /** Sku Id */
+            sku_id: string;
+            /** Sold Out */
+            sold_out?: boolean | null;
+            /** Source */
+            source?: ("farmer_group" | "spot") | null;
+            /** Store Id */
+            store_id?: string | null;
+            /** Suggestion Id */
+            suggestion_id?: string | null;
+            /** Units Bought */
+            units_bought?: number | null;
+            /** Units Sold */
+            units_sold?: number | null;
+            /** Units Wasted */
+            units_wasted?: number | null;
         };
         /**
          * PriceQuote
@@ -995,6 +1084,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    outcomes_api_v1_outcomes_get: {
+        parameters: {
+            query?: {
+                kind?: ("closing" | "purchase") | null;
+                store_id?: string | null;
+                date?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeRecord"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_outcome_api_v1_outcomes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutcomeInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeRecord"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

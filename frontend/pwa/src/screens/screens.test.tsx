@@ -132,6 +132,29 @@ describe("store manager evening", () => {
   });
 });
 
+describe("store manager closing", () => {
+  it("records how a decided order went, and the order leaves the list", async () => {
+    const user = await openRole("Store manager");
+    await openProduct(user, "Tomato");
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click(await screen.findByRole("button", { name: /Closing/ }));
+    await openProduct(user, "Tomato");
+    for (let i = 0; i < 3; i++) await user.click(screen.getByRole("button", { name: "Sold: More" }));
+    await user.click(screen.getByRole("button", { name: /Yes, it ran out/ }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mock.outcomes).toHaveLength(1));
+    expect(mock.outcomes[0]).toMatchObject({
+      kind: "closing",
+      store_id: "S01",
+      units_sold: 3,
+      units_wasted: 0,
+      sold_out: true,
+      suggestion_id: "s-order-tomato",
+    });
+    expect(await screen.findByText("No approved orders to close yet.")).toBeInTheDocument();
+  });
+});
+
 describe("area manager", () => {
   it("shows the scoreboard with all three measures beside the queue", async () => {
     await openRole("Area manager");
@@ -162,6 +185,22 @@ describe("dc lead", () => {
     expect(await screen.findByText("Price unavailable")).toBeInTheDocument();
     expect(screen.getByText("Buy less on the spot market")).toBeInTheDocument();
     expect(screen.getAllByText(/Mock price feed/).length).toBeGreaterThan(0);
+  });
+});
+
+describe("dc lead purchases", () => {
+  it("records what came from farmer groups and from the mandi, as a record only", async () => {
+    const user = await openRole("DC buying lead");
+    expect(await screen.findByText("What you bought today")).toBeInTheDocument();
+    const tile = (await screen.findAllByRole("button", { name: /Tomato/ })).at(-1) as HTMLElement;
+    await user.click(tile);
+    for (let i = 0; i < 2; i++) await user.click(screen.getByRole("button", { name: "From the mandi: More" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mock.outcomes).toHaveLength(2));
+    expect(mock.outcomes.map((o) => [o.source, o.units_bought])).toEqual([
+      ["farmer_group", 0],
+      ["spot", 10],
+    ]);
   });
 });
 

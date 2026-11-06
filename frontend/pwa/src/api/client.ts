@@ -8,6 +8,8 @@ import type {
   Health,
   KillSwitchResponse,
   LoginResponse,
+  OutcomeInput,
+  OutcomeRecord,
   PriceQuote,
   Role,
   Scorecard,
@@ -85,6 +87,8 @@ export const api = {
   prices: () => request<PriceQuote[]>("/prices"),
   farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),
   scorecard: () => request<Scorecard[]>("/scorecard"),
+  recordOutcome: (body: OutcomeInput) =>
+    request<OutcomeRecord>("/outcomes", { method: "POST", body: JSON.stringify(body) }),
   setKillSwitch: (on: boolean) =>
     request<KillSwitchResponse>("/admin/kill-switch", {
       method: "POST",

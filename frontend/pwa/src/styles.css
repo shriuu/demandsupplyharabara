@@ -137,3 +137,11 @@ p { margin: 4px 0; }
 .tiles-2 .day-row { grid-template-columns: 1fr; gap: 2px; }
 .tiles-2 .total-card.farmer-head { flex-wrap: wrap; justify-content: center; }
 @media (max-width: 340px) { .tiles-2 { grid-template-columns: 1fr; } }
+
+/* Entering what happened */
+.counter { width: 100%; }
+.counter-label { font-weight: 800; margin: 8px 0 2px; }
+.counter-value { min-width: 96px; display: grid; place-items: center; text-align: center; }
+.counter-value strong { font-size: 1.8rem; }
+.btn-dim { opacity: 0.4; }
+.buy-row { display: grid; gap: 8px; }

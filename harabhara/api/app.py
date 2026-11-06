@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import date, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
@@ -26,6 +26,7 @@ from harabhara.api.schemas import (
     KillSwitchResponse,
     LoginRequest,
     LoginResponse,
+    OutcomeInput,
 )
 from harabhara.api.service import ApiError, Service
 from harabhara.api.settings import ApiSettings, User
@@ -35,6 +36,7 @@ from harabhara.contracts import (
     AuditEvent,
     FarmerVolumeForecast,
     Forecast,
+    OutcomeRecord,
     PriceQuote,
     Projection,
     Role,
@@ -187,6 +189,20 @@ def create_app(
         user: CurrentUser, response: Response, scope: str | None = None
     ) -> list[Scorecard]:
         return _mark(service.scorecard(user, scope), response)
+
+    @router.post("/outcomes")
+    def record_outcome(body: OutcomeInput, user: CurrentUser) -> OutcomeRecord:
+        return service.record_outcome(user, body)
+
+    @router.get("/outcomes")
+    def outcomes(
+        user: CurrentUser,
+        response: Response,
+        kind: Literal["closing", "purchase"] | None = None,
+        store_id: str | None = None,
+        on: Annotated[date | None, Query(alias="date")] = None,
+    ) -> list[OutcomeRecord]:
+        return _mark(service.list_outcomes(user, kind, store_id, on), response)
 
     @router.post("/assistant/ask")
     def ask(body: AskRequest, user: CurrentUser) -> AskResponse:

@@ -44,7 +44,8 @@ the playbook does not give is empty and marked "source: OWNER". `docs/traceabili
 rule to its code and test. Changing a limit means editing config and passing the tests.
 
 ## 6. Not done, in order of importance
-1. **Turn on the daily schedule.** The code and Terraform are written and checked but off: see `docs/daily_job.md`. It cycles past demo days; a real daily data feed is still needed for live use.
+1. **Use the recorded outcomes** (`docs/outcomes.md`): stores and the DC now record what happened, but nothing reads it back into forecasts or scorecards yet.
+2. **Turn on the daily schedule.** The code and Terraform are written and checked but off: see `docs/daily_job.md`. It cycles past demo days; a real daily data feed is still needed for live use.
 2. **Owner decisions** in `docs/owner_questions.md`: value of a lost sale, what counts as waste,
    what happens if a manager misses the deadline, how farmer share is defined, recall procedure.
 3. **A weather forecast source.** The model uses observed weather standing in for a forecast.
