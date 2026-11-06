@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
 import type { PriceQuote } from "../api/types";
+import { Counter } from "../components/Counter";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { RangeBar } from "../components/RangeBar";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
+import { ENTRY_STEP_UNITS } from "../config";
+import { todayIso } from "../dates";
 import { productName, t, unitOf } from "../i18n/strings";
 
 /** Never shows a number for an unavailable price (guardrails 11, 12). */
@@ -37,6 +41,81 @@ export function PriceCard({ quote }: { quote: PriceQuote }) {
         <p className="small source">{t("price.source", { source: quote.source })}</p>
       </div>
     </li>
+  );
+}
+
+/** The DC lead notes what was really bought, split by where it came from. A record only. */
+function Purchases({ skus }: { skus: string[] }) {
+  const [openSku, setOpenSku] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string[]>([]);
+  if (!skus.length) return null;
+  return (
+    <>
+      <h2>
+        <Icon name="tick" /> {t("dc.bought")}
+      </h2>
+      <p className="small">{t("dc.boughtNote")}</p>
+      {openSku ? (
+        <PurchaseCard
+          key={openSku}
+          sku={openSku}
+          onBack={() => setOpenSku(null)}
+          onSaved={() => {
+            setSaved((s) => [...s, openSku]);
+            setOpenSku(null);
+          }}
+        />
+      ) : (
+        <ul className="tiles-2">
+          {skus.map((sku) => (
+            <li key={sku}>
+              <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpenSku(sku)}>
+                <ProductIcon skuId={sku} size={56} />
+                <span className="tile-name">{productName(sku)}</span>
+                {saved.includes(sku) && (
+                  <span className="tile-amount">
+                    <Icon name="tick" size={18} /> {t("dc.saved")}
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+function PurchaseCard({ sku, onBack, onSaved }: { sku: string; onBack: () => void; onSaved: () => void }) {
+  const [fpo, setFpo] = useState(0);
+  const [spot, setSpot] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const unit = unitOf(sku);
+  async function save() {
+    setFailed(false);
+    try {
+      const base = { kind: "purchase", on: todayIso(), sku_id: sku } as const;
+      await api.recordOutcome({ ...base, units_bought: fpo, source: "farmer_group" });
+      await api.recordOutcome({ ...base, units_bought: spot, source: "spot" });
+      onSaved();
+    } catch {
+      setFailed(true);
+    }
+  }
+  return (
+    <article className="card order-card">
+      <button className="btn btn-plain" onClick={onBack}>
+        <Icon name="back" size={28} /> {t("order.back")}
+      </button>
+      <ProductIcon skuId={sku} size={96} />
+      <h2>{productName(sku)}</h2>
+      <Counter label={t("dc.fpo")} value={fpo} step={ENTRY_STEP_UNITS} unit={unit} onChange={setFpo} />
+      <Counter label={t("dc.spot")} value={spot} step={ENTRY_STEP_UNITS} unit={unit} onChange={setSpot} />
+      {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
+      <button className="btn btn-yes" style={{ width: "100%" }} onClick={() => void save()}>
+        <Icon name="tick" size={40} /> {t("closing.save")}
+      </button>
+    </article>
   );
 }
 
@@ -77,6 +156,8 @@ export function DcScreen() {
             </ul>
           );
         })()}
+
+      {totals.state.status === "ready" && <Purchases skus={totals.state.data.totals.map((r) => r.sku_id)} />}
 
       <h2>
         <Icon name="coin" /> {t("dc.prices")}

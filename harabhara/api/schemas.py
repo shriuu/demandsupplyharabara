@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from harabhara.contracts import Range, Role, ThinHistoryFlag
 
@@ -74,3 +75,18 @@ class DcTotals(_Body):
     totals: list[ProductTotal]
     trimming: list[TrimmingHint]
     stale: bool
+
+
+class OutcomeInput(_Body):
+    """What a person enters. Who and when come from the sign-in and the server clock."""
+
+    kind: Literal["closing", "purchase"]
+    on: date
+    store_id: str | None = None
+    sku_id: str
+    units_sold: float | None = Field(default=None, ge=0)
+    units_wasted: float | None = Field(default=None, ge=0)
+    sold_out: bool | None = None
+    units_bought: float | None = Field(default=None, ge=0)
+    source: Literal["farmer_group", "spot"] | None = None
+    suggestion_id: str | None = None

@@ -18,6 +18,7 @@ from harabhara.api.storage import (
     AlreadyExistsError,
     farmer_key,
     forecast_key,
+    outcome_key,
     price_key,
     projection_key,
     scorecard_key,
@@ -28,6 +29,7 @@ from harabhara.contracts import (
     AuditEvent,
     FarmerVolumeForecast,
     Forecast,
+    OutcomeRecord,
     PriceQuote,
     Projection,
     Scorecard,
@@ -45,6 +47,7 @@ FARMER_FORECASTS = "farmer_forecasts"
 SCORECARDS = "scorecards"
 TRIMMING = "trimming"
 PROJECTIONS = "projections"
+OUTCOMES = "outcomes"
 CONTROL = "control"
 KILL_SWITCH_DOC = "kill_switch"
 
@@ -181,6 +184,18 @@ class FirestoreStorage:
         self, store_id: str | None = None, sku_id: str | None = None
     ) -> list[Projection]:
         return self._stream(PROJECTIONS, Projection, store_id=store_id, sku_id=sku_id)
+
+    # outcomes
+    def put_outcome(self, record: OutcomeRecord) -> None:
+        self._set_all(OUTCOMES, [(outcome_key(record), record)])
+
+    def list_outcomes(
+        self, kind: str | None = None, store_id: str | None = None, on: date | None = None
+    ) -> list[OutcomeRecord]:
+        rows = self._stream(
+            OUTCOMES, OutcomeRecord, kind=kind, store_id=store_id, on=on.isoformat() if on else None
+        )
+        return sorted(rows, key=lambda r: (r.on, r.store_id or "", r.sku_id, r.source or ""))
 
     # control
     def kill_switch_on(self) -> bool:

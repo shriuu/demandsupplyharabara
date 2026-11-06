@@ -16,3 +16,6 @@ export const MAX_PIN_LENGTH = 8;
 
 /** Dots drawn before anything is typed. The row grows if a longer PIN is entered. */
 export const PIN_DOTS_SHOWN = 6;
+
+/** One tap on the big plus or minus when entering what was bought or sold. */
+export const ENTRY_STEP_UNITS = 5;

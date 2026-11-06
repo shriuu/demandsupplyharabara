@@ -9,6 +9,7 @@ import { AreaScreen } from "./screens/Area";
 import { DcScreen } from "./screens/Dc";
 import { FarmerScreen } from "./screens/Farmer";
 import { Login } from "./screens/Login";
+import { StoreClosing } from "./screens/StoreClosing";
 import { StoreEvening } from "./screens/StoreEvening";
 import { StoreMorning } from "./screens/StoreMorning";
 import { StoreSurplus } from "./screens/StoreSurplus";
@@ -21,11 +22,12 @@ const roleIcons: Record<Role, IconName> = {
   farmer_coordinator: "tractor",
 };
 
-type StoreTab = "evening" | "morning" | "surplus";
+type StoreTab = "evening" | "morning" | "surplus" | "closing";
 const storeTabs: { tab: StoreTab; icon: IconName; label: StringKey }[] = [
   { tab: "evening", icon: "moon", label: "tab.evening" },
   { tab: "morning", icon: "sun", label: "tab.morning" },
   { tab: "surplus", icon: "bag", label: "tab.surplus" },
+  { tab: "closing", icon: "tick", label: "tab.closing" },
 ];
 
 export function App() {
@@ -99,6 +101,7 @@ export function App() {
             {tab === "evening" && <StoreEvening storeId={storeId} />}
             {tab === "morning" && <StoreMorning storeId={storeId} />}
             {tab === "surplus" && <StoreSurplus storeId={storeId} />}
+            {tab === "closing" && <StoreClosing storeId={storeId} />}
           </>
         )}
         {role === "area_manager" && <AreaScreen killed={killed} onKilledChange={setKilled} />}

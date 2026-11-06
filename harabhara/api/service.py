@@ -16,6 +16,7 @@ from harabhara.api.schemas import (
     DcTotals,
     HealthResponse,
     KillSwitchResponse,
+    OutcomeInput,
     ProductTotal,
     TrimmingHint,
 )
@@ -26,6 +27,7 @@ from harabhara.contracts import (
     AuditEvent,
     FarmerVolumeForecast,
     Forecast,
+    OutcomeRecord,
     PriceQuote,
     Projection,
     Range,
@@ -290,6 +292,56 @@ class Service:
     def audit_log(self, user: User, suggestion_id: str | None) -> Served[AuditEvent]:
         self.require_role(user, "area_manager")
         return fallback.attempt(lambda: self.storage.list_audit(suggestion_id))
+
+    # ---- outcomes ------------------------------------------------------------------------
+
+    def record_outcome(self, user: User, body: OutcomeInput) -> OutcomeRecord:
+        """A person enters what really happened: a fact, so the kill switch does not stop it."""
+        if body.kind == "closing":
+            self.require_role(user, "store_manager")
+            if body.store_id != user.store_id:
+                raise ApiError(403, "a store manager records only their own store")
+        else:
+            self.require_role(user, "dc_lead")
+        now = self.now()
+        if body.on > now.date():
+            raise ApiError(422, "that day has not happened yet")
+        try:
+            record = OutcomeRecord(**body.model_dump(), recorded_by=user.actor_id, recorded_at=now)
+        except ValueError as exc:
+            raise ApiError(422, "the numbers do not fit this kind of record") from exc
+        try:
+            self.storage.put_outcome(record)
+            self.storage.append_audit(audit.outcome(record))
+        except Exception as exc:
+            raise ApiError(503, "could not record this") from exc
+        if record.kind == "closing" and record.suggestion_id:
+            self._finish_order(record)
+        return record
+
+    def _finish_order(self, record: OutcomeRecord) -> None:
+        """An approved or edited order of this store and product is done once its day is in."""
+        with contextlib.suppress(Exception):  # the record is already saved; this is a label
+            s = self.storage.get_suggestion(record.suggestion_id or "")
+            if (
+                s is not None
+                and s.store_id == record.store_id
+                and s.sku_id == record.sku_id
+                and s.state in ("approved", "edited")
+            ):
+                self.storage.transition(s.id, s.state, "done")
+
+    def list_outcomes(
+        self, user: User, kind: str | None, store_id: str | None, on: date | None
+    ) -> Served[OutcomeRecord]:
+        self.require_role(user, "store_manager", "dc_lead", "area_manager")
+        if user.role == "store_manager":
+            if store_id not in (None, user.store_id):
+                raise ApiError(403, "a store manager sees only their own store")
+            store_id, kind = user.store_id, "closing"
+        elif user.role == "dc_lead":
+            kind = "purchase"
+        return fallback.attempt(lambda: self.storage.list_outcomes(kind, store_id, on))
 
     # ---- assistant -----------------------------------------------------------------------
 

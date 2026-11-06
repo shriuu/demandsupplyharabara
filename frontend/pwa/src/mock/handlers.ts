@@ -6,6 +6,8 @@ import type {
   Health,
   KillSwitchResponse,
   LoginResponse,
+  OutcomeInput,
+  OutcomeRecord,
   Role,
   Suggestion,
 } from "../api/types";
@@ -33,6 +35,7 @@ export function createMockApi() {
   const tokens = new Map<string, Omit<LoginResponse, "token">>();
   const asked: { suggestion_id: string; question: string }[] = [];
   const decisions: Approval[] = [];
+  const outcomes: OutcomeRecord[] = [];
 
   function handle(method: string, url: string, rawBody?: string, authorization?: string): MockResponse {
     const parsed = new URL(url, "http://mock");
@@ -96,6 +99,18 @@ export function createMockApi() {
       items = items.map((s) => (s.id === found.id ? updated : s));
       return json(updated);
     }
+    if (method === "POST" && path === "/outcomes") {
+      const body = JSON.parse(rawBody ?? "{}") as OutcomeInput;
+      const denied = need(body.kind === "closing" ? "store_manager" : "dc_lead");
+      if (denied) return denied;
+      if (body.kind === "closing" && body.store_id !== user.store_id) return detail(403, "not your store");
+      const record: OutcomeRecord = { ...body, recorded_by: user.actor_id, recorded_at: new Date().toISOString() } as OutcomeRecord;
+      outcomes.push(record);
+      items = items.map((s) =>
+        s.id === body.suggestion_id && (s.state === "approved" || s.state === "edited") ? { ...s, state: "done" } : s,
+      );
+      return json(record);
+    }
     if (method === "GET" && path === "/dc/totals") return need("dc_lead") ?? json(dcTotals);
     if (method === "GET" && path === "/prices") return need("dc_lead") ?? json(prices);
     if (method === "GET" && path === "/farmers/forecast") return need("farmer_coordinator") ?? json(farmerForecast);
@@ -111,7 +126,7 @@ export function createMockApi() {
     return detail(404, "not found");
   }
 
-  return { handle, asked, decisions };
+  return { handle, asked, decisions, outcomes };
 }
 
 /** Replace window.fetch with the mock (browser or jsdom). Returns the mock for assertions. */

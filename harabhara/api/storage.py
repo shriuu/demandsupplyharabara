@@ -14,6 +14,7 @@ from harabhara.contracts import (
     AuditEvent,
     FarmerVolumeForecast,
     Forecast,
+    OutcomeRecord,
     PriceQuote,
     Projection,
     Scorecard,
@@ -73,6 +74,13 @@ class Storage(Protocol):
     ) -> list[Projection]: ...
 
     # control
+    def put_outcome(self, record: OutcomeRecord) -> None:
+        """Replace the record for the same day, store, product and source (audit keeps history)."""
+
+    def list_outcomes(
+        self, kind: str | None = None, store_id: str | None = None, on: date | None = None
+    ) -> list[OutcomeRecord]: ...
+
     def kill_switch_on(self) -> bool: ...
     def set_kill_switch(self, on: bool) -> None: ...
 
@@ -97,6 +105,10 @@ def projection_key(p: Projection) -> str:
     return f"{p.store_id}|{p.sku_id}|{p.as_of.isoformat()}"
 
 
+def outcome_key(r: OutcomeRecord) -> str:
+    return f"{r.kind}|{r.on.isoformat()}|{r.store_id or '-'}|{r.sku_id}|{r.source or '-'}"
+
+
 def scorecard_key(s: Scorecard) -> str:
     return f"{s.scope}|{s.period_start.isoformat()}|{s.period_end.isoformat()}"
 
@@ -115,6 +127,7 @@ class InMemoryStorage:
         self._scorecards: dict[str, Scorecard] = {}
         self._trimming: dict[str, TrimmingSuggestion] = {}
         self._projections: dict[str, Projection] = {}
+        self._outcomes: dict[str, OutcomeRecord] = {}
         self._kill = False
 
     def get_suggestion(self, suggestion_id: str) -> Suggestion | None:
@@ -217,6 +230,19 @@ class InMemoryStorage:
             for p in self._projections.values()
             if store_id in (None, p.store_id) and sku_id in (None, p.sku_id)
         ]
+
+    def put_outcome(self, record: OutcomeRecord) -> None:
+        self._outcomes[outcome_key(record)] = record
+
+    def list_outcomes(
+        self, kind: str | None = None, store_id: str | None = None, on: date | None = None
+    ) -> list[OutcomeRecord]:
+        rows = [
+            r
+            for r in self._outcomes.values()
+            if kind in (None, r.kind) and store_id in (None, r.store_id) and on in (None, r.on)
+        ]
+        return sorted(rows, key=lambda r: (r.on, r.store_id or "", r.sku_id, r.source or ""))
 
     def kill_switch_on(self) -> bool:
         return self._kill

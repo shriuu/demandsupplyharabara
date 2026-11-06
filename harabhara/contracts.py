@@ -235,6 +235,40 @@ class Scorecard(_Frozen):
         return self
 
 
+# ---- what really happened ------------------------------------------------------------------
+
+
+class OutcomeRecord(_Frozen):
+    """Entered by a person after the fact: a store's closing counts, or what the DC bought."""
+
+    kind: Literal["closing", "purchase"]
+    on: date
+    store_id: str | None = None
+    sku_id: str
+    units_sold: float | None = Field(default=None, ge=0)
+    units_wasted: float | None = Field(default=None, ge=0)
+    sold_out: bool | None = None
+    units_bought: float | None = Field(default=None, ge=0)
+    source: Literal["farmer_group", "spot"] | None = None
+    suggestion_id: str | None = None
+    recorded_by: str
+    recorded_at: datetime
+
+    @model_validator(mode="after")
+    def _fits_its_kind(self) -> OutcomeRecord:
+        closing = (self.units_sold, self.units_wasted, self.sold_out)
+        buying = (self.units_bought, self.source)
+        if self.kind == "closing":
+            ok = self.store_id and None not in closing and all(v is None for v in buying)
+            msg = "a closing record needs a store, sold, wasted, sold-out and nothing about buying"
+        else:
+            ok = self.store_id is None and None not in buying and all(v is None for v in closing)
+            msg = "a purchase record needs units bought and a source, and nothing about a store"
+        if not ok:
+            raise ValueError(msg)
+        return self
+
+
 # ---- three-day projection ------------------------------------------------------------------
 
 
