@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dc/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dc Orders */
+        get: operations["dc_orders_api_v1_dc_orders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dc/totals": {
         parameters: {
             query?: never;
@@ -366,6 +383,35 @@ export interface components {
              */
             type: "suggestion_created" | "approved" | "edited" | "rejected" | "expired" | "outcome" | "kill_switch";
         };
+        /** BoughtRow */
+        BoughtRow: {
+            /** Market */
+            market: string | null;
+            /** Sku Id */
+            sku_id: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "farmer_group" | "spot";
+            /** Units */
+            units: number;
+        };
+        /** DcOrders */
+        DcOrders: {
+            /** All Decided */
+            all_decided: boolean;
+            /** Bought */
+            bought: components["schemas"]["BoughtRow"][];
+            /** Markets */
+            markets: string[];
+            /** On */
+            on: string | null;
+            /** Products */
+            products: components["schemas"]["ProductOrders"][];
+            /** Stale */
+            stale: boolean;
+        };
         /** DcTotals */
         DcTotals: {
             /**
@@ -542,6 +588,8 @@ export interface components {
              * @enum {string}
              */
             kind: "closing" | "purchase";
+            /** Market */
+            market?: string | null;
             /**
              * On
              * Format: date
@@ -574,6 +622,11 @@ export interface components {
              * @enum {string}
              */
             kind: "closing" | "purchase";
+            /**
+             * Market
+             * @description the mandi, for spot buying
+             */
+            market?: string | null;
             /**
              * On
              * Format: date
@@ -638,6 +691,24 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "stale" | "unavailable";
+        };
+        /**
+         * ProductOrders
+         * @description What the stores have ordered of one product for the DC to buy.
+         */
+        ProductOrders: {
+            /** Confirmed Units */
+            confirmed_units: number;
+            /** Sku Id */
+            sku_id: string;
+            /** Stores Decided */
+            stores_decided: number;
+            /** Stores Rejected */
+            stores_rejected: number;
+            /** Stores Waiting */
+            stores_waiting: number;
+            /** Waiting Units */
+            waiting_units: number;
         };
         /** ProductTotal */
         ProductTotal: {
@@ -1028,6 +1099,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoreContact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dc_orders_api_v1_dc_orders_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DcOrders"];
                 };
             };
             /** @description Validation Error */

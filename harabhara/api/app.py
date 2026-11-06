@@ -20,6 +20,7 @@ from harabhara.api.auth import (
 from harabhara.api.schemas import (
     AskRequest,
     AskResponse,
+    DcOrders,
     DcTotals,
     HealthResponse,
     KillSwitchRequest,
@@ -89,6 +90,7 @@ def create_app(
         clock,
         (config or load_config()).modeling.pipeline.scorecard_days,
         load_contacts(),
+        (config or load_config()).feeds.mandi.buying_markets,
     )
     auth = Authenticator(settings, token_clock) if token_clock else Authenticator(settings)
     app = FastAPI(title="HaraBhara Fresh", docs_url=None, redoc_url=None, openapi_url=None)
@@ -196,6 +198,10 @@ def create_app(
     @router.get("/scorecard/recorded")
     def recorded_scorecard(user: CurrentUser, response: Response) -> list[Scorecard]:
         return _mark(service.recorded_scorecard(user), response)
+
+    @router.get("/dc/orders")
+    def dc_orders(user: CurrentUser) -> DcOrders:
+        return service.dc_orders(user)
 
     @router.get("/contacts")
     def contacts(user: CurrentUser) -> list[StoreContact]:

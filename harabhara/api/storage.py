@@ -106,7 +106,10 @@ def projection_key(p: Projection) -> str:
 
 
 def outcome_key(r: OutcomeRecord) -> str:
-    return f"{r.kind}|{r.on.isoformat()}|{r.store_id or '-'}|{r.sku_id}|{r.source or '-'}"
+    return (
+        f"{r.kind}|{r.on.isoformat()}|{r.store_id or '-'}|{r.sku_id}|{r.source or '-'}"
+        f"|{r.market or '-'}"
+    )
 
 
 def scorecard_key(s: Scorecard) -> str:

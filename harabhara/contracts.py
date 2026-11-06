@@ -250,6 +250,9 @@ class OutcomeRecord(_Frozen):
     sold_out: bool | None = None
     units_bought: float | None = Field(default=None, ge=0)
     source: Literal["farmer_group", "spot"] | None = None
+    market: str | None = Field(
+        default=None, max_length=60, description="the mandi, for spot buying"
+    )
     suggestion_id: str | None = None
     recorded_by: str
     recorded_at: datetime
@@ -264,6 +267,13 @@ class OutcomeRecord(_Frozen):
         else:
             ok = self.store_id is None and None not in buying and all(v is None for v in closing)
             msg = "a purchase record needs units bought and a source, and nothing about a store"
+        if (
+            ok
+            and self.market is not None
+            and not (self.kind == "purchase" and self.source == "spot")
+        ):
+            ok = False
+            msg = "a market belongs only to spot buying"
         if not ok:
             raise ValueError(msg)
         return self

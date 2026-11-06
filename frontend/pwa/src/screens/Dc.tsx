@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import type { PriceQuote } from "../api/types";
+import type { DcOrders, PriceQuote } from "../api/types";
 import { Counter } from "../components/Counter";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
@@ -45,7 +45,7 @@ export function PriceCard({ quote }: { quote: PriceQuote }) {
 }
 
 /** The DC lead notes what was really bought, split by where it came from. A record only. */
-function Purchases({ skus }: { skus: string[] }) {
+function Purchases({ skus, markets }: { skus: string[]; markets: string[] }) {
   const [openSku, setOpenSku] = useState<string | null>(null);
   const [saved, setSaved] = useState<string[]>([]);
   if (!skus.length) return null;
@@ -59,6 +59,7 @@ function Purchases({ skus }: { skus: string[] }) {
         <PurchaseCard
           key={openSku}
           sku={openSku}
+          markets={markets}
           onBack={() => setOpenSku(null)}
           onSaved={() => {
             setSaved((s) => [...s, openSku]);
@@ -86,9 +87,9 @@ function Purchases({ skus }: { skus: string[] }) {
   );
 }
 
-function PurchaseCard({ sku, onBack, onSaved }: { sku: string; onBack: () => void; onSaved: () => void }) {
+function PurchaseCard({ sku, markets, onBack, onSaved }: { sku: string; markets: string[]; onBack: () => void; onSaved: () => void }) {
   const [fpo, setFpo] = useState(0);
-  const [spot, setSpot] = useState(0);
+  const [spot, setSpot] = useState<Record<string, number>>({});
   const [failed, setFailed] = useState(false);
   const unit = unitOf(sku);
   async function save() {
@@ -96,7 +97,9 @@ function PurchaseCard({ sku, onBack, onSaved }: { sku: string; onBack: () => voi
     try {
       const base = { kind: "purchase", on: todayIso(), sku_id: sku } as const;
       await api.recordOutcome({ ...base, units_bought: fpo, source: "farmer_group" });
-      await api.recordOutcome({ ...base, units_bought: spot, source: "spot" });
+      for (const market of markets) {
+        await api.recordOutcome({ ...base, units_bought: spot[market] ?? 0, source: "spot", market });
+      }
       onSaved();
     } catch {
       setFailed(true);
@@ -110,7 +113,16 @@ function PurchaseCard({ sku, onBack, onSaved }: { sku: string; onBack: () => voi
       <ProductIcon skuId={sku} size={96} />
       <h2>{productName(sku)}</h2>
       <Counter label={t("dc.fpo")} value={fpo} step={ENTRY_STEP_UNITS} unit={unit} onChange={setFpo} />
-      <Counter label={t("dc.spot")} value={spot} step={ENTRY_STEP_UNITS} unit={unit} onChange={setSpot} />
+      {markets.map((market) => (
+        <Counter
+          key={market}
+          label={t("dc.spotAt", { market })}
+          value={spot[market] ?? 0}
+          step={ENTRY_STEP_UNITS}
+          unit={unit}
+          onChange={(n) => setSpot((s) => ({ ...s, [market]: n }))}
+        />
+      ))}
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
       <button className="btn btn-yes" style={{ width: "100%" }} onClick={() => void save()}>
         <Icon name="tick" size={40} /> {t("closing.save")}
@@ -119,11 +131,69 @@ function PurchaseCard({ sku, onBack, onSaved }: { sku: string; onBack: () => voi
   );
 }
 
+/** What the stores have ordered so far, added up per product, and what has been bought. */
+function OrdersSoFar({ orders }: { orders: DcOrders }) {
+  if (!orders.products.length) return <p className="notice" role="status">{t("dc.orderedNone")}</p>;
+  const totalStores = (p: DcOrders["products"][number]) => p.stores_decided + p.stores_waiting + p.stores_rejected;
+  const where = (market: string | null) => market ?? t("dc.fromFpo");
+  return (
+    <>
+      <p className={`notice ${orders.all_decided ? "notice-ok" : ""}`} role="status">
+        <Icon name={orders.all_decided ? "tick" : "clock"} size={28} /> {orders.all_decided ? t("dc.orderedAll") : t("dc.orderedSome")}
+      </p>
+      <ul className="tiles-2">
+        {[...orders.products]
+          .sort((a, b) => b.confirmed_units + b.waiting_units - (a.confirmed_units + a.waiting_units))
+          .map((p) => (
+            <li key={p.sku_id} className="card total-card">
+              <ProductIcon skuId={p.sku_id} size={64} />
+              <div className="grow">
+                <h3>{productName(p.sku_id)}</h3>
+                <p>
+                  <strong className="big-number">{Math.round(p.confirmed_units)}</strong> {unitOf(p.sku_id)}
+                </p>
+                <p className="small">
+                  <TrafficLight light={p.stores_waiting === 0 ? "green" : "amber"} />{" "}
+                  {t("dc.orderedStores", { done: p.stores_decided + p.stores_rejected, total: totalStores(p) })}
+                </p>
+                {p.waiting_units > 0 && (
+                  <p className="small">{t("dc.orderedWaiting", { n: Math.round(p.waiting_units), unit: unitOf(p.sku_id) })}</p>
+                )}
+              </div>
+            </li>
+          ))}
+      </ul>
+      {orders.bought.length > 0 && (
+        <>
+          <h3>{t("dc.boughtSoFar")}</h3>
+          <ul className="plain-list">
+            {orders.bought.map((b) => (
+              <li key={`${b.sku_id}-${b.source}-${b.market ?? ""}`} className="decided-row">
+                <strong>{productName(b.sku_id)}</strong>
+                <span>{t("dc.boughtRow", { units: Math.round(b.units), unit: unitOf(b.sku_id), where: where(b.market) })}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
+  );
+}
+
 export function DcScreen() {
+  const orders = useLoad(() => api.dcOrders(), []);
   const totals = useLoad(() => api.dcTotals(), []);
   const prices = useLoad(() => api.prices(), []);
   return (
     <div className="stack">
+      <h2>
+        <Icon name="tick" /> {t("dc.ordered")}
+      </h2>
+      <p className="small">{t("dc.orderedNote")}</p>
+      {orders.state.status === "loading" && <Loading />}
+      {orders.state.status === "error" && <LoadError onRetry={orders.reload} />}
+      {orders.state.status === "ready" && <OrdersSoFar orders={orders.state.data} />}
+
       <h2>
         <Icon name="box" /> {t("dc.totals")}
       </h2>
@@ -157,7 +227,10 @@ export function DcScreen() {
           );
         })()}
 
-      {totals.state.status === "ready" && <Purchases skus={totals.state.data.totals.map((r) => r.sku_id)} />}
+      {totals.state.status === "ready" && <Purchases
+          skus={totals.state.data.totals.map((r) => r.sku_id)}
+          markets={orders.state.status === "ready" ? orders.state.data.markets : []}
+        />}
 
       <h2>
         <Icon name="coin" /> {t("dc.prices")}

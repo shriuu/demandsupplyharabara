@@ -6,6 +6,8 @@ type S = components["schemas"];
 
 export type Approval = S["Approval"];
 export type AskResponse = S["AskResponse"];
+export type BoughtRow = S["BoughtRow"];
+export type DcOrders = S["DcOrders"];
 export type DcTotals = S["DcTotals"];
 export type FarmerVolumeForecast = S["FarmerVolumeForecast"];
 export type Health = S["HealthResponse"];
@@ -15,6 +17,7 @@ export type MarkdownPayload = S["MarkdownPayload"];
 export type OrderPayload = S["OrderPayload"];
 export type OutcomeInput = S["OutcomeInput"];
 export type OutcomeRecord = S["OutcomeRecord"];
+export type ProductOrders = S["ProductOrders"];
 export type PriceQuote = S["PriceQuote"];
 export type ProductTotal = S["ProductTotal"];
 export type Range = S["Range"];

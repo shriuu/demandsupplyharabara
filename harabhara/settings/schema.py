@@ -292,6 +292,7 @@ class Mandi(_Strict):
     state: str
     district: str
     markets: list[str] = Field(min_length=1)
+    buying_markets: list[str] = Field(min_length=1)
     user_agent: str
     timeout_s: float = Field(gt=0)
     page_limit: int = Field(ge=1, le=1000)

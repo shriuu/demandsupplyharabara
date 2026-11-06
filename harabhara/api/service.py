@@ -13,10 +13,13 @@ from datetime import date, datetime, timedelta
 from harabhara.api import ports
 from harabhara.api.schemas import (
     AskResponse,
+    BoughtRow,
+    DcOrders,
     DcTotals,
     HealthResponse,
     KillSwitchResponse,
     OutcomeInput,
+    ProductOrders,
     ProductTotal,
     TrimmingHint,
 )
@@ -27,6 +30,7 @@ from harabhara.contracts import (
     AuditEvent,
     FarmerVolumeForecast,
     Forecast,
+    OrderPayload,
     OutcomeRecord,
     PriceQuote,
     Projection,
@@ -73,8 +77,10 @@ class Service:
         clock: Callable[[], datetime] | None = None,
         scorecard_days: int = 28,
         contacts: list[StoreContact] | None = None,
+        buying_markets: list[str] | None = None,
     ) -> None:
         self.storage = storage
+        self._markets = buying_markets or []
         self._contacts = contacts or []
         self.scorecard_days = scorecard_days
         self.prices = prices
@@ -225,6 +231,79 @@ class Service:
             return served
         return fallback.fresh_forecasts(served.items, self.now().date())
 
+    def dc_orders(self, user: User) -> DcOrders:
+        """What every store has ordered so far, added up per product, plus what the DC bought.
+
+        Information for the DC lead. Nothing here orders, changes or reduces anything.
+        """
+        self.require_role(user, "dc_lead")
+        served = fallback.attempt(self.storage.list_suggestions)
+        orders = [
+            s for s in served.items if s.payload.kind == "order" and s.state not in ("expired",)
+        ]
+        if not orders:
+            return DcOrders(
+                on=None,
+                products=[],
+                bought=[],
+                markets=self._markets,
+                all_decided=False,
+                stale=served.stale,
+            )
+        day = max(aware(s.created_at).date() for s in orders)
+        todays = [s for s in orders if aware(s.created_at).date() == day]
+        per_sku: dict[str, dict[str, float]] = {}
+        for s in todays:
+            p = s.payload
+            assert isinstance(p, OrderPayload)
+            row = per_sku.setdefault(
+                s.sku_id,
+                {"confirmed": 0.0, "waiting": 0.0, "decided": 0, "waiting_n": 0, "rejected": 0},
+            )
+            if s.state == "proposed":
+                row["waiting"] += p.recommended_units
+                row["waiting_n"] += 1
+            elif s.state == "rejected":
+                row["rejected"] += 1
+            else:  # approved, edited or done
+                units = p.recommended_units
+                if s.state == "edited":
+                    approval = self.storage.get_approval(s.id)
+                    if approval is not None and approval.edited_units is not None:
+                        units = approval.edited_units
+                row["confirmed"] += units
+                row["decided"] += 1
+        products = [
+            ProductOrders(
+                sku_id=sku,
+                confirmed_units=round(r["confirmed"], 1),
+                waiting_units=round(r["waiting"], 1),
+                stores_decided=int(r["decided"]),
+                stores_waiting=int(r["waiting_n"]),
+                stores_rejected=int(r["rejected"]),
+            )
+            for sku, r in sorted(per_sku.items())
+        ]
+        today = self.now().date()
+        bought: dict[tuple[str, str, str | None], float] = {}
+        for rec in self.storage.list_outcomes("purchase", None, today):
+            if rec.source and rec.units_bought:
+                key = (rec.sku_id, rec.source, rec.market)
+                bought[key] = bought.get(key, 0.0) + rec.units_bought
+        return DcOrders(
+            on=day,
+            products=products,
+            bought=[
+                BoughtRow(sku_id=k[0], source=k[1], market=k[2], units=v)
+                for k, v in sorted(
+                    bought.items(), key=lambda kv: (kv[0][0], kv[0][1], kv[0][2] or "")
+                )
+            ],
+            markets=self._markets,
+            all_decided=all(p.stores_waiting == 0 for p in products),
+            stale=served.stale,
+        )
+
     def dc_totals(self, user: User, on: date | None) -> DcTotals:
         self.require_role(user, "dc_lead")
         day = on or self.now().date()
@@ -332,6 +411,8 @@ class Service:
                 raise ApiError(403, "a store manager records only their own store")
         else:
             self.require_role(user, "dc_lead")
+            if body.market is not None and body.market not in self._markets:
+                raise ApiError(422, "that is not one of the markets we buy from")
         now = self.now()
         if body.on > now.date():
             raise ApiError(422, "that day has not happened yet")

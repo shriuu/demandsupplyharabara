@@ -187,6 +187,102 @@
         "title": "AuditEvent",
         "type": "object"
       },
+      "BoughtRow": {
+        "additionalProperties": false,
+        "properties": {
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "farmer_group",
+              "spot"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "units": {
+            "title": "Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sku_id",
+          "source",
+          "market",
+          "units"
+        ],
+        "title": "BoughtRow",
+        "type": "object"
+      },
+      "DcOrders": {
+        "additionalProperties": false,
+        "properties": {
+          "all_decided": {
+            "title": "All Decided",
+            "type": "boolean"
+          },
+          "bought": {
+            "items": {
+              "$ref": "#/components/schemas/BoughtRow"
+            },
+            "title": "Bought",
+            "type": "array"
+          },
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ProductOrders"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on",
+          "products",
+          "bought",
+          "markets",
+          "all_decided",
+          "stale"
+        ],
+        "title": "DcOrders",
+        "type": "object"
+      },
       "DcTotals": {
         "additionalProperties": false,
         "properties": {
@@ -593,6 +689,18 @@
             "title": "Kind",
             "type": "string"
           },
+          "market": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
           "on": {
             "format": "date",
             "title": "On",
@@ -706,6 +814,19 @@
             ],
             "title": "Kind",
             "type": "string"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the mandi, for spot buying",
+            "title": "Market"
           },
           "on": {
             "format": "date",
@@ -903,6 +1024,46 @@
           "status"
         ],
         "title": "PriceQuote",
+        "type": "object"
+      },
+      "ProductOrders": {
+        "additionalProperties": false,
+        "description": "What the stores have ordered of one product for the DC to buy.",
+        "properties": {
+          "confirmed_units": {
+            "title": "Confirmed Units",
+            "type": "number"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "stores_decided": {
+            "title": "Stores Decided",
+            "type": "integer"
+          },
+          "stores_rejected": {
+            "title": "Stores Rejected",
+            "type": "integer"
+          },
+          "stores_waiting": {
+            "title": "Stores Waiting",
+            "type": "integer"
+          },
+          "waiting_units": {
+            "title": "Waiting Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sku_id",
+          "confirmed_units",
+          "waiting_units",
+          "stores_decided",
+          "stores_waiting",
+          "stores_rejected"
+        ],
+        "title": "ProductOrders",
         "type": "object"
       },
       "ProductTotal": {
@@ -1771,6 +1932,52 @@
           }
         },
         "summary": "Contacts"
+      }
+    },
+    "/api/v1/dc/orders": {
+      "get": {
+        "operationId": "dc_orders_api_v1_dc_orders_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcOrders"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dc Orders"
       }
     },
     "/api/v1/dc/totals": {

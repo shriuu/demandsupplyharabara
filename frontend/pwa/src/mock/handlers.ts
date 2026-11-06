@@ -111,6 +111,31 @@ export function createMockApi() {
       );
       return json(record);
     }
+    if (method === "GET" && path === "/dc/orders") {
+      const denied = need("dc_lead");
+      if (denied) return denied;
+      const orders = items.filter((s) => s.payload.kind === "order" && s.state !== "expired");
+      const bySku = new Map<string, { confirmed: number; waiting: number; decided: number; waitingN: number; rejected: number }>();
+      for (const s of orders) {
+        const units = (s.payload as { recommended_units: number }).recommended_units;
+        const row = bySku.get(s.sku_id) ?? { confirmed: 0, waiting: 0, decided: 0, waitingN: 0, rejected: 0 };
+        if (s.state === "proposed") { row.waiting += units; row.waitingN += 1; }
+        else if (s.state === "rejected") row.rejected += 1;
+        else { row.confirmed += units; row.decided += 1; }
+        bySku.set(s.sku_id, row);
+      }
+      const products = [...bySku.entries()].map(([sku_id, r]) => ({
+        sku_id, confirmed_units: r.confirmed, waiting_units: r.waiting,
+        stores_decided: r.decided, stores_waiting: r.waitingN, stores_rejected: r.rejected,
+      }));
+      const bought = outcomes
+        .filter((o) => o.kind === "purchase" && o.units_bought)
+        .map((o) => ({ sku_id: o.sku_id, source: o.source as "spot" | "farmer_group", market: o.market ?? null, units: o.units_bought as number }));
+      return json({
+        on: "2026-10-31", products, bought, markets: ["APMC Yeshwanthpur", "K.R. Market"],
+        all_decided: products.every((p) => p.stores_waiting === 0), stale: false,
+      });
+    }
     if (method === "GET" && path === "/dc/totals") return need("dc_lead") ?? json(dcTotals);
     if (method === "GET" && path === "/prices") return need("dc_lead") ?? json(prices);
     if (method === "GET" && path === "/farmers/forecast") return need("farmer_coordinator") ?? json(farmerForecast);
