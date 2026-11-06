@@ -54,6 +54,16 @@ class ApiError(Exception):
 _DECISION_STATUS = {"not_proposed": 409, "overdue": 409, "mismatch": 422, "illegal": 409}
 
 
+def _latest_per_scope(rows: list[Scorecard]) -> list[Scorecard]:
+    """One scoreboard per store: each daily run adds a period, and only the newest is current."""
+    newest: dict[str, Scorecard] = {}
+    for row in rows:
+        kept = newest.get(row.scope)
+        if kept is None or row.period_end > kept.period_end:
+            newest[row.scope] = row
+    return sorted(newest.values(), key=lambda r: r.scope)
+
+
 class Service:
     def __init__(
         self,
@@ -293,7 +303,7 @@ class Service:
 
     def scorecard(self, user: User, scope: str | None) -> Served[Scorecard]:
         self.require_role(user, "area_manager")
-        return fallback.attempt(lambda: self.storage.list_scorecards(scope))
+        return fallback.attempt(lambda: _latest_per_scope(self.storage.list_scorecards(scope)))
 
     def recorded_scorecard(self, user: User) -> Served[Scorecard]:
         """Waste, empty shelves and farmer share from what people recorded, not the data pack."""

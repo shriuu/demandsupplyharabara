@@ -156,3 +156,24 @@ def test_the_area_manager_sees_a_scorecard_from_what_was_recorded(env: Env) -> N
     assert chain["farmer_share"] == pytest.approx(0.3)
     for pin in ("1111", "4444", "5555"):
         assert env.client.get(f"{V1}/scorecard/recorded", headers=env.login(pin)).status_code == 403
+
+
+def test_the_scoreboard_lists_each_store_once_with_its_newest_period(env: Env) -> None:
+    from harabhara.contracts import Scorecard
+
+    def card(scope: str, end_offset: int, waste: float) -> Scorecard:
+        return Scorecard(
+            scope=scope,
+            period_start=TODAY - timedelta(days=30 - end_offset),
+            period_end=TODAY - timedelta(days=end_offset),
+            waste_pct=waste,
+            stockout_pct=2.0,
+            farmer_share=0.4,
+        )
+
+    env.storage.put_scorecards([card("S1", 2, 9.0), card("S1", 0, 5.0), card("S2", 1, 4.0)])
+    r = env.client.get(f"{V1}/scorecard", headers=env.login("3333"))
+    assert r.status_code == 200
+    got = {row["scope"]: row["waste_pct"] for row in r.json()}
+    assert got == {"S1": 5.0, "S2": 4.0}
+    assert len(r.json()) == 2
