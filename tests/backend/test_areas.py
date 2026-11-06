@@ -156,3 +156,20 @@ def test_the_dc_lead_is_not_limited_by_area() -> None:
     client, _ = build()
     assert client.get(f"{V1}/dc/orders", headers=login(client, "8888")).status_code == 200
     assert NOW  # clock fixed for the whole module
+
+
+def test_the_dc_lead_sees_each_products_order_per_store_and_area() -> None:
+    client, storage = build()
+    for sid, store in (("o1", "S06"), ("o2", "S05"), ("o3", "S01")):
+        storage.create_suggestion(make_suggestion(sid, store))
+    out = client.get(f"{V1}/dc/orders", headers=login(client, "8888")).json()
+    (tomato,) = out["products"]
+    rows = {
+        r["store_id"]: (r["area_id"], r["area_name"], r["waiting_units"]) for r in tomato["stores"]
+    }
+    assert rows == {
+        "S06": ("north", "North", 40),
+        "S05": ("east", "East", 40),
+        "S01": ("south_central", "South and central", 40),
+    }
+    assert tomato["waiting_units"] == sum(r[2] for r in rows.values())

@@ -21,6 +21,7 @@ from harabhara.api.schemas import (
     OutcomeInput,
     ProductOrders,
     ProductTotal,
+    StoreOrder,
     TrimmingHint,
 )
 from harabhara.api.settings import User
@@ -243,6 +244,12 @@ class Service:
             return served
         return fallback.fresh_forecasts(served.items, self.now().date())
 
+    def _area_of(self, store_id: str) -> tuple[str | None, str | None]:
+        for area_id, area in self._areas.items():
+            if store_id in area.stores:
+                return area_id, area.name
+        return None, None
+
     def dc_orders(self, user: User) -> DcOrders:
         """What every store has ordered so far, added up per product, plus what the DC bought.
 
@@ -265,6 +272,7 @@ class Service:
         day = max(aware(s.created_at).date() for s in orders)
         todays = [s for s in orders if aware(s.created_at).date() == day]
         per_sku: dict[str, dict[str, float]] = {}
+        lines: dict[str, dict[str, StoreOrder]] = {}
         for s in todays:
             p = s.payload
             assert isinstance(p, OrderPayload)
@@ -272,11 +280,28 @@ class Service:
                 s.sku_id,
                 {"confirmed": 0.0, "waiting": 0.0, "decided": 0, "waiting_n": 0, "rejected": 0},
             )
+            line = lines.setdefault(s.sku_id, {})
+            area_id, area_name = self._area_of(s.store_id)
+            mine = line.setdefault(
+                s.store_id,
+                StoreOrder(
+                    store_id=s.store_id,
+                    area_id=area_id,
+                    area_name=area_name,
+                    confirmed_units=0.0,
+                    waiting_units=0.0,
+                    rejected=False,
+                ),
+            )
             if s.state == "proposed":
                 row["waiting"] += p.recommended_units
                 row["waiting_n"] += 1
+                line[s.store_id] = mine.model_copy(
+                    update={"waiting_units": round(mine.waiting_units + p.recommended_units, 1)}
+                )
             elif s.state == "rejected":
                 row["rejected"] += 1
+                line[s.store_id] = mine.model_copy(update={"rejected": True})
             else:  # approved, edited or done
                 units = p.recommended_units
                 if s.state == "edited":
@@ -285,6 +310,9 @@ class Service:
                         units = approval.edited_units
                 row["confirmed"] += units
                 row["decided"] += 1
+                line[s.store_id] = mine.model_copy(
+                    update={"confirmed_units": round(mine.confirmed_units + units, 1)}
+                )
         products = [
             ProductOrders(
                 sku_id=sku,
@@ -293,6 +321,7 @@ class Service:
                 stores_decided=int(r["decided"]),
                 stores_waiting=int(r["waiting_n"]),
                 stores_rejected=int(r["rejected"]),
+                stores=sorted(lines[sku].values(), key=lambda o: (o.area_id or "~", o.store_id)),
             )
             for sku, r in sorted(per_sku.items())
         ]

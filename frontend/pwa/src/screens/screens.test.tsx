@@ -280,6 +280,13 @@ describe("dc lead sees what the stores ordered", () => {
     expect(await screen.findByText(/Some stores are still deciding/)).toBeInTheDocument();
     expect(screen.getAllByText(/of \d+ stores decided/).length).toBeGreaterThan(0);
   });
+
+  it("shows, per product, how much goes to each area and store", async () => {
+    await openRole("DC buying lead");
+    await screen.findByText("What the stores ordered");
+    expect((await screen.findAllByText("Send to which area and store")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/South and central|North|East/).length).toBeGreaterThan(0);
+  });
 });
 
 describe("farmer coordinator", () => {

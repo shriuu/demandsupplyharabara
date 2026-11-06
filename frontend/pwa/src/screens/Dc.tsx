@@ -9,7 +9,7 @@ import { RangeBar } from "../components/RangeBar";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
 import { ENTRY_STEP_UNITS } from "../config";
 import { todayIso } from "../dates";
-import { productName, t, unitOf } from "../i18n/strings";
+import { productName, storeLabel, t, unitOf } from "../i18n/strings";
 
 /** Never shows a number for an unavailable price (guardrails 11, 12). */
 export function PriceCard({ quote }: { quote: PriceQuote }) {
@@ -131,6 +131,49 @@ function PurchaseCard({ sku, markets, onBack, onSaved }: { sku: string; markets:
   );
 }
 
+/** Where one product goes: each area's total, and under it each store's amount. Information only. */
+function SendTo({ product }: { product: DcOrders["products"][number] }) {
+  const unit = unitOf(product.sku_id);
+  const groups = new Map<string, { name: string; rows: typeof product.stores }>();
+  for (const row of product.stores) {
+    const key = row.area_id ?? "";
+    const group = groups.get(key) ?? { name: row.area_name ?? "", rows: [] };
+    group.rows.push(row);
+    groups.set(key, group);
+  }
+  return (
+    <details className="send-to">
+      <summary>{t("dc.sendTo")}</summary>
+      {[...groups.entries()].map(([key, group]) => {
+        const sum = group.rows.reduce((n, r) => n + r.confirmed_units, 0);
+        const waiting = group.rows.reduce((n, r) => n + r.waiting_units, 0);
+        return (
+          <div key={key} className="send-area">
+            <p className="send-head">
+              <strong>{group.name}</strong>{" "}
+              <strong>{t("dc.sendRow", { n: Math.round(sum), unit })}</strong>
+              {waiting > 0 && <span className="small"> · {t("dc.sendWaiting", { n: Math.round(waiting), unit })}</span>}
+            </p>
+            <ul className="plain-list">
+              {group.rows.map((r) => (
+                <li key={r.store_id} className="decided-row">
+                  <span>{storeLabel(r.store_id)}</span>
+                  <span>
+                    {r.rejected && r.confirmed_units === 0 && r.waiting_units === 0
+                      ? t("dc.sendRejected")
+                      : t("dc.sendRow", { n: Math.round(r.confirmed_units || r.waiting_units), unit })}
+                    {r.confirmed_units === 0 && r.waiting_units > 0 && <TrafficLight light="amber" />}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </details>
+  );
+}
+
 /** What the stores have ordered so far, added up per product, and what has been bought. */
 function OrdersSoFar({ orders }: { orders: DcOrders }) {
   if (!orders.products.length) return <p className="notice" role="status">{t("dc.orderedNone")}</p>;
@@ -159,6 +202,7 @@ function OrdersSoFar({ orders }: { orders: DcOrders }) {
                 {p.waiting_units > 0 && (
                   <p className="small">{t("dc.orderedWaiting", { n: Math.round(p.waiting_units), unit: unitOf(p.sku_id) })}</p>
                 )}
+                <SendTo product={p} />
               </div>
             </li>
           ))}

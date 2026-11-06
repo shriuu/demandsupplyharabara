@@ -153,3 +153,7 @@ p { margin: 4px 0; }
 .number-input { text-align: center; font-size: 1.8rem; font-weight: 800; min-height: 64px; }
 .btn-dim { opacity: 0.4; }
 .buy-row { display: grid; gap: 8px; }
+.send-to { text-align: left; margin-top: 8px; }
+.send-to summary { cursor: pointer; font-weight: 700; min-height: 48px; display: flex; align-items: center; }
+.send-area { margin-top: 8px; }
+.send-head { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; }

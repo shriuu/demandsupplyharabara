@@ -43,3 +43,7 @@ together (guardrail 4), over the scorecard window in `config/modeling.yaml`.
 - `GET /api/v1/dc/orders` (DC lead only) adds up the newest evening's orders per product. **Confirmed** is what stores approved, or edited to their own amount. **Waiting** is the suggested amount where a store has not decided. Rejected orders add nothing. It is information only: nothing is ordered, changed or reduced from it (guardrails 1, 3).
 - Spot purchases now name the mandi: `APMC Yeshwanthpur` or `K.R. Market`, the two the data pack's purchases use (`config/feeds.yaml`, `buying_markets`). Farmer-group purchases name no market. One record per day, product, source and market.
 - The mandi price feed (`/prices`) is a separate thing: it says what the market charges. Where the DC bought comes only from what the DC lead records.
+
+## DC lead: where each product goes
+
+Each product on the "What the stores ordered" list opens to "Send to which area and store": the area's total, then each store's confirmed amount (or the suggested amount, marked amber, where the store has not decided; "no order" where it rejected). Areas come from `config/areas.yaml`. Information only: it orders and changes nothing, and it never lowers a confirmed farmer-group volume.
