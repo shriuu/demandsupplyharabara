@@ -8,6 +8,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight, type Light } from "../components/Status";
 import { productName, t } from "../i18n/strings";
+import { decideAll } from "./decide";
 import { biggestGroupFirst, groupSteps, type Group } from "./priority";
 
 /** Transfers and starts on the last day are urgent (red); an early markdown is a check (amber). */
@@ -18,19 +19,17 @@ export function lightFor(s: Suggestion): Light {
 
 export function AlertCard({ group, role, onDone }: { group: Group; role: Role; onDone: () => void }) {
   const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
   const first = group.items[0] as Suggestion;
   async function decide(action: "approve" | "reject") {
+    if (busy) return;
     setFailed(false);
-    let done = 0;
-    try {
-      for (const s of group.items) {
-        await api.decide(role, s.id, { action });
-        done += 1;
-      }
-      onDone();
-    } catch {
-      if (done > 0) onDone();
-      else setFailed(true);
+    setBusy(true);
+    const result = await decideAll(role, group.items.map((s) => s.id), { action });
+    if (result === "done") onDone();
+    else {
+      setFailed(true);
+      setBusy(false);
     }
   }
   return (
@@ -40,11 +39,16 @@ export function AlertCard({ group, role, onDone }: { group: Group; role: Role; o
         <ProductIcon skuId={first.sku_id} size={72} />
         <div>
           <h3>{productName(first.sku_id)}</h3>
+          {first.payload.kind === "markdown" && (
+            <p>
+              <Icon name="tag" size={22} /> <strong>{t("alert.markdown")}</strong>
+            </p>
+          )}
           {group.items.map((s) => {
             const p = s.payload as MarkdownPayload | TransferPayload;
             return !("to_store" in p) ? (
-              <p key={s.id}>
-                <Icon name="tag" size={22} /> {t("alert.markdown")} · {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
+              <p key={s.id} className="step">
+                {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
               </p>
             ) : (
               <p key={s.id}>
@@ -62,7 +66,7 @@ export function AlertCard({ group, role, onDone }: { group: Group; role: Role; o
         </div>
       </div>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} />
+      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />
     </li>
   );
 }

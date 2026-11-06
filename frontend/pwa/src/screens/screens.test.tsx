@@ -84,9 +84,24 @@ describe("sign-in", () => {
 describe("store manager evening", () => {
   it("shows the products as tiles, biggest sellers first", async () => {
     await openRole("Store manager");
-    const tiles = await screen.findAllByRole("button", { name: /crates/ });
+    const tiles = await screen.findAllByRole("button", { name: /(Banana|Tomato|Spinach).*\d/ });
     expect(tiles[0]).toHaveTextContent("Banana");
     expect(tiles[1]).toHaveTextContent("Tomato");
+    expect(tiles[0]).not.toHaveTextContent("crates");
+  });
+
+  it("the amount can be typed as a whole number, and letters or points are dropped", async () => {
+    const user = await openRole("Store manager");
+    await openProduct(user, "Tomato");
+    const box = screen.getByRole("textbox", { name: "Amount to order" });
+    await user.clear(box);
+    await user.type(box, "2a5.7");
+    expect(box).toHaveValue("257");
+    await user.type(screen.getByPlaceholderText("Write a reason to save"), "Festival");
+    await user.click(screen.getByRole("button", { name: "Save change" }));
+    await user.click(await screen.findByRole("button", { name: "Yes" })); // a big change asks first
+    await waitFor(() => expect(mock.decisions).toHaveLength(1));
+    expect(mock.decisions[0]).toMatchObject({ action: "edit", edited_units: 257 });
   });
 
   it("accepting sends an approve and goes back to the tiles", async () => {
@@ -153,6 +168,21 @@ describe("store manager closing", () => {
     });
     expect(await screen.findByText("No approved orders to close yet.")).toBeInTheDocument();
   });
+
+  it("big counts are typed in whole numbers, not tapped one at a time", async () => {
+    const user = await openRole("Store manager");
+    await openProduct(user, "Tomato");
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click(await screen.findByRole("button", { name: /Closing/ }));
+    await openProduct(user, "Tomato");
+    const sold = screen.getByRole("textbox", { name: "Sold" });
+    await user.clear(sold);
+    await user.type(sold, "118kg");
+    expect(sold).toHaveValue("118");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mock.outcomes).toHaveLength(1));
+    expect(mock.outcomes[0]).toMatchObject({ units_sold: 118, units_wasted: 0 });
+  });
 });
 
 describe("area manager", () => {
@@ -161,6 +191,23 @@ describe("area manager", () => {
     expect(await screen.findByLabelText("Wasted")).toBeInTheDocument();
     expect(screen.getByLabelText("Empty shelves")).toBeInTheDocument();
     expect(screen.getByLabelText("Farmer share")).toBeInTheDocument();
+  });
+
+  it("a store with a phone number gets a call button; one without says so and shows none", async () => {
+    const user = await openRole("Area manager");
+    await user.click(await screen.findByRole("button", { name: /Jayanagar/ }));
+    const call = await screen.findByRole("link", { name: /Call Test manager/ });
+    expect(call).toHaveAttribute("href", "tel:+919000000001");
+    await user.click(screen.getByRole("button", { name: /Indiranagar/ }));
+    expect(await screen.findByText(/No phone number is set/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Call/ })).not.toBeInTheDocument();
+  });
+
+  it("shows what the stores have already decided", async () => {
+    const user = await openRole("Area manager");
+    expect(await screen.findByText("What stores decided")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Jayanagar/ }));
+    expect(await screen.findByText(/waiting/)).toBeInTheDocument();
   });
 
   it("says when nothing has been recorded yet, instead of showing zeros", async () => {

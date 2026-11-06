@@ -22,7 +22,7 @@ const quote = (over: Partial<PriceQuote>): PriceQuote => ({
 
 describe("Crates", () => {
   it("draws solid crates up to the order and lighter ones up to the high end", () => {
-    const { container } = render(<Crates units={4} range={{ low: 3, likely: 4, high: 6 }} />);
+    const { container } = render(<Crates units={4} range={{ low: 3, likely: 4, high: 6 }} skuId="P01" />);
     expect(container.querySelectorAll('[data-kind="full"]')).toHaveLength(3);
     expect(container.querySelectorAll('[data-kind="maybe-in"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-kind="maybe"]')).toHaveLength(2);
@@ -30,7 +30,7 @@ describe("Crates", () => {
   });
 
   it("keeps the row short for big quantities", () => {
-    const { container } = render(<Crates units={120} range={{ low: 100, likely: 120, high: 150 }} />);
+    const { container } = render(<Crates units={120} range={{ low: 100, likely: 120, high: 150 }} skuId="P01" />);
     expect(container.querySelectorAll(".crate").length).toBeLessThanOrEqual(12);
   });
 });

@@ -1,0 +1,16 @@
+# Who the area manager can call at each store. Synthetic project: no real people or numbers are
+# stored here. Fill in a name and a phone number per store (digits, spaces and a leading + only).
+# A store with no number shows no call button; nothing is guessed.
+stores:
+  S01: {name: null, phone: null}
+  S02: {name: null, phone: null}
+  S03: {name: null, phone: null}
+  S04: {name: null, phone: null}
+  S05: {name: null, phone: null}
+  S06: {name: null, phone: null}
+  S07: {name: null, phone: null}
+  S08: {name: null, phone: null}
+  D01: {name: null, phone: null}
+  D02: {name: null, phone: null}
+  D03: {name: null, phone: null}
+  D04: {name: null, phone: null}

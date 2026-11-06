@@ -114,6 +114,14 @@ export function createMockApi() {
     if (method === "GET" && path === "/dc/totals") return need("dc_lead") ?? json(dcTotals);
     if (method === "GET" && path === "/prices") return need("dc_lead") ?? json(prices);
     if (method === "GET" && path === "/farmers/forecast") return need("farmer_coordinator") ?? json(farmerForecast);
+    if (method === "GET" && path === "/contacts") {
+      // test numbers only: the real file ships empty
+      const rows = [
+        { store_id: "S01", name: "Test manager", phone: "+91 90000 00001" },
+        { store_id: "S02", name: null, phone: null },
+      ];
+      return need("area_manager") ?? json(rows);
+    }
     if (method === "GET" && path === "/scorecard/recorded") return need("area_manager") ?? json([]);
     if (method === "GET" && path === "/scorecard") return need("area_manager") ?? json(scorecards);
     if (method === "POST" && path === "/assistant/ask") {

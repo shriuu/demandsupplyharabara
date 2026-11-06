@@ -37,6 +37,7 @@ class LoadReport:
     forecasts: int = 0
     suggestions_created: int = 0
     suggestions_existing: int = 0
+    suggestions_superseded: int = 0
     suggestions_blocked_by_kill_switch: int = 0
     farmer_forecasts: int = 0
     scorecards: int = 0
@@ -98,7 +99,36 @@ def load_directory(storage: Storage, directory: Path, now: datetime | None = Non
         report.suggestions_created += 1
         with contextlib.suppress(AlreadyExistsError):
             storage.append_audit(audit.suggestion_created(s, at, "loader"))
+    if not killed:
+        report.suggestions_superseded = _retire_older(storage, suggestions, at)
     return report
+
+
+def _retire_older(storage: Storage, loaded: list[Suggestion], at: datetime) -> int:
+    """Close proposals that a newer run has replaced, so a store sees one order per product.
+
+    A newer run's suggestion for the same store, product and kind replaces an older proposal that
+    nobody has decided: the older one expires, with an audit event saying why. Decided
+    suggestions are never touched, and nothing newer than this load is retired.
+    """
+    if not loaded:
+        return 0
+    newest = max(s.created_at for s in loaded)
+    ids = {s.id for s in loaded}
+    keys = {(s.store_id, s.sku_id, s.payload.kind) for s in loaded}
+    retired = 0
+    for old in storage.list_suggestions():
+        if (
+            old.state == "proposed"
+            and old.id not in ids
+            and (old.store_id, old.sku_id, old.payload.kind) in keys
+            and old.created_at < newest
+            and storage.transition(old.id, "proposed", "expired")
+        ):
+            retired += 1
+            with contextlib.suppress(AlreadyExistsError):
+                storage.append_audit(audit.superseded(old, at))
+    return retired
 
 
 def main() -> None:  # pragma: no cover - thin CLI over the tested function

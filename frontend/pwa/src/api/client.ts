@@ -13,6 +13,7 @@ import type {
   PriceQuote,
   Role,
   Scorecard,
+  StoreContact,
   Suggestion,
 } from "./types";
 
@@ -87,6 +88,7 @@ export const api = {
   prices: () => request<PriceQuote[]>("/prices"),
   farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),
   scorecard: () => request<Scorecard[]>("/scorecard"),
+  contacts: () => request<StoreContact[]>("/contacts"),
   recordedScorecard: () => request<Scorecard[]>("/scorecard/recorded"),
   recordOutcome: (body: OutcomeInput) =>
     request<OutcomeRecord>("/outcomes", { method: "POST", body: JSON.stringify(body) }),

@@ -55,7 +55,7 @@ export function StoreClosing({ storeId }: { storeId: string }) {
             <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpenId(s.id)}>
               <ProductIcon skuId={s.sku_id} size={72} />
               <span className="tile-name">{productName(s.sku_id)}</span>
-              <span className="tile-amount">{t("order.units", { n: (s.payload as OrderPayload).recommended_units })}</span>
+              <span className="tile-amount">{t("order.units", { n: Math.round((s.payload as OrderPayload).recommended_units), unit: unitOf(s.sku_id) })}</span>
             </button>
           </li>
         ))}

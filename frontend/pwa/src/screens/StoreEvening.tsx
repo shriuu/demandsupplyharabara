@@ -4,13 +4,15 @@ import { useLoad } from "../api/useApi";
 import type { OrderPayload, Suggestion } from "../api/types";
 import { Confirm, TickCross } from "../components/Buttons";
 import { Crates } from "../components/Crates";
+import { NumberField } from "../components/NumberField";
 import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { ReasonBadge } from "../components/ReasonBadge";
 import { Loading, LoadError } from "../components/Status";
 import { EDIT_STEP_UNITS, LARGE_EDIT_FRACTION } from "../config";
-import { productName, t } from "../i18n/strings";
+import { productName, t, unitOf } from "../i18n/strings";
+import { decideAll } from "./decide";
 import { biggestFirst } from "./priority";
 
 /** The first few tiles are the biggest sellers: shown with an amber edge. */
@@ -70,7 +72,7 @@ export function StoreEvening({ storeId }: { storeId: string }) {
                 <span className="tile-rank">{i + 1}</span>
                 <ProductIcon skuId={s.sku_id} size={72} />
                 <span className="tile-name">{productName(s.sku_id)}</span>
-                <span className="tile-amount">{t("order.units", { n: units })}</span>
+                <span className="tile-amount">{t("order.units", { n: Math.round(units), unit: unitOf(s.sku_id) })}</span>
               </button>
             </li>
           );
@@ -92,23 +94,27 @@ export function OrderCard({
   onDone: () => void;
 }) {
   const payload = suggestion.payload as OrderPayload;
-  const [units, setUnits] = useState(payload.recommended_units);
+  const suggested = Math.round(payload.recommended_units);
+  const [units, setUnits] = useState(suggested);
   const [reason, setReason] = useState("");
   const [confirming, setConfirming] = useState<"reject" | "bigEdit" | null>(null);
   const [failed, setFailed] = useState(false);
-  const edited = units !== payload.recommended_units;
-  const big = Math.abs(units - payload.recommended_units) > payload.recommended_units * LARGE_EDIT_FRACTION;
+  const [busy, setBusy] = useState(false);
+  const edited = units !== suggested;
+  const big = Math.abs(units - suggested) > suggested * LARGE_EDIT_FRACTION;
   const needsReason = edited && reason.trim() === "";
   useChatFocus(suggestion.id);
 
-  async function send(body: Parameters<typeof api.decide>[2]) {
+  async function send(body: Parameters<typeof decideAll>[2]) {
+    if (busy) return;
     setConfirming(null);
     setFailed(false);
-    try {
-      await api.decide("store_manager", suggestion.id, body);
-      onDone();
-    } catch {
+    setBusy(true);
+    const result = await decideAll("store_manager", [suggestion.id], body);
+    if (result === "done") onDone();
+    else {
       setFailed(true);
+      setBusy(false);
     }
   }
   const saveEdit = () => send({ action: "edit", edited_units: units, reason: reason.trim() });
@@ -128,7 +134,7 @@ export function OrderCard({
         <ProductIcon skuId={suggestion.sku_id} size={112} />
         <h2>{productName(suggestion.sku_id)}</h2>
       </div>
-      <Crates units={units} range={payload.range} />
+      <Crates units={units} range={payload.range} skuId={suggestion.sku_id} />
       <div className="stepper">
         <button
           className="btn btn-step"
@@ -138,12 +144,13 @@ export function OrderCard({
         >
           <Icon name="minus" size={40} />
         </button>
+        <NumberField label={t("order.amount")} value={units} onChange={setUnits} unit={unitOf(suggestion.sku_id)} />
         <button className="btn btn-step" aria-label={t("action.plus")} onClick={() => setUnits((n) => n + EDIT_STEP_UNITS)}>
           <Icon name="plus" size={40} />
         </button>
       </div>
       {payload.manager_rule_units != null && (
-        <p className="usual">{t("order.usual", { n: payload.manager_rule_units })}</p>
+        <p className="usual">{t("order.usual", { n: Math.round(payload.manager_rule_units) })}</p>
       )}
       <ReasonBadge driver={suggestion.drivers[0]} reason={suggestion.reason} />
       {edited && (
@@ -164,7 +171,7 @@ export function OrderCard({
         onTick={onTick}
         onCross={() => setConfirming("reject")}
         tickLabel={edited ? t("action.save") : t("action.accept")}
-        disabled={edited && needsReason}
+        disabled={busy || (edited && needsReason)}
       />
       {confirming === "reject" && (
         <Confirm message={t("action.confirm.sure")} onYes={() => void send({ action: "reject" })} onNo={() => setConfirming(null)} />
