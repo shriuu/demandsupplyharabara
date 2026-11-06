@@ -23,6 +23,11 @@ async function enterPin(user: ReturnType<typeof userEvent.setup>, pin: string) {
   await user.click(screen.getByRole("button", { name: "Go" }));
 }
 
+async function openProduct(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(await screen.findByRole("button", { name: new RegExp(name) }));
+  return screen.findByRole("heading", { name });
+}
+
 async function openRole(name: string) {
   const user = userEvent.setup();
   render(<App />);
@@ -77,17 +82,25 @@ describe("sign-in", () => {
 });
 
 describe("store manager evening", () => {
-  it("accepting sends an approve and moves to the next product", async () => {
+  it("shows the products as tiles, biggest sellers first", async () => {
+    await openRole("Store manager");
+    const tiles = await screen.findAllByRole("button", { name: /crates/ });
+    expect(tiles[0]).toHaveTextContent("Banana");
+    expect(tiles[1]).toHaveTextContent("Tomato");
+  });
+
+  it("accepting sends an approve and goes back to the tiles", async () => {
     const user = await openRole("Store manager");
-    expect(await screen.findByRole("heading", { name: "Tomato" })).toBeInTheDocument();
+    expect(await openProduct(user, "Tomato")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Accept" }));
-    expect(await screen.findByRole("heading", { name: "Banana" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Banana/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Tomato/ })).not.toBeInTheDocument();
     expect(mock.decisions[0]).toMatchObject({ action: "approve", suggestion_id: "s-order-tomato" });
   });
 
   it("an edit needs a reason before it can be saved", async () => {
     const user = await openRole("Store manager");
-    await screen.findByRole("heading", { name: "Tomato" });
+    await openProduct(user, "Tomato");
     await user.click(screen.getByRole("button", { name: "Less" }));
     const save = screen.getByRole("button", { name: "Save change" });
     expect(save).toBeDisabled();
@@ -100,7 +113,7 @@ describe("store manager evening", () => {
 
   it("a big edit asks are-you-sure first", async () => {
     const user = await openRole("Store manager");
-    await screen.findByRole("heading", { name: "Tomato" });
+    await openProduct(user, "Tomato");
     for (let i = 0; i < 4; i++) await user.click(screen.getByRole("button", { name: "Less" }));
     await user.type(screen.getByPlaceholderText("Write a reason to save"), "Closing early");
     await user.click(screen.getByRole("button", { name: "Save change" }));
@@ -111,7 +124,7 @@ describe("store manager evening", () => {
 
   it("rejecting asks first", async () => {
     const user = await openRole("Store manager");
-    await screen.findByRole("heading", { name: "Tomato" });
+    await openProduct(user, "Tomato");
     await user.click(screen.getByRole("button", { name: "Reject" }));
     expect(mock.decisions).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Yes" }));
@@ -162,7 +175,7 @@ describe("farmer coordinator", () => {
 describe("chat panel", () => {
   it("answers from the suggestion, or says it does not have it", async () => {
     const user = await openRole("Store manager");
-    await screen.findByRole("heading", { name: "Tomato" });
+    await openProduct(user, "Tomato");
     await user.click(screen.getByRole("button", { name: "Ask" }));
     const box = screen.getByPlaceholderText("Type your question");
     await user.type(box, "why?{Enter}");

@@ -9,6 +9,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
+import { biggestFirst } from "./priority";
 
 /** Waste, empty shelves and farmer share: always the same three gauges, side by side (G04). */
 export function Scoreboard({ card }: { card: Scorecard }) {
@@ -33,45 +34,72 @@ export function Scoreboard({ card }: { card: Scorecard }) {
 /** How many cards to show before the rest: the queue is ordered by value, biggest first. */
 const SHORT_LIST = 8;
 
-function Scores() {
-  const { state, reload } = useLoad(() => api.scorecard(), []);
-  if (state.status === "loading") return <Loading />;
-  if (state.status === "error") return <LoadError onRetry={reload} />;
-  if (!state.data.length) return <Empty />;
-  const chain = state.data.find((c) => c.scope === "chain") ?? (state.data.length === 1 ? state.data[0] : undefined);
-  const stores = state.data.filter((c) => c !== chain);
-  // Compared with the chain, so no fixed limit is needed here.
-  const gap = (c: Scorecard) =>
-    chain && c.waste_pct != null && chain.waste_pct != null && c.stockout_pct != null && chain.stockout_pct != null
-      ? c.waste_pct - chain.waste_pct + (c.stockout_pct - chain.stockout_pct)
-      : 0;
-  const ordered = [...stores].sort((a, b) => gap(b) - gap(a));
+type Light = "red" | "amber" | "green";
+
+/** Compared with the chain, so no fixed limit is needed here. */
+function compare(card: Scorecard, chain: Scorecard | undefined) {
+  const wasteWorse =
+    !!chain && card.waste_pct != null && chain.waste_pct != null && card.waste_pct > chain.waste_pct;
+  const emptyWorse =
+    !!chain && card.stockout_pct != null && chain.stockout_pct != null && card.stockout_pct > chain.stockout_pct;
+  const light: Light = wasteWorse && emptyWorse ? "red" : wasteWorse || emptyWorse ? "amber" : "green";
+  return { wasteWorse, emptyWorse, light };
+}
+
+/** Stores worse than the chain come first in the navigation. */
+function byWorse(chain: Scorecard | undefined) {
+  const rank: Record<Light, number> = { red: 0, amber: 1, green: 2 };
+  return (a: Scorecard, b: Scorecard) => rank[compare(a, chain).light] - rank[compare(b, chain).light];
+}
+
+function StoreNav({
+  stores,
+  chain,
+  scope,
+  onPick,
+}: {
+  stores: Scorecard[];
+  chain: Scorecard | undefined;
+  scope: string;
+  onPick: (scope: string) => void;
+}) {
+  return (
+    <nav aria-label={t("area.pick")}>
+      <p className="small">{t("area.storesNote")}</p>
+      <div className="nav-scroll">
+        <button
+          className={`btn nav-tile ${scope === "chain" ? "nav-on" : ""}`}
+          aria-pressed={scope === "chain"}
+          onClick={() => onPick("chain")}
+        >
+          <Icon name="chart" size={28} />
+          <span>{t("area.chain")}</span>
+        </button>
+        {stores.map((c) => (
+          <button
+            key={c.scope}
+            className={`btn nav-tile ${scope === c.scope ? "nav-on" : ""}`}
+            aria-pressed={scope === c.scope}
+            onClick={() => onPick(c.scope)}
+          >
+            <Icon name="store" size={28} />
+            <span>{storeLabel(c.scope)}</span>
+            <TrafficLight light={compare(c, chain).light} />
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function StoreNote({ card, chain }: { card: Scorecard; chain: Scorecard | undefined }) {
+  if (card === chain) return null;
+  const { wasteWorse, emptyWorse } = compare(card, chain);
   return (
     <>
-      {chain && <Scoreboard card={chain} />}
-      <h3>{t("area.stores")}</h3>
-      <p className="small">{t("area.storesNote")}</p>
-      <ul className="stack">
-        {ordered.map((c) => {
-          const wasteWorse = !!chain && c.waste_pct != null && chain.waste_pct != null && c.waste_pct > chain.waste_pct;
-          const emptyWorse =
-            !!chain && c.stockout_pct != null && chain.stockout_pct != null && c.stockout_pct > chain.stockout_pct;
-          return (
-            <li key={c.scope} className="card" data-scope={c.scope}>
-              <h3>{storeLabel(c.scope)}</h3>
-              <TrafficLight light={wasteWorse && emptyWorse ? "red" : wasteWorse || emptyWorse ? "amber" : "green"} />
-              <p>
-                <Icon name="bag" size={22} /> {t("score.waste")}: {c.waste_pct == null ? t("score.unknown") : `${c.waste_pct.toFixed(1)}%`}
-                {" · "}
-                <Icon name="box" size={22} /> {t("score.stockout")}: {c.stockout_pct == null ? t("score.unknown") : `${c.stockout_pct.toFixed(1)}%`}
-              </p>
-              {wasteWorse && <p className="small">{t("area.worseWaste")}</p>}
-              {emptyWorse && <p className="small">{t("area.worseEmpty")}</p>}
-              {!wasteWorse && !emptyWorse && <p className="small">{t("area.fine")}</p>}
-            </li>
-          );
-        })}
-      </ul>
+      {wasteWorse && <p className="small">{t("area.worseWaste")}</p>}
+      {emptyWorse && <p className="small">{t("area.worseEmpty")}</p>}
+      {!wasteWorse && !emptyWorse && <p className="small">{t("area.fine")}</p>}
     </>
   );
 }
@@ -114,20 +142,20 @@ function ApprovalCard({ s, onDone }: { s: Suggestion; onDone: () => void }) {
   );
 }
 
-function Queue({ killed }: { killed: boolean }) {
+function Queue({ killed, scope }: { killed: boolean; scope: string }) {
   const [all, setAll] = useState(false);
   const { state, reload } = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), String(killed));
   useChatFocus(state.status === "ready" ? (state.data[0]?.id ?? null) : null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
   if (!state.data.length) return <Empty />;
-  const worth = (s: Suggestion) =>
-    "expected_recovery_inr" in s.payload ? Number(s.payload.expected_recovery_inr) : 0;
-  const sorted = [...state.data].sort((a, b) => worth(b) - worth(a));
+  const mine = state.data.filter((s) => scope === "chain" || s.store_id === scope);
+  if (!mine.length) return <Empty />;
+  const sorted = [...mine].sort(biggestFirst);
   const shown = all ? sorted : sorted.slice(0, SHORT_LIST);
   return (
     <>
-      <ul className="stack">
+      <ul className="tiles-2">
         {shown.map((s) => (
           <ApprovalCard key={s.id} s={s} onDone={reload} />
         ))}
@@ -177,17 +205,32 @@ function KillSwitch({ killed, onChange }: { killed: boolean; onChange: (killed: 
 }
 
 export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKilledChange: (killed: boolean) => void }) {
+  const scores = useLoad(() => api.scorecard(), []);
+  const [scope, setScope] = useState("chain");
+  const cards = scores.state.status === "ready" ? scores.state.data : [];
+  const chain = cards.find((c) => c.scope === "chain") ?? (cards.length === 1 ? cards[0] : undefined);
+  const stores = cards.filter((c) => c !== chain).sort(byWorse(chain));
+  const shown = scope === "chain" ? chain : stores.find((c) => c.scope === scope);
   return (
     <div className="stack">
+      {stores.length > 0 && <StoreNav stores={stores} chain={chain} scope={scope} onPick={setScope} />}
+      <h2>
+        <Icon name="chart" /> {t("area.scoreboard")}
+      </h2>
+      {scores.state.status === "loading" && <Loading />}
+      {scores.state.status === "error" && <LoadError onRetry={scores.reload} />}
+      {scores.state.status === "ready" && !cards.length && <Empty />}
+      {shown && (
+        <>
+          <Scoreboard card={shown} />
+          <StoreNote card={shown} chain={chain} />
+        </>
+      )}
       <h2>
         <Icon name="tick" /> {t("area.todo")}
       </h2>
       <p className="small">{t("area.todoNote")}</p>
-      <Queue killed={killed} />
-      <h2>
-        <Icon name="chart" /> {t("area.scoreboard")}
-      </h2>
-      <Scores />
+      <Queue killed={killed} scope={scope} />
       <KillSwitch killed={killed} onChange={onKilledChange} />
     </div>
   );

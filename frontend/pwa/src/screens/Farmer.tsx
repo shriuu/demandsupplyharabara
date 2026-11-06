@@ -20,6 +20,8 @@ export function FarmerScreen() {
   const bySku = new Map<string, FarmerVolumeForecast[]>();
   for (const row of state.data) bySku.set(row.sku_id, [...(bySku.get(row.sku_id) ?? []), row]);
   const max = Math.max(1, ...state.data.map((r) => r.volume.high));
+  const likely = (rows: FarmerVolumeForecast[]) => rows.reduce((n, r) => n + r.volume.likely, 0);
+  const ordered = [...bySku].sort((a, b) => likely(b[1]) - likely(a[1]));
   return (
     <div className="stack">
       <h2>
@@ -29,9 +31,10 @@ export function FarmerScreen() {
         <Icon name="alert" /> {t("farmer.note")}
       </p>
       <p className="small">{t("farmer.what")}</p>
-      {[...bySku].map(([sku, rows]) => (
+      <div className="tiles-2">
+      {ordered.map(([sku, rows]) => (
         <section key={sku} className="card">
-          <div className="total-card">
+          <div className="total-card farmer-head">
             <ProductIcon skuId={sku} size={64} />
             <h3>{productLabel(sku)}</h3>
             <span className="badge">{t("farmer.estimate")}</span>
@@ -46,6 +49,7 @@ export function FarmerScreen() {
           ))}
         </section>
       ))}
+      </div>
     </div>
   );
 }

@@ -64,8 +64,8 @@ export function DcScreen() {
         (() => {
           const max = Math.max(1, ...totals.state.data.totals.map((r) => r.demand.high));
           return (
-            <ul className="stack">
-              {totals.state.data.totals.map((row) => (
+            <ul className="tiles-2">
+              {[...totals.state.data.totals].sort((a, b) => b.demand.likely - a.demand.likely).map((row) => (
                 <li key={row.sku_id} className="card total-card">
                   <ProductIcon skuId={row.sku_id} size={64} />
                   <div className="grow">
@@ -89,7 +89,7 @@ export function DcScreen() {
         </p>
       )}
       {prices.state.status === "ready" && (
-        <ul className="stack">
+        <ul className="tiles-2">
           {prices.state.data.map((q) => (
             <PriceCard key={`${q.sku_id}-${q.market}`} quote={q} />
           ))}
@@ -102,7 +102,7 @@ export function DcScreen() {
       <p className="small">{t("dc.trimNote")}</p>
       {totals.state.status === "ready" &&
         (totals.state.data.trimming.length ? (
-          <ul className="stack">
+          <ul className="tiles-2">
             {totals.state.data.trimming.map((tr) => (
               <li key={tr.sku_id} className="card total-card">
                 <ProductIcon skuId={tr.sku_id} size={64} />
