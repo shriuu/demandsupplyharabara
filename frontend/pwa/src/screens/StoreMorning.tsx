@@ -8,6 +8,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight, type Light } from "../components/Status";
 import { productName, t } from "../i18n/strings";
+import { biggestFirst } from "./priority";
 
 /** Transfers and starts on the last day are urgent (red); an early markdown is a check (amber). */
 export function lightFor(s: Suggestion): Light {
@@ -77,7 +78,7 @@ export function StoreMorning({ storeId }: { storeId: string }) {
   const list = alerts(state.data);
   if (!list.length) return <Empty />;
   return (
-    <ul className="stack">
+    <ul className="tiles-2">
       {list.map((s) => (
         <AlertCard key={s.id} suggestion={s} role="store_manager" onDone={reload} />
       ))}
@@ -85,10 +86,10 @@ export function StoreMorning({ storeId }: { storeId: string }) {
   );
 }
 
-/** Red first, then amber: most urgent at the top. */
+/** Red first, then the biggest at stake: most urgent at the top. */
 function alerts(all: Suggestion[]): Suggestion[] {
   const rank: Record<Light, number> = { red: 0, amber: 1, green: 2 };
   return all
     .filter((s) => s.payload.kind === "markdown" || s.payload.kind === "transfer")
-    .sort((a, b) => rank[lightFor(a)] - rank[lightFor(b)]);
+    .sort((a, b) => rank[lightFor(a)] - rank[lightFor(b)] || biggestFirst(a, b));
 }
