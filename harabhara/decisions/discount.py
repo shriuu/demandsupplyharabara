@@ -55,6 +55,7 @@ def plan_markdown(
 ) -> list[MarkdownProposal]:
     """Markdown suggestions for one store and product on a morning."""
     step_hour = f"{rules.step_2_after_hour:02d}:00"
+    second_step_hour = f"{rules.step_2_start_hour:02d}:00"
     proposals: list[MarkdownProposal] = []
 
     if last_day_units > 0:
@@ -83,7 +84,7 @@ def plan_markdown(
             proposals.append(
                 MarkdownProposal(
                     step_pct=rules.step_2_pct,
-                    start=step_hour,
+                    start=second_step_hour,
                     units=last_day_units,
                     price_after=price_2,
                     expected_recovery_inr=_recovery(

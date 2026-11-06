@@ -27,7 +27,8 @@ markdown:                           # playbook §5
   step_1_pct: 30
   step_1_when: last_sellable_day_from_opening
   step_2_pct: 50
-  step_2_after_hour: 18
+  step_2_after_hour: 18             # playbook §5: the 50% step may not start before this hour
+  step_2_start_hour: 19             # ASSUMED (user choice, 6 Nov 2026): the 50% step is proposed one hour after the 30% step, so the two never start together on a below-cost product. Playbook says "after 6 pm", so this is allowed. Owner to confirm.
   step_2_categories_or_skus: ["Leafy greens", P04, P05]   # "leafy greens and bananas only"
   floor_basis_before_step_2: purchase_cost   # "never below purchase cost before 6 pm"
   approver_default: store_manager
