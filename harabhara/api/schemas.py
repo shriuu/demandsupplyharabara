@@ -23,6 +23,8 @@ class LoginResponse(_Body):
     role: Role
     actor_id: str
     store_id: str | None
+    area_id: str | None = None
+    area_name: str | None = None
 
 
 class KillSwitchRequest(_Body):

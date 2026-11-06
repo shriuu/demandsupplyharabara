@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/client";
+import { loadSession } from "../api/session";
 import { useLoad } from "../api/useApi";
 import type { MarkdownPayload, Scorecard, Suggestion, TransferPayload } from "../api/types";
 import { Confirm, TickCross } from "../components/Buttons";
@@ -57,11 +58,13 @@ function StoreNav({
   stores,
   chain,
   scope,
+  allLabel,
   onPick,
 }: {
   stores: Scorecard[];
   chain: Scorecard | undefined;
   scope: string;
+  allLabel: string;
   onPick: (scope: string) => void;
 }) {
   return (
@@ -74,7 +77,7 @@ function StoreNav({
           onClick={() => onPick("chain")}
         >
           <Icon name="chart" size={28} />
-          <span>{t("area.chain")}</span>
+          <span>{allLabel}</span>
         </button>
         {stores.map((c) => (
           <button
@@ -288,13 +291,16 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
   const scores = useLoad(() => api.scorecard(), []);
   const recorded = useLoad(() => api.recordedScorecard(), []);
   const [scope, setScope] = useState("chain");
+  const session = loadSession();
+  const limited = !!session?.area_id; // an area manager sees only their own stores
+  const allLabel = session?.area_name ?? t("area.chain");
   const cards = scores.state.status === "ready" ? scores.state.data : [];
   const chain = cards.find((c) => c.scope === "chain") ?? (cards.length === 1 ? cards[0] : undefined);
   const stores = cards.filter((c) => c !== chain).sort(byWorse(chain));
   const shown = scope === "chain" ? chain : stores.find((c) => c.scope === scope);
   return (
     <div className="stack">
-      {stores.length > 0 && <StoreNav stores={stores} chain={chain} scope={scope} onPick={setScope} />}
+      {stores.length > 0 && <StoreNav stores={stores} chain={chain} scope={scope} allLabel={allLabel} onPick={setScope} />}
       <h2>
         <Icon name="chart" /> {t("area.scoreboard")}
       </h2>
@@ -307,6 +313,7 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
           <StoreNote card={shown} chain={chain} />
         </>
       )}
+      {!shown && scope === "chain" && stores.length > 0 && <p className="notice" role="status">{t("area.pickStore")}</p>}
       {scope !== "chain" && <CallStore storeId={scope} />}
       <StoresDecided scope={scope} onPick={setScope} />
       {recorded.state.status === "ready" && (
@@ -332,7 +339,7 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
       </h2>
       <p className="small">{t("area.todoNote")}</p>
       <Queue killed={killed} scope={scope} />
-      <KillSwitch killed={killed} onChange={onKilledChange} />
+      {!limited && <KillSwitch killed={killed} onChange={onKilledChange} />}
     </div>
   );
 }

@@ -1,0 +1,31 @@
+# Which stores each area manager looks after. Not given by the playbook or the data pack, so this is
+# ASSUMED: the pack has no store addresses or distances. The stores are grouped by the approximate
+# map position of their locality (straight-line, from public maps), so each manager's stores are near
+# each other. Replace the positions with real store addresses and regroup if the owner wants.
+# Every store belongs to exactly one area. An area manager with no area sees all stores.
+areas:
+  south_central:
+    name: South and central
+    stores: [S01, S02, S03, S04, S07, D02]
+  north:
+    name: North
+    stores: [S06, S08, D03]
+  east:
+    name: East
+    stores: [S05, D01, D04]
+
+# Approximate locality positions used for the grouping (latitude, longitude). For reference only;
+# nothing reads this block.
+approx_positions:
+  S01: [12.925, 77.593]   # Jayanagar
+  S02: [12.978, 77.640]   # Indiranagar
+  S03: [12.935, 77.624]   # Koramangala
+  S04: [12.911, 77.641]   # HSR Layout
+  S05: [12.970, 77.750]   # Whitefield
+  S06: [13.003, 77.570]   # Malleshwaram
+  S07: [12.925, 77.547]   # Banashankari
+  S08: [13.100, 77.596]   # Yelahanka
+  D01: [12.926, 77.676]   # Bellandur
+  D02: [12.845, 77.660]   # Electronic City
+  D03: [13.035, 77.597]   # Hebbal
+  D04: [12.956, 77.701]   # Marathahalli

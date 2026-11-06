@@ -22,6 +22,7 @@ export interface MockResponse {
 export const MOCK_PINS: Record<string, Omit<LoginResponse, "token">> = {
   "1111": { role: "store_manager", actor_id: "mock-store", store_id: "S01" },
   "3333": { role: "area_manager", actor_id: "mock-area", store_id: null },
+  "6666": { role: "area_manager", actor_id: "mock-north", store_id: null, area_id: "north", area_name: "North" },
   "4444": { role: "dc_lead", actor_id: "mock-dc", store_id: null },
   "5555": { role: "farmer_coordinator", actor_id: "mock-farmer", store_id: null },
 };
@@ -65,7 +66,7 @@ export function createMockApi() {
     const need = (...roles: Role[]) => (roles.includes(user.role) ? null : detail(403, "wrong role"));
 
     if (method === "POST" && path === "/admin/kill-switch") {
-      const denied = need("area_manager");
+      const denied = need("area_manager") ?? (user.area_id ? detail(403, "all stores only") : null);
       if (denied) return denied;
       killSwitch = (JSON.parse(rawBody ?? "{}") as { on: boolean }).on;
       return json({ status: "ok", kill_switch: killSwitch } satisfies KillSwitchResponse);
@@ -148,7 +149,9 @@ export function createMockApi() {
       return need("area_manager") ?? json(rows);
     }
     if (method === "GET" && path === "/scorecard/recorded") return need("area_manager") ?? json([]);
-    if (method === "GET" && path === "/scorecard") return need("area_manager") ?? json(scorecards);
+    if (method === "GET" && path === "/scorecard") {
+      return need("area_manager") ?? json(user.area_id ? scorecards.filter((c) => c.scope !== "chain") : scorecards);
+    }
     if (method === "POST" && path === "/assistant/ask") {
       const body = JSON.parse(rawBody ?? "{}") as { suggestion_id: string; question: string };
       asked.push(body);

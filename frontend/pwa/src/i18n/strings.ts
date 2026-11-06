@@ -138,6 +138,7 @@ export const en = {
   "area.recorded": "What stores recorded",
   "area.recordedNote": "From the closing counts and purchases people entered in the last weeks. Waste here is thrown away out of sold plus thrown away, so it is not the same figure as above.",
   "area.recordedNone": "Nothing recorded for this yet.",
+  "area.pickStore": "Pick a store above to see its scoreboard.",
   "area.call": "Call {who}",
   "area.callWho": "the store manager",
   "area.callNone": "No phone number is set for this store yet. Add it in config/contacts.yaml.",

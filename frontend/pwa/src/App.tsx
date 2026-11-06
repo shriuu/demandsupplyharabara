@@ -64,6 +64,7 @@ export function App() {
           <div className="topbar-row">
             <span className="brand">
               <Icon name={roleIcons[role]} size={32} /> {t(`role.${role}`)}
+              {session?.area_name ? ` · ${session.area_name}` : ""}
             </span>
             <button className="btn btn-plain" onClick={signOut} aria-label={t("app.logout")}>
               <Icon name="logout" size={32} />
