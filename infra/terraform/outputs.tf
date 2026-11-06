@@ -13,3 +13,11 @@ output "github_variables" {
     CLOUD_RUN_SERVICE              = google_cloud_run_v2_service.app.name
   }
 }
+
+output "daily_job" {
+  description = "Set CLOUD_RUN_DAILY_JOB to this in GitHub variables; upload the data pack to the bucket."
+  value = var.daily_job_enabled ? {
+    job_name    = google_cloud_run_v2_job.daily["on"].name
+    pack_bucket = google_storage_bucket.pack["on"].name
+  } : null
+}

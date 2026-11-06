@@ -93,4 +93,7 @@ pipeline:
   # Demo only: when the day the data ends is shown as "today", deadlines are kept at least this
   # many hours ahead so suggestions are not already expired.
   demo_keep_open_hours: 6
+  # Demo only: the scheduled job shows one data day per calendar day, cycling through this many
+  # days that end at the last training day (ASSUMED; the real feed replaces this).
+  daily_demo_window_days: 28
 

@@ -41,3 +41,20 @@ variable "unmounted_secrets" {
   type        = list(string)
   default     = ["data-gov-in-api-key"]
 }
+
+variable "daily_job_enabled" {
+  description = "Create the scheduled daily job (Cloud Run job, scheduler, data bucket). Off until the owner agrees."
+  type        = bool
+  default     = false
+}
+
+variable "daily_job_schedule" {
+  description = "Cron for the daily job, in the schedule timezone. Evening ordering opens at 20:30 (config/schedule.yaml) and a run takes about four minutes."
+  type        = string
+  default     = "30 19 * * *"
+}
+
+variable "daily_job_timezone" {
+  type    = string
+  default = "Asia/Kolkata"
+}

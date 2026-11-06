@@ -67,3 +67,12 @@ jobs:
             --region "${{ vars.GCP_REGION }}" \
             --image "$IMAGE" \
             --quiet
+
+      - name: Keep the daily job on the same image (when it exists)
+        if: ${{ vars.CLOUD_RUN_DAILY_JOB != '' }}
+        run: |
+          gcloud run jobs update "${{ vars.CLOUD_RUN_DAILY_JOB }}" \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
+            --region "${{ vars.GCP_REGION }}" \
+            --image "$IMAGE" \
+            --quiet

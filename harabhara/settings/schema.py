@@ -263,6 +263,7 @@ class PipelineParams(_Strict):
     scorecard_days: int = Field(ge=1)
     farmer_share_days: int = Field(ge=1)
     demo_keep_open_hours: float = Field(ge=0)
+    daily_demo_window_days: int = Field(ge=1)
 
 
 class Modeling(_Strict):
