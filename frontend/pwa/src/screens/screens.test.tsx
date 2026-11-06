@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "../App";
@@ -195,10 +195,11 @@ describe("area manager", () => {
 
   it("a store with a phone number gets a call button; one without says so and shows none", async () => {
     const user = await openRole("Area manager");
-    await user.click(await screen.findByRole("button", { name: /Jayanagar/ }));
+    const nav = within(await screen.findByRole("navigation"));
+    await user.click(nav.getByRole("button", { name: /Jayanagar/ }));
     const call = await screen.findByRole("link", { name: /Call Test manager/ });
     expect(call).toHaveAttribute("href", "tel:+919000000001");
-    await user.click(screen.getByRole("button", { name: /Indiranagar/ }));
+    await user.click(nav.getByRole("button", { name: /Indiranagar/ }));
     expect(await screen.findByText(/No phone number is set/)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Call/ })).not.toBeInTheDocument();
   });
@@ -206,8 +207,10 @@ describe("area manager", () => {
   it("shows what the stores have already decided", async () => {
     const user = await openRole("Area manager");
     expect(await screen.findByText("What stores decided")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Jayanagar/ }));
-    expect(await screen.findByText(/waiting/)).toBeInTheDocument();
+    // a store's row is a button: tapping it opens that store, with what is waiting by type
+    await user.click(await screen.findByRole("button", { name: /Jayanagar.*waiting/ }));
+    expect(await screen.findByText(/^Waiting: .*orders/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Call Test manager/ })).toBeInTheDocument();
   });
 
   it("says when nothing has been recorded yet, instead of showing zeros", async () => {

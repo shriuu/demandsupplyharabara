@@ -126,30 +126,56 @@ function CallStore({ storeId }: { storeId: string }) {
 }
 
 /** What the store managers have already decided, so the area manager sees the other roles' work. */
-function StoresDecided({ scope }: { scope: string }) {
+function StoresDecided({ scope, onPick }: { scope: string; onPick: (scope: string) => void }) {
   const { state } = useLoad(() => api.suggestions({}), []);
   if (state.status !== "ready") return null;
   const mine = state.data.filter((s) => s.approver_role === "store_manager" && (scope === "chain" || s.store_id === scope));
   if (!mine.length) return null;
-  const rows = new Map<string, { ok: number; edit: number; no: number; wait: number }>();
+  type Row = { ok: number; edit: number; no: number; wait: number; kinds: Record<string, number> };
+  const rows = new Map<string, Row>();
   for (const s of mine) {
-    const row = rows.get(s.store_id) ?? { ok: 0, edit: 0, no: 0, wait: 0 };
+    const row = rows.get(s.store_id) ?? { ok: 0, edit: 0, no: 0, wait: 0, kinds: {} };
     if (s.state === "approved" || s.state === "done") row.ok += 1;
     else if (s.state === "edited") row.edit += 1;
     else if (s.state === "rejected") row.no += 1;
-    else if (s.state === "proposed") row.wait += 1;
+    else if (s.state === "proposed") {
+      row.wait += 1;
+      row.kinds[s.payload.kind] = (row.kinds[s.payload.kind] ?? 0) + 1;
+    }
     rows.set(s.store_id, row);
   }
+  const kindLine = (kinds: Record<string, number>) =>
+    (["order", "markdown", "transfer", "surplus"] as const)
+      .filter((k) => kinds[k])
+      .map((k) => `${kinds[k]} ${t(`kind.${k}`)}`)
+      .join(" · ");
   return (
     <section className="card" aria-label={t("area.decided")}>
       <h3>{t("area.decided")}</h3>
       <p className="small">{t("area.decidedNote")}</p>
-      {[...rows.entries()].map(([store, r]) => (
-        <p key={store} className="decided-row">
-          <strong>{storeLabel(store)}</strong>
-          <span>{t("area.decidedRow", { ok: r.ok, edit: r.edit, no: r.no, wait: r.wait })}</span>
-        </p>
-      ))}
+      {[...rows.entries()].map(([store, r]) =>
+        scope === "chain" ? (
+          <button
+            key={store}
+            className="btn btn-plain decided-row"
+            onClick={() => {
+              onPick(store);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <strong>{storeLabel(store)}</strong>
+            <span>{t("area.decidedRow", { ok: r.ok, edit: r.edit, no: r.no, wait: r.wait })}</span>
+          </button>
+        ) : (
+          <div key={store}>
+            <p className="decided-row">
+              <strong>{storeLabel(store)}</strong>
+              <span>{t("area.decidedRow", { ok: r.ok, edit: r.edit, no: r.no, wait: r.wait })}</span>
+            </p>
+            {r.wait > 0 && <p className="small">{t("area.waitingKinds", { list: kindLine(r.kinds) })}</p>}
+          </div>
+        ),
+      )}
     </section>
   );
 }
@@ -282,7 +308,7 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
         </>
       )}
       {scope !== "chain" && <CallStore storeId={scope} />}
-      <StoresDecided scope={scope} />
+      <StoresDecided scope={scope} onPick={setScope} />
       {recorded.state.status === "ready" && (
         <>
           <h3>{t("area.recorded")}</h3>
