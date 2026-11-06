@@ -45,16 +45,16 @@ rule to its code and test. Changing a limit means editing config and passing the
 
 ## 6. Not done, in order of importance
 1. **Use the recorded outcomes** (`docs/outcomes.md`): stores and the DC now record what happened, but nothing reads it back into forecasts or scorecards yet.
-2. **Turn on the daily schedule.** The code and Terraform are written and checked but off: see `docs/daily_job.md`. It cycles past demo days; a real daily data feed is still needed for live use.
-2. **Owner decisions** in `docs/owner_questions.md`: value of a lost sale, what counts as waste,
+2. **A real daily data feed.** The daily job is on (see `docs/daily_job.md`) but it cycles 28 past demo days; sales, stock and deliveries must come from the real systems for live use.
+3. **Owner decisions** in `docs/owner_questions.md`: value of a lost sale, what counts as waste,
    what happens if a manager misses the deadline, how farmer share is defined, recall procedure.
-3. **A weather forecast source.** The model uses observed weather standing in for a forecast.
-4. **A mandi price feed.** The DC page shows "no prices" until a data.gov.in key is added.
-5. **Store distances.** Transfers are not checked against the 6 km limit; the pack has no coordinates.
-6. **Weekly retrain** with drift checks, and a model registry.
-7. **Voice, translations, offline mode** and a usability test with people who cannot read the interface language.
-8. **Shadow mode** before suggest mode, then a pilot with comparison stores.
-9. Terraform state is on one laptop; move it to a storage bucket.
+4. **A weather forecast source.** The model uses observed weather standing in for a forecast.
+5. **A mandi price feed.** The DC page shows "no prices" until a data.gov.in key is added.
+6. **Store distances.** Transfers are not checked against the 6 km limit; the pack has no coordinates.
+7. **Weekly retrain** with drift checks, and a model registry.
+8. **Voice, translations, offline mode** and a usability test with people who cannot read the interface language.
+9. **Shadow mode** before suggest mode, then a pilot with comparison stores.
+10. Terraform state is on one laptop; move it to a storage bucket.
 
 ## 7. If something breaks
 | Sign | Check |
