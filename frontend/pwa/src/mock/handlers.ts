@@ -114,6 +114,7 @@ export function createMockApi() {
     if (method === "GET" && path === "/dc/totals") return need("dc_lead") ?? json(dcTotals);
     if (method === "GET" && path === "/prices") return need("dc_lead") ?? json(prices);
     if (method === "GET" && path === "/farmers/forecast") return need("farmer_coordinator") ?? json(farmerForecast);
+    if (method === "GET" && path === "/scorecard/recorded") return need("area_manager") ?? json([]);
     if (method === "GET" && path === "/scorecard") return need("area_manager") ?? json(scorecards);
     if (method === "POST" && path === "/assistant/ask") {
       const body = JSON.parse(rawBody ?? "{}") as { suggestion_id: string; question: string };

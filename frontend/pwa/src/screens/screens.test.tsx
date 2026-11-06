@@ -163,6 +163,11 @@ describe("area manager", () => {
     expect(screen.getByLabelText("Farmer share")).toBeInTheDocument();
   });
 
+  it("says when nothing has been recorded yet, instead of showing zeros", async () => {
+    await openRole("Area manager");
+    expect(await screen.findByText("Nothing recorded for this yet.")).toBeInTheDocument();
+  });
+
   it("the kill switch needs a second step, and can be switched off again", async () => {
     const user = await openRole("Area manager");
     const state = async () => ((await (await fetch("/api/v1/health")).json()) as { kill_switch: boolean }).kill_switch;

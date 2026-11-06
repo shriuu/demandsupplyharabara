@@ -142,3 +142,17 @@ def test_the_contract_refuses_mixed_records() -> None:
         OutcomeRecord(kind="closing", store_id="S1", units_bought=3, source="spot", **base)
     with pytest.raises(ValueError, match="purchase"):
         OutcomeRecord(kind="purchase", store_id="S1", units_bought=3, source="spot", **base)
+
+
+def test_the_area_manager_sees_a_scorecard_from_what_was_recorded(env: Env) -> None:
+    assert env.client.get(f"{V1}/scorecard/recorded", headers=env.login("3333")).json() == []
+    post(env, "1111", closing(units_sold=90, units_wasted=10, sold_out=True))
+    post(env, "4444", purchase(units_bought=30, source="farmer_group"))
+    post(env, "4444", purchase(units_bought=70, source="spot"))
+    cards = env.client.get(f"{V1}/scorecard/recorded", headers=env.login("3333")).json()
+    chain = next(c for c in cards if c["scope"] == "chain")
+    assert chain["waste_pct"] == pytest.approx(10.0)
+    assert chain["stockout_pct"] == pytest.approx(100.0)
+    assert chain["farmer_share"] == pytest.approx(0.3)
+    for pin in ("1111", "4444", "5555"):
+        assert env.client.get(f"{V1}/scorecard/recorded", headers=env.login(pin)).status_code == 403
