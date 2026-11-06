@@ -28,3 +28,11 @@ The project ID and repository name come from a git-ignored `terraform.tfvars`
 
 Firestore needs no seed. Load precomputed output with
 `python -m harabhara.api.loader <dir>` (see docs/api.md, Storage).
+
+## Before any plain `terraform apply`
+
+`terraform.tfvars` is git-ignored, so the settings that match the live service live only on the
+machine that applied them. If the file lacks `mount_secrets = true` and `daily_job_enabled = true`,
+`terraform plan` shows the secrets (including `HARABHARA_PIN_DIRECTORY`) removed from the service and
+the daily job destroyed. Read the plan first; it should show no secret or job change. Moving state
+to a shared bucket would remove this trap (see `docs/handover.md`).
