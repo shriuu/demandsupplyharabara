@@ -49,7 +49,9 @@ class Markdown(_Strict):
     step_1_when: str
     step_2_pct: float = Field(gt=0, lt=100)
     step_2_after_hour: int = Hour
-    step_2_start_hour: int = Hour  # when the 50% step is actually proposed; never before step_2_after_hour
+    step_2_start_hour: int = (
+        Hour  # when the 50% step is actually proposed; never before step_2_after_hour
+    )
     step_2_categories_or_skus: list[str]
     floor_basis_before_step_2: str
     approver_default: str
