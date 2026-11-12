@@ -31,6 +31,7 @@ export function Login({ onSignedIn, notice }: { onSignedIn: (s: LoginResponse) =
 
   return (
     <section className="login" aria-label={t("login.title")}>
+      <DemoSignIns onPick={(p) => void submit(p)} />
       <Icon name="lock" size={64} />
       <h2>{t("login.title")}</h2>
       <div className="pin-dots" role="img" aria-label={`${pin.length}`}>
@@ -59,7 +60,6 @@ export function Login({ onSignedIn, notice }: { onSignedIn: (s: LoginResponse) =
           <Icon name="tick" size={36} />
         </button>
       </div>
-      <DemoSignIns onPick={(p) => void submit(p)} />
     </section>
   );
 }
