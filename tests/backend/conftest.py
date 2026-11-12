@@ -32,6 +32,7 @@ from harabhara.contracts import (
     TransferPayload,
     TrimmingSuggestion,
 )
+from harabhara.settings import AppConfig, load_config
 
 IST = ZoneInfo("Asia/Kolkata")
 NOW = datetime(2026, 11, 10, 20, 45, tzinfo=IST)  # inside the evening ordering window
@@ -155,14 +156,15 @@ class Env:
     login: Callable[[str], dict[str, str]]
 
 
-@pytest.fixture
-def env() -> Env:
+def build_env(config: AppConfig | None = None) -> Env:
     storage = InMemoryStorage()
     clock = Clock()
     prices = FakePrices([make_quote()])
     assistant = FakeAssistant()
     settings = ApiSettings(signing_key="test-signing-key", pins=PINS)
-    app = create_app(storage, settings, prices=prices, assistant=assistant, clock=clock)
+    app = create_app(
+        storage, settings, prices=prices, assistant=assistant, clock=clock, config=config
+    )
     client = TestClient(app)
 
     def login(pin: str) -> dict[str, str]:
@@ -171,6 +173,21 @@ def env() -> Env:
         return {"Authorization": f"Bearer {r.json()['token']}"}
 
     return Env(storage, clock, prices, assistant, client, app, login)
+
+
+@pytest.fixture
+def env() -> Env:
+    """The shipped config: evening orders do not time out."""
+    return build_env()
+
+
+@pytest.fixture
+def strict_env() -> Env:
+    """The order timeout switched back on, as it will be when the owner wants it."""
+    cfg = load_config()
+    ordering = cfg.rules.ordering.model_copy(update={"order_deadline_enforced": True})
+    rules = cfg.rules.model_copy(update={"ordering": ordering})
+    return build_env(cfg.model_copy(update={"rules": rules}))
 
 
 def decision_body(sid: str, action: str, role: str, **extra: Any) -> dict[str, Any]:

@@ -99,6 +99,7 @@ class Ordering(_Strict):
     forecast_horizon_days: int = Field(ge=1)
     approval_required: bool
     big_edit_reason_threshold: float | None
+    order_deadline_enforced: bool
 
 
 class Automation(_Strict):
