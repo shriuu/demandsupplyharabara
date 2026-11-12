@@ -228,6 +228,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/history/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History Products */
+        get: operations["history_products_api_v1_history_products_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/history/series": {
         parameters: {
             query?: never;
@@ -491,6 +508,8 @@ export interface components {
             sku_id: string;
             /** Sold Out */
             sold_out: boolean;
+            /** Units Left */
+            units_left?: number | null;
             /** Units Sold */
             units_sold: number;
             /** Units Wasted */
@@ -911,6 +930,8 @@ export interface components {
             suggestion_id?: string | null;
             /** Units Bought */
             units_bought?: number | null;
+            /** Units Left */
+            units_left?: number | null;
             /** Units Sold */
             units_sold?: number | null;
             /** Units Wasted */
@@ -955,6 +976,8 @@ export interface components {
             suggestion_id?: string | null;
             /** Units Bought */
             units_bought?: number | null;
+            /** Units Left */
+            units_left?: number | null;
             /** Units Sold */
             units_sold?: number | null;
             /** Units Wasted */
@@ -996,6 +1019,52 @@ export interface components {
              */
             status: "ok" | "stale" | "unavailable";
         };
+        /** ProductDay */
+        ProductDay: {
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Sold Out */
+            sold_out: boolean | null;
+            /** Units Left */
+            units_left: number | null;
+            /** Units Sold */
+            units_sold: number | null;
+            /** Units Wasted */
+            units_wasted: number | null;
+        };
+        /**
+         * ProductHistory
+         * @description One store's products, day by day: sold, left on the shelf, thrown away.
+         */
+        ProductHistory: {
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "week" | "month";
+            /** Products */
+            products: components["schemas"]["ProductSeries"][];
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /** Store Id */
+            store_id: string;
+        };
         /**
          * ProductOrders
          * @description What the stores have ordered of one product for the DC to buy.
@@ -1015,6 +1084,27 @@ export interface components {
             stores_waiting: number;
             /** Waiting Units */
             waiting_units: number;
+        };
+        /** ProductSeries */
+        ProductSeries: {
+            /** Average Left */
+            average_left: number | null;
+            /** Days */
+            days: components["schemas"]["ProductDay"][];
+            /** Days Counted */
+            days_counted: number;
+            /** Days Ran Out */
+            days_ran_out: number;
+            /** Latest Left */
+            latest_left: number | null;
+            /** Sku Id */
+            sku_id: string;
+            /** Units Sold */
+            units_sold: number;
+            /** Units Wasted */
+            units_wasted: number;
+            /** Waste Pct */
+            waste_pct: number | null;
         };
         /** ProductTotal */
         ProductTotal: {
@@ -1781,6 +1871,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DayView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    history_products_api_v1_history_products_get: {
+        parameters: {
+            query?: {
+                period?: "week" | "month";
+                store_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductHistory"];
                 };
             };
             /** @description Validation Error */

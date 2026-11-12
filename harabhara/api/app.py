@@ -34,6 +34,7 @@ from harabhara.api.schemas import (
     OrgChart,
     OrgStore,
     OutcomeInput,
+    ProductHistory,
     WeekHistory,
 )
 from harabhara.api.service import ApiError, Horizons, Service
@@ -261,6 +262,14 @@ def create_app(
         store_id: str | None = None,
     ) -> HistorySeries:
         return service.history_series(user, period, store_id)
+
+    @router.get("/history/products")
+    def history_products(
+        user: CurrentUser,
+        period: Literal["week", "month"] = "week",
+        store_id: str | None = None,
+    ) -> ProductHistory:
+        return service.product_history(user, period, store_id)
 
     @router.get("/farmers/day")
     def farmer_day(user: CurrentUser, on: Annotated[date, Query(alias="date")]) -> FarmerDay:

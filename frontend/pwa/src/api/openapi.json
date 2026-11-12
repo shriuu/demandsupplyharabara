@@ -238,6 +238,17 @@
             "title": "Sold Out",
             "type": "boolean"
           },
+          "units_left": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Left"
+          },
           "units_sold": {
             "title": "Units Sold",
             "type": "number"
@@ -1334,6 +1345,18 @@
             ],
             "title": "Units Bought"
           },
+          "units_left": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Left"
+          },
           "units_sold": {
             "anyOf": [
               {
@@ -1470,6 +1493,18 @@
             ],
             "title": "Units Bought"
           },
+          "units_left": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Left"
+          },
           "units_sold": {
             "anyOf": [
               {
@@ -1590,6 +1625,118 @@
         "title": "PriceQuote",
         "type": "object"
       },
+      "ProductDay": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "sold_out": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sold Out"
+          },
+          "units_left": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Left"
+          },
+          "units_sold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Sold"
+          },
+          "units_wasted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Wasted"
+          }
+        },
+        "required": [
+          "on",
+          "units_sold",
+          "units_wasted",
+          "units_left",
+          "sold_out"
+        ],
+        "title": "ProductDay",
+        "type": "object"
+      },
+      "ProductHistory": {
+        "additionalProperties": false,
+        "description": "One store's products, day by day: sold, left on the shelf, thrown away.",
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "week",
+              "month"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ProductSeries"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "start",
+          "end",
+          "store_id",
+          "products"
+        ],
+        "title": "ProductHistory",
+        "type": "object"
+      },
       "ProductOrders": {
         "additionalProperties": false,
         "description": "What the stores have ordered of one product for the DC to buy.",
@@ -1636,6 +1783,84 @@
           "stores"
         ],
         "title": "ProductOrders",
+        "type": "object"
+      },
+      "ProductSeries": {
+        "additionalProperties": false,
+        "properties": {
+          "average_left": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Left"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ProductDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "days_counted": {
+            "title": "Days Counted",
+            "type": "integer"
+          },
+          "days_ran_out": {
+            "title": "Days Ran Out",
+            "type": "integer"
+          },
+          "latest_left": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Left"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "units_sold": {
+            "title": "Units Sold",
+            "type": "number"
+          },
+          "units_wasted": {
+            "title": "Units Wasted",
+            "type": "number"
+          },
+          "waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waste Pct"
+          }
+        },
+        "required": [
+          "sku_id",
+          "days",
+          "units_sold",
+          "units_wasted",
+          "waste_pct",
+          "days_counted",
+          "days_ran_out",
+          "average_left",
+          "latest_left"
+        ],
+        "title": "ProductSeries",
         "type": "object"
       },
       "ProductTotal": {
@@ -3392,6 +3617,82 @@
           }
         },
         "summary": "History Day"
+      }
+    },
+    "/api/v1/history/products": {
+      "get": {
+        "operationId": "history_products_api_v1_history_products_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "week",
+              "enum": [
+                "week",
+                "month"
+              ],
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "store_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Store Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History Products"
       }
     },
     "/api/v1/history/series": {

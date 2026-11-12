@@ -5,6 +5,7 @@ import type {
   FarmerDay,
   HistorySeries,
   OrgChart,
+  ProductHistory,
   Approval,
   AskResponse,
   DcOrders,
@@ -100,6 +101,8 @@ export const api = {
   dayHistory: (date: string) => request<DayView>(`/history/day${query({ date })}`),
   historySeries: (period: "week" | "month", storeId?: string) =>
     request<HistorySeries>(`/history/series${query({ period, store_id: storeId })}`),
+  productHistory: (period: "week" | "month", storeId?: string) =>
+    request<ProductHistory>(`/history/products${query({ period, store_id: storeId })}`),
   farmerDay: (date: string) => request<FarmerDay>(`/farmers/day${query({ date })}`),
   contacts: () => request<StoreContact[]>("/contacts"),
   recordedScorecard: () => request<Scorecard[]>("/scorecard/recorded"),

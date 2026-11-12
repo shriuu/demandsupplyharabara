@@ -34,6 +34,9 @@ export type HistorySeries = S["HistorySeries"];
 export type SeriesPoint = S["SeriesPoint"];
 export type TalkPoint = S["TalkPoint"];
 export type FarmerDay = S["FarmerDay"];
+export type ProductHistory = S["ProductHistory"];
+export type ProductSeries = S["ProductSeries"];
+export type ProductDay = S["ProductDay"];
 export type TrimmingHint = S["TrimmingHint"];
 
 export type Role = Suggestion["approver_role"];
