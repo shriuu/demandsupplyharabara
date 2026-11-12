@@ -23,6 +23,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import pandas as pd
+
 from harabhara.api.firestore_store import FirestoreStorage
 from harabhara.api.settings import from_env
 from harabhara.api.storage import AlreadyExistsError, Storage
@@ -117,6 +119,12 @@ def _decide(storage: Storage, s: Suggestion, tz: ZoneInfo, apply: bool) -> str:
     return choice
 
 
+def _wasted(row: pd.Series) -> float:
+    """What the store recorded as thrown away; where that was blank, the rebuilt figure."""
+    recorded = row["wastage_units"]
+    return float(row["waste_rebuilt"] if recorded != recorded else recorded)
+
+
 def _outcomes(pack: PackData, day: date, data_day: date, tz: ZoneInfo) -> list[OutcomeRecord]:
     at = datetime(day.year, day.month, day.day, 22, 30, tzinfo=tz)
     panel = pack.panel
@@ -128,13 +136,13 @@ def _outcomes(pack: PackData, day: date, data_day: date, tz: ZoneInfo) -> list[O
             store_id=str(r["store_id"]),
             sku_id=str(r["sku_id"]),
             units_sold=max(0.0, float(r["sold"])),
-            units_wasted=max(0.0, float(r["waste_rebuilt"])),
+            units_wasted=max(0.0, float(_wasted(r))),
             sold_out=bool(r["stockout_flag"]),
             recorded_by=SEED,
             recorded_at=at,
         )
         for _, r in rows.iterrows()
-        if r["sold"] == r["sold"] and r["waste_rebuilt"] == r["waste_rebuilt"]
+        if r["sold"] == r["sold"] and _wasted(r) == _wasted(r)
     ]
     buys = pack.purchases[pack.purchases["date"].dt.date == data_day]
     for (sku, kind), grp in buys.groupby(["sku_id", "source_type"]):
