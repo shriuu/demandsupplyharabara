@@ -188,6 +188,15 @@ describe("store manager closing", () => {
     expect(await screen.findByText("No approved orders to close yet.")).toBeInTheDocument();
   });
 
+  it("shows each product once, however many days of approved orders there are", async () => {
+    mock.answerOrders();
+    mock.addOlderApproved(4); // four earlier days of approved orders for the same products
+    const user = await openRole("Store manager");
+    await user.click(await screen.findByRole("button", { name: /Closing/ }));
+    expect(await screen.findAllByText("Tomato")).toHaveLength(1);
+    expect(screen.getAllByText("Banana")).toHaveLength(1);
+  });
+
   it("big counts are typed in whole numbers, not tapped one at a time", async () => {
     const user = await openRole("Store manager");
     await openProduct(user, "Tomato");
