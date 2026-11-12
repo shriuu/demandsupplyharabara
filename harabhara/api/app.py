@@ -114,6 +114,7 @@ def create_app(
             (config or load_config()).modeling.pipeline.chart_month_days,
         ),
         TalkLimits.from_config((config or load_config()).modeling.pipeline),
+        (config or load_config()).rules.ordering.order_deadline_enforced,
     )
     auth = Authenticator(settings, token_clock) if token_clock else Authenticator(settings)
     app = FastAPI(title="HaraBhara Fresh", docs_url=None, redoc_url=None, openapi_url=None)

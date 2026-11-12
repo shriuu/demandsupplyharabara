@@ -66,6 +66,11 @@ ordering:
   forecast_horizon_days: 3          # brief must-have, playbook §10
   approval_required: true           # guardrail 1
   big_edit_reason_threshold: null   # source: OWNER — playbook says "reason recorded for big edits"; CLAUDE.md says every edit
+  # Owner Q1 (what happens when a manager does not answer by the ordering deadline). SWITCHED OFF for
+  # now, by the owner's instruction: an evening order stays open until the next evening's run replaces
+  # it, and can be answered any time. Set true to bring back the timeout (orders then expire at their
+  # deadline). Morning markdowns, transfers and surplus plans keep their own deadlines either way.
+  order_deadline_enforced: false
 
 automation:
   auto_order_allowed: false         # playbook §10: only after beating managers ≥ 8 weeks in pilot

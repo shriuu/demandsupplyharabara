@@ -35,3 +35,16 @@
 - All thresholds are in `config/modeling.yaml` (`talk_*`, `chart_detail_items`) and are ASSUMED: the
   playbook gives none. The owner should confirm them.
 - Each point is a question to ask, not a verdict: it cannot tell why a product ran out.
+
+## Evening order timeout switched off (owner instruction), kept as a setting
+- `config/rules.yaml` → `ordering.order_deadline_enforced: false`. With it off, an evening order does
+  not expire at its deadline and a store manager can answer it at any time; a person's decision is
+  still recorded the same way (guardrail 1 unchanged). Nothing is ordered, priced or moved on its own.
+- It is only a switch. Setting it to `true` brings the timeout back exactly as before (tests cover
+  both). This is owner question Q1 (what happens when a manager does not answer by the deadline);
+  the answer for now is "nothing: it stays open".
+- Only evening **orders** are affected. Morning markdowns, transfers and surplus plans keep their deadlines.
+- An unanswered order is still replaced when the next evening's run loads new orders (it is then
+  marked as replaced, so old orders do not pile up). Orders that had already expired stay expired.
+- Open point: the screens still say "ran out of time" for an order that was replaced unanswered;
+  that wording may want changing while the timeout is off.

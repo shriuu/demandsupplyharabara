@@ -54,11 +54,23 @@ def may_decide(suggestion: Suggestion, role: Role, store_id: str | None) -> bool
     return not (role == "store_manager" and store_id != suggestion.store_id)
 
 
-def next_state(suggestion: Suggestion, approval: Approval, now: datetime) -> SuggestionState:
+def _deadline_applies(suggestion: Suggestion, order_deadline_enforced: bool) -> bool:
+    """Evening orders may have their timeout switched off (config); everything else keeps it."""
+    return order_deadline_enforced or suggestion.payload.kind != "order"
+
+
+def next_state(
+    suggestion: Suggestion,
+    approval: Approval,
+    now: datetime,
+    order_deadline_enforced: bool = True,
+) -> SuggestionState:
     """Validate a decision and return the state it leads to."""
     if suggestion.state != "proposed":
         raise DecisionError("not_proposed", f"suggestion is already {suggestion.state}")
-    if is_overdue(suggestion.deadline, now):
+    if _deadline_applies(suggestion, order_deadline_enforced) and is_overdue(
+        suggestion.deadline, now
+    ):
         raise DecisionError("overdue", "the deadline has passed; the suggestion expires")
     if approval.suggestion_id != suggestion.id:
         raise DecisionError("mismatch", "decision is for a different suggestion")
@@ -68,5 +80,11 @@ def next_state(suggestion: Suggestion, approval: Approval, now: datetime) -> Sug
     return target
 
 
-def due_for_expiry(suggestion: Suggestion, now: datetime) -> bool:
-    return suggestion.state == "proposed" and is_overdue(suggestion.deadline, now)
+def due_for_expiry(
+    suggestion: Suggestion, now: datetime, order_deadline_enforced: bool = True
+) -> bool:
+    return (
+        suggestion.state == "proposed"
+        and _deadline_applies(suggestion, order_deadline_enforced)
+        and is_overdue(suggestion.deadline, now)
+    )

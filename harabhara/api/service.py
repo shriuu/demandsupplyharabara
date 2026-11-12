@@ -107,6 +107,7 @@ class Service:
         areas: dict[str, Area] | None = None,
         horizons: Horizons | None = None,
         talk: TalkLimits | None = None,
+        order_deadline_enforced: bool | None = None,
     ) -> None:
         self.storage = storage
         self._areas = areas or {}
@@ -124,6 +125,11 @@ class Service:
             )
         self.horizons = horizons
         self.talk = talk or TalkLimits.from_config(load_config().modeling.pipeline)
+        self.order_deadline_enforced = (
+            load_config().rules.ordering.order_deadline_enforced
+            if order_deadline_enforced is None
+            else order_deadline_enforced
+        )
         self.prices = prices
         self.assistant = assistant
         self._clock = clock or (lambda: datetime.now(LOCAL_TZ))
@@ -186,7 +192,9 @@ class Service:
         now = self.now()
         count = 0
         for s in self.storage.list_suggestions():
-            if due_for_expiry(s, now) and self.storage.transition(s.id, "proposed", "expired"):
+            if due_for_expiry(s, now, self.order_deadline_enforced) and self.storage.transition(
+                s.id, "proposed", "expired"
+            ):
                 count += 1
                 with contextlib.suppress(AlreadyExistsError):
                     self.storage.append_audit(audit.expired(s, now))
@@ -247,7 +255,7 @@ class Service:
         # who and when come from the sign-in and the server clock, not from the caller
         approval = body.model_copy(update={"actor_id": user.actor_id, "at": self.now()})
         try:
-            new_state = next_state(s, approval, approval.at)
+            new_state = next_state(s, approval, approval.at, self.order_deadline_enforced)
         except DecisionError as exc:
             if exc.code == "overdue":
                 self._expire_quietly()

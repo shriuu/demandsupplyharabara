@@ -74,12 +74,12 @@ def test_flipping_it_is_audited(env: Env) -> None:
     assert (event.type, event.actor, event.data) == ("kill_switch", "area-1", {"on": True})
 
 
-def test_expiry_still_runs_while_it_is_on(env: Env) -> None:
-    env.storage.create_suggestion(make_suggestion(deadline=NOW + timedelta(minutes=5)))
-    env.client.post(KILL, json={"on": True}, headers=env.login("3333"))
-    env.clock.advance(minutes=10)
-    env.client.get("/api/v1/suggestions", headers=env.login("1111"))
-    stored = env.storage.get_suggestion("sg-1")
+def test_expiry_still_runs_while_it_is_on(strict_env: Env) -> None:
+    strict_env.storage.create_suggestion(make_suggestion(deadline=NOW + timedelta(minutes=5)))
+    strict_env.client.post(KILL, json={"on": True}, headers=strict_env.login("3333"))
+    strict_env.clock.advance(minutes=10)
+    strict_env.client.get("/api/v1/suggestions", headers=strict_env.login("1111"))
+    stored = strict_env.storage.get_suggestion("sg-1")
     assert stored is not None
     assert stored.state == "expired"
 
