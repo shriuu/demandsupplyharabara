@@ -331,12 +331,33 @@ describe("empty evening screen says what really happened", () => {
 });
 
 describe("one week of history", () => {
-  it("a store manager sees their last seven days with orders and closing together", async () => {
+  it("a store manager picks a day on the calendar and sees orders and closing together", async () => {
     const user = await openRole("Store manager");
-    await user.click(await screen.findByRole("button", { name: /Last 7 days/ }));
-    expect(await screen.findByText("Your last 7 days")).toBeInTheDocument();
-    expect(screen.getAllByText(/Thrown away 8% · ran out/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("No closing count").length).toBeGreaterThan(0);
+    await user.click(await screen.findByRole("button", { name: /History/ }));
+    expect(await screen.findByText("Your history")).toBeInTheDocument();
+    expect(await screen.findByTestId("calendar-pick")).toBeInTheDocument();
+    expect(await screen.findByText(/Thrown away 8% · ran out/)).toBeInTheDocument();
+    // the day before and the day after are one tap away; the last day cannot go later
+    await user.click(screen.getByRole("button", { name: "Day before" }));
+    expect(await screen.findByText(/Thrown away 8% · ran out/)).toBeInTheDocument();
+  });
+
+  it("farmers see only the estimate and can open a history calendar", async () => {
+    const user = await openRole("Farmer group");
+    expect(await screen.findByText(/Estimates for the next 3 days only/)).toBeInTheDocument();
+    await user.click(await screen.findByText("History: pick a day"));
+    expect(await screen.findByText(/Bought from farmer groups: 72/)).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-pick")).toBeInTheDocument();
+  });
+
+  it("an area manager has a weekly and a monthly graph with waste and empty shelves together", async () => {
+    const user = await openRole("Area manager");
+    const trend = await screen.findByTestId("trend");
+    expect(await within(trend).findByRole("img", { name: /Thrown away and ran out by day/ })).toBeInTheDocument();
+    expect(within(trend).getByText(/Farmer-group share, whole chain: 62%/)).toBeInTheDocument();
+    await user.click(within(trend).getByRole("button", { name: "Monthly" }));
+    const chart = await within(trend).findByRole("img", { name: /Thrown away and ran out by day/ });
+    expect(chart.querySelectorAll("circle").length).toBeGreaterThan(7);
   });
 
   it("an area manager sees each store's week with thrown away and ran out side by side", async () => {

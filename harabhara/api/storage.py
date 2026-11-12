@@ -78,8 +78,14 @@ class Storage(Protocol):
         """Replace the record for the same day, store, product and source (audit keeps history)."""
 
     def list_outcomes(
-        self, kind: str | None = None, store_id: str | None = None, on: date | None = None
-    ) -> list[OutcomeRecord]: ...
+        self,
+        kind: str | None = None,
+        store_id: str | None = None,
+        on: date | None = None,
+        since: date | None = None,
+    ) -> list[OutcomeRecord]:
+        """Records of one kind, store or day; ``since`` keeps only days on or after it."""
+        ...
 
     def kill_switch_on(self) -> bool: ...
     def set_kill_switch(self, on: bool) -> None: ...
@@ -238,12 +244,19 @@ class InMemoryStorage:
         self._outcomes[outcome_key(record)] = record
 
     def list_outcomes(
-        self, kind: str | None = None, store_id: str | None = None, on: date | None = None
+        self,
+        kind: str | None = None,
+        store_id: str | None = None,
+        on: date | None = None,
+        since: date | None = None,
     ) -> list[OutcomeRecord]:
         rows = [
             r
             for r in self._outcomes.values()
-            if kind in (None, r.kind) and store_id in (None, r.store_id) and on in (None, r.on)
+            if kind in (None, r.kind)
+            and store_id in (None, r.store_id)
+            and on in (None, r.on)
+            and (since is None or r.on >= since)
         ]
         return sorted(rows, key=lambda r: (r.on, r.store_id or "", r.sku_id, r.source or ""))
 

@@ -29,6 +29,10 @@ export type TransferPayload = S["TransferPayload"];
 export type WeekHistory = S["WeekHistory"];
 export type StoreWeek = S["StoreWeek"];
 export type DayHistory = S["DayHistory"];
+export type DayView = S["DayView"];
+export type HistorySeries = S["HistorySeries"];
+export type SeriesPoint = S["SeriesPoint"];
+export type FarmerDay = S["FarmerDay"];
 export type TrimmingHint = S["TrimmingHint"];
 
 export type Role = Suggestion["approver_role"];
