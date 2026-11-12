@@ -223,7 +223,12 @@ export function createMockApi() {
     items = items.map((s) => (s.payload.kind === "order" && s.state === "proposed" ? { ...s, state: "expired" } : s));
   };
 
-  return { handle, asked, decisions, outcomes, expireOrders };
+  /** Make every waiting order answered, as if the manager had ticked them. */
+  const answerOrders = () => {
+    items = items.map((s) => (s.payload.kind === "order" && s.state === "proposed" ? { ...s, state: "approved" } : s));
+  };
+
+  return { handle, asked, decisions, outcomes, expireOrders, answerOrders };
 }
 
 /** Replace window.fetch with the mock (browser or jsdom). Returns the mock for assertions. */

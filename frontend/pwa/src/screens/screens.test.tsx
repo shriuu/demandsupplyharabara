@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { clearSession, signalExpired } from "../api/session";
 import { installMockFetch } from "../mock/handlers";
@@ -15,8 +15,15 @@ const PIN_FOR: Record<string, string> = {
 
 let mock: ReturnType<typeof installMockFetch>;
 beforeEach(() => {
+  // the mock's orders are dated 3 Nov 2026; make that "tonight" so the screens read as they would live
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-03T21:00:00+05:30"));
   mock = installMockFetch();
   clearSession();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 async function enterPin(user: ReturnType<typeof userEvent.setup>, pin: string) {
@@ -327,6 +334,30 @@ describe("empty evening screen says what really happened", () => {
     await openRole("Store manager");
     expect(await screen.findByText(/ran out of time\. Nothing was ordered/)).toBeInTheDocument();
     expect(screen.queryByText("All orders answered")).not.toBeInTheDocument();
+  });
+});
+
+describe("tonight's orders are not last night's", () => {
+  it("answered orders from tonight say all answered", async () => {
+    mock.answerOrders();
+    await openRole("Store manager");
+    expect(await screen.findByText("All orders answered")).toBeInTheDocument();
+  });
+
+  it("the next evening before the run, last night's answered orders do not say all answered", async () => {
+    mock.answerOrders();
+    vi.setSystemTime(new Date("2026-11-04T18:30:00+05:30")); // tonight's batch has not come yet
+    await openRole("Store manager");
+    expect(await screen.findByText(/Tonight's orders have not arrived yet/)).toBeInTheDocument();
+    expect(screen.getByText(/Last night: \d+ orders answered/)).toBeInTheDocument();
+    expect(screen.queryByText("All orders answered")).not.toBeInTheDocument();
+  });
+
+  it("last night's orders that ran out of time are named as last night's", async () => {
+    mock.expireOrders();
+    vi.setSystemTime(new Date("2026-11-04T18:30:00+05:30"));
+    await openRole("Store manager");
+    expect(await screen.findByText(/Last night's orders ran out of time/)).toBeInTheDocument();
   });
 });
 

@@ -6,6 +6,7 @@ import { Confirm, TickCross } from "../components/Buttons";
 import { Crates } from "../components/Crates";
 import { NumberField } from "../components/NumberField";
 import { useChatFocus } from "../components/chatContext";
+import { todayIso } from "../components/CalendarPick";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { ReasonBadge } from "../components/ReasonBadge";
@@ -28,18 +29,30 @@ export function StoreEvening({ storeId }: { storeId: string }) {
   if (state.status === "error") return <LoadError onRetry={reload} />;
   const queue = state.data.filter((s) => s.state === "proposed").sort(biggestFirst);
   if (!queue.length) {
-    // Say what really happened: answered, ran out of time, or nothing has arrived yet.
+    // Say what really happened tonight. An older batch is not tonight's: if the last batch was
+    // answered, tonight's have simply not arrived yet.
     const latest = state.data.map((s) => s.created_at.slice(0, 10)).sort().pop();
     const lastRun = state.data.filter((s) => s.created_at.slice(0, 10) === latest);
     const answered = lastRun.filter((s) => ["approved", "edited", "rejected", "done"].includes(s.state)).length;
     const late = lastRun.filter((s) => s.state === "expired").length;
-    const message = answered > 0 ? "order.allDone" : late > 0 ? "order.expiredAll" : "order.notYet";
+    const tonight = latest === todayIso();
+    const message = tonight
+      ? answered > 0
+        ? "order.allDone"
+        : late > 0
+          ? "order.expiredTonight"
+          : "order.notYet"
+      : answered === 0 && late > 0
+        ? "order.expiredAll"
+        : "order.notYet";
+    const good = tonight && answered > 0;
     return (
       <>
-        <p className={`notice ${answered > 0 ? "notice-ok" : ""}`} role="status">
-          <Icon name={answered > 0 ? "tick" : "clock"} size={answered > 0 ? 48 : 32} /> {t(message)}
+        <p className={`notice ${good ? "notice-ok" : ""}`} role="status">
+          <Icon name={good ? "tick" : "clock"} size={good ? 48 : 32} /> {t(message)}
         </p>
-        {answered > 0 && late > 0 && <p className="small">{t("order.someExpired", { n: late })}</p>}
+        {tonight && answered > 0 && late > 0 && <p className="small">{t("order.someExpired", { n: late })}</p>}
+        {!tonight && answered > 0 && <p className="small">{t("order.lastNight", { ok: answered, late })}</p>}
       </>
     );
   }
