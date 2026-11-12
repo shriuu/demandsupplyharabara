@@ -337,6 +337,21 @@ describe("chat panel", () => {
   });
 });
 
+describe("ask menu", () => {
+  it("lists each product once, not once per day, grouped by kind", async () => {
+    mock.addOlderApproved(4);
+    const user = await openRole("Store manager");
+    await user.click(await screen.findByRole("button", { name: "Ask" }));
+    const menu = await screen.findByRole("combobox", { name: "Choose a suggestion first" });
+    const groups = [...menu.querySelectorAll("optgroup")];
+    expect(groups.length).toBeGreaterThan(0);
+    for (const g of groups) {
+      const labels = [...g.querySelectorAll("option")].map((o) => o.textContent);
+      expect(new Set(labels).size).toBe(labels.length); // a product once per group, not once per day
+    }
+  });
+});
+
 describe("empty evening screen says what really happened", () => {
   it("says orders ran out of time, not that they were answered", async () => {
     mock.expireOrders();
