@@ -4,6 +4,7 @@ import type {
   FarmerVolumeForecast,
   PriceQuote,
   Scorecard,
+  WeekHistory,
   Suggestion,
 } from "../api/types";
 
@@ -218,3 +219,44 @@ export const scorecards: Scorecard[] = [
   { scope: "S01", period_start: "2026-10-01", period_end: "2026-10-31", waste_pct: 7.5, stockout_pct: 2.0, farmer_share: null },
   { scope: "S02", period_start: "2026-10-01", period_end: "2026-10-31", waste_pct: 5.0, stockout_pct: 3.0, farmer_share: null },
 ];
+
+/** A week for each store: two days closed, one with orders that ran out of time, the rest empty. */
+export function weekHistory(storeIds: string[], detail: boolean): WeekHistory {
+  const day = (offset: number) => new Date(Date.UTC(2026, 10, 10 - offset)).toISOString().slice(0, 10);
+  return {
+    start: day(6),
+    end: day(0),
+    farmer_share: null,
+    farmer_share_definition: "No purchases recorded this week.",
+    waste_basis: "thrown away over sold plus thrown away, from stores' own counts",
+    stale: false,
+    stores: storeIds.map((store_id) => ({
+      store_id,
+      area_id: null,
+      area_name: null,
+      waste_pct: 8,
+      stockout_pct: 25,
+      days_with_closing: 2,
+      orders_decided: 3,
+      orders_expired: 1,
+      days: [6, 5, 4, 3, 2, 1, 0].map((o) => ({
+        on: day(o),
+        orders_made: o <= 2 ? 2 : 0,
+        orders_approved: o === 1 ? 2 : 0,
+        orders_edited: o === 2 ? 1 : 0,
+        orders_rejected: 0,
+        orders_expired: o === 2 ? 1 : 0,
+        orders_waiting: 0,
+        units_confirmed: o <= 2 ? 40 : 0,
+        products_closed: o === 1 || o === 0 ? 2 : 0,
+        units_sold: o === 1 || o === 0 ? 90 : 0,
+        units_wasted: o === 1 || o === 0 ? 8 : 0,
+        sold_out_products: o === 0 ? 1 : 0,
+        waste_pct: o === 1 || o === 0 ? 8 : null,
+        stockout_pct: o === 1 ? 0 : o === 0 ? 50 : null,
+        orders: detail && o <= 2 ? [{ sku_id: "P01", state: o === 2 ? "expired" : "approved", suggested_units: 20, final_units: o === 2 ? null : 20 }] : [],
+        closing: detail && o <= 1 ? [{ sku_id: "P01", units_sold: 45, units_wasted: 4, sold_out: o === 0 }] : [],
+      })),
+    })),
+  };
+}

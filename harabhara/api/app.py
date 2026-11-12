@@ -28,6 +28,7 @@ from harabhara.api.schemas import (
     LoginRequest,
     LoginResponse,
     OutcomeInput,
+    WeekHistory,
 )
 from harabhara.api.service import ApiError, Service
 from harabhara.api.settings import ApiSettings, User
@@ -215,6 +216,10 @@ def create_app(
     @router.get("/dc/orders")
     def dc_orders(user: CurrentUser) -> DcOrders:
         return service.dc_orders(user)
+
+    @router.get("/history/week")
+    def week_history(user: CurrentUser) -> WeekHistory:
+        return service.week_history(user)
 
     @router.get("/contacts")
     def contacts(user: CurrentUser) -> list[StoreContact]:

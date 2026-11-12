@@ -309,3 +309,30 @@ describe("chat panel", () => {
     expect(mock.asked[0].suggestion_id).toBe("s-order-tomato");
   });
 });
+
+describe("empty evening screen says what really happened", () => {
+  it("says orders ran out of time, not that they were answered", async () => {
+    mock.expireOrders();
+    await openRole("Store manager");
+    expect(await screen.findByText(/ran out of time\. Nothing was ordered/)).toBeInTheDocument();
+    expect(screen.queryByText("All orders answered")).not.toBeInTheDocument();
+  });
+});
+
+describe("one week of history", () => {
+  it("a store manager sees their last seven days with orders and closing together", async () => {
+    const user = await openRole("Store manager");
+    await user.click(await screen.findByRole("button", { name: /Last 7 days/ }));
+    expect(await screen.findByText("Your last 7 days")).toBeInTheDocument();
+    expect(screen.getAllByText(/Thrown away 8% · ran out/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("No closing count").length).toBeGreaterThan(0);
+  });
+
+  it("an area manager sees each store's week with thrown away and ran out side by side", async () => {
+    await openRole("Area manager");
+    expect(await screen.findByText("Last 7 days, store by store")).toBeInTheDocument();
+    expect(screen.getAllByText(/Thrown away 8%/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Ran out 25%/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Farmer-group share: not known/)).toBeInTheDocument();
+  });
+});

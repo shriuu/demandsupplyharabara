@@ -174,6 +174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/history/week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Week History */
+        get: operations["week_history_api_v1_history_week_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/outcomes": {
         parameters: {
             query?: never;
@@ -397,6 +414,58 @@ export interface components {
             /** Units */
             units: number;
         };
+        /** ClosingLine */
+        ClosingLine: {
+            /** Sku Id */
+            sku_id: string;
+            /** Sold Out */
+            sold_out: boolean;
+            /** Units Sold */
+            units_sold: number;
+            /** Units Wasted */
+            units_wasted: number;
+        };
+        /**
+         * DayHistory
+         * @description One day for one store: orders counted on the day made, closings on their own day.
+         */
+        DayHistory: {
+            /** Closing */
+            closing: components["schemas"]["ClosingLine"][];
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Orders */
+            orders: components["schemas"]["OrderLine"][];
+            /** Orders Approved */
+            orders_approved: number;
+            /** Orders Edited */
+            orders_edited: number;
+            /** Orders Expired */
+            orders_expired: number;
+            /** Orders Made */
+            orders_made: number;
+            /** Orders Rejected */
+            orders_rejected: number;
+            /** Orders Waiting */
+            orders_waiting: number;
+            /** Products Closed */
+            products_closed: number;
+            /** Sold Out Products */
+            sold_out_products: number;
+            /** Stockout Pct */
+            stockout_pct: number | null;
+            /** Units Confirmed */
+            units_confirmed: number;
+            /** Units Sold */
+            units_sold: number;
+            /** Units Wasted */
+            units_wasted: number;
+            /** Waste Pct */
+            waste_pct: number | null;
+        };
         /** DcOrders */
         DcOrders: {
             /** All Decided */
@@ -568,6 +637,20 @@ export interface components {
             step_pct: number;
             /** Units */
             units: number;
+        };
+        /**
+         * OrderLine
+         * @description One order a store was asked about, and what became of it.
+         */
+        OrderLine: {
+            /** Final Units */
+            final_units: number | null;
+            /** Sku Id */
+            sku_id: string;
+            /** State */
+            state: string;
+            /** Suggested Units */
+            suggested_units: number;
         };
         /** OrderPayload */
         OrderPayload: {
@@ -845,6 +928,27 @@ export interface components {
             /** Waiting Units */
             waiting_units: number;
         };
+        /** StoreWeek */
+        StoreWeek: {
+            /** Area Id */
+            area_id: string | null;
+            /** Area Name */
+            area_name: string | null;
+            /** Days */
+            days: components["schemas"]["DayHistory"][];
+            /** Days With Closing */
+            days_with_closing: number;
+            /** Orders Decided */
+            orders_decided: number;
+            /** Orders Expired */
+            orders_expired: number;
+            /** Stockout Pct */
+            stockout_pct: number | null;
+            /** Store Id */
+            store_id: string;
+            /** Waste Pct */
+            waste_pct: number | null;
+        };
         /** Suggestion */
         Suggestion: {
             /**
@@ -959,6 +1063,29 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WeekHistory */
+        WeekHistory: {
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Farmer Share */
+            farmer_share: number | null;
+            /** Farmer Share Definition */
+            farmer_share_definition: string | null;
+            /** Stale */
+            stale: boolean;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /** Stores */
+            stores: components["schemas"]["StoreWeek"][];
+            /** Waste Basis */
+            waste_basis: string;
         };
     };
     responses: never;
@@ -1284,6 +1411,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    week_history_api_v1_history_week_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekHistory"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -118,6 +118,65 @@ class DcOrders(_Body):
     stale: bool
 
 
+class OrderLine(_Body):
+    """One order a store was asked about, and what became of it."""
+
+    sku_id: str
+    state: str
+    suggested_units: float
+    final_units: float | None  # what was confirmed; None if rejected, expired or still waiting
+
+
+class ClosingLine(_Body):
+    sku_id: str
+    units_sold: float
+    units_wasted: float
+    sold_out: bool
+
+
+class DayHistory(_Body):
+    """One day for one store: orders counted on the day made, closings on their own day."""
+
+    on: date
+    orders_made: int
+    orders_approved: int
+    orders_edited: int
+    orders_rejected: int
+    orders_expired: int
+    orders_waiting: int
+    units_confirmed: float
+    products_closed: int  # how many products have a closing count for this day
+    units_sold: float
+    units_wasted: float
+    sold_out_products: int
+    waste_pct: float | None  # None when nothing was recorded: unknown, not zero
+    stockout_pct: float | None
+    orders: list[OrderLine]  # store manager only
+    closing: list[ClosingLine]  # filled for a store manager only
+
+
+class StoreWeek(_Body):
+    store_id: str
+    area_id: str | None
+    area_name: str | None
+    days: list[DayHistory]
+    waste_pct: float | None
+    stockout_pct: float | None
+    days_with_closing: int
+    orders_decided: int
+    orders_expired: int
+
+
+class WeekHistory(_Body):
+    start: date
+    end: date
+    stores: list[StoreWeek]
+    farmer_share: float | None  # chain-wide only: purchases are not recorded per store
+    farmer_share_definition: str | None
+    waste_basis: str
+    stale: bool
+
+
 class OutcomeInput(_Body):
     """What a person enters. Who and when come from the sign-in and the server clock."""
 

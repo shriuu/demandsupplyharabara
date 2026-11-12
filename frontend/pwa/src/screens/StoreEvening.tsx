@@ -20,18 +20,27 @@ const TOP_TILES = 3;
 
 export function StoreEvening({ storeId }: { storeId: string }) {
   const { state, reload } = useLoad(
-    () => api.suggestions({ role: "store_manager", store_id: storeId, kind: "order", state: "proposed" }),
+    () => api.suggestions({ role: "store_manager", store_id: storeId, kind: "order" }),
     [storeId],
   );
   const [openId, setOpenId] = useState<string | null>(null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
-  const queue = [...state.data].sort(biggestFirst);
+  const queue = state.data.filter((s) => s.state === "proposed").sort(biggestFirst);
   if (!queue.length) {
+    // Say what really happened: answered, ran out of time, or nothing has arrived yet.
+    const latest = state.data.map((s) => s.created_at.slice(0, 10)).sort().pop();
+    const lastRun = state.data.filter((s) => s.created_at.slice(0, 10) === latest);
+    const answered = lastRun.filter((s) => ["approved", "edited", "rejected", "done"].includes(s.state)).length;
+    const late = lastRun.filter((s) => s.state === "expired").length;
+    const message = answered > 0 ? "order.allDone" : late > 0 ? "order.expiredAll" : "order.notYet";
     return (
-      <p className="notice notice-ok" role="status">
-        <Icon name="tick" size={48} /> {t("order.allDone")}
-      </p>
+      <>
+        <p className={`notice ${answered > 0 ? "notice-ok" : ""}`} role="status">
+          <Icon name={answered > 0 ? "tick" : "clock"} size={answered > 0 ? 48 : 32} /> {t(message)}
+        </p>
+        {answered > 0 && late > 0 && <p className="small">{t("order.someExpired", { n: late })}</p>}
+      </>
     );
   }
   const open = queue.find((s) => s.id === openId);
