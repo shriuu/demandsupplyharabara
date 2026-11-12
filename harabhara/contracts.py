@@ -107,6 +107,7 @@ class SurplusPayload(_Frozen):
     units: float = Field(gt=0)
     grade: Literal["A", "B", "C"]
     pickup_window: str
+    pickup_date: date | None = None  # the day of that window, so "06:00-08:00" is never ambiguous
     expected_recovery_inr: float = Field(ge=0)
     # What the buyer pays as a share of the shelf price, and the result against purchase cost
     # (negative = below cost, still better than binning). None when not known.

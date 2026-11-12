@@ -27,6 +27,7 @@ from harabhara.contracts import (
     Range,
     Scorecard,
     Suggestion,
+    SurplusPayload,
 )
 from harabhara.decisions.builder import (
     MorningStore,
@@ -383,15 +384,16 @@ def shift_to_today(
     ]
     for s in out.suggestions:
         deadline = max(s.deadline + delta, floor)
-        shifted.suggestions.append(
-            s.model_copy(
-                update={
-                    "id": f"{s.id}@{tag}",
-                    "created_at": s.created_at + delta,
-                    "deadline": deadline,
-                }
+        update: dict[str, Any] = {
+            "id": f"{s.id}@{tag}",
+            "created_at": s.created_at + delta,
+            "deadline": deadline,
+        }
+        if isinstance(s.payload, SurplusPayload) and s.payload.pickup_date is not None:
+            update["payload"] = s.payload.model_copy(
+                update={"pickup_date": s.payload.pickup_date + delta}
             )
-        )
+        shifted.suggestions.append(s.model_copy(update=update))
     shifted.farmer = [f.model_copy(update={"on": f.on + delta}) for f in out.farmer]
     shifted.scorecards = [
         c.model_copy(

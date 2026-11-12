@@ -1274,6 +1274,8 @@ export interface components {
              * @enum {string}
              */
             kind: "surplus";
+            /** Pickup Date */
+            pickup_date?: string | null;
             /** Pickup Window */
             pickup_window: string;
             /** Price Share Of Retail */

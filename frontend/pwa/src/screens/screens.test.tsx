@@ -2,6 +2,8 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
+import { suggestions } from "../mock/fixtures";
+import { SurplusCard } from "./StoreSurplus";
 import { clearSession, signalExpired } from "../api/session";
 import { installMockFetch } from "../mock/handlers";
 
@@ -334,6 +336,36 @@ describe("chat panel", () => {
     await user.type(box, "what is the capital?{Enter}");
     expect(await screen.findByText("I don't have that.")).toBeInTheDocument();
     expect(mock.asked[0].suggestion_id).toBe("s-order-tomato");
+  });
+});
+
+describe("surplus offer card", () => {
+  const offer = (payload: object) => {
+    const base = suggestions().find((s) => s.id === "s-surplus-onion")!;
+    return { ...base, payload: { ...base.payload, ...payload } } as ReturnType<typeof suggestions>[number];
+  };
+
+  it("says which day the pickup is, so a morning window is not mistaken for today", () => {
+    render(<SurplusCard suggestion={offer({ pickup_window: "06:00–08:00", pickup_date: "2026-11-04" })} onDone={() => {}} />);
+    expect(screen.getByText(/Pickup tomorrow, 06:00–08:00/)).toBeInTheDocument(); // the mock clock is 3 Nov
+  });
+
+  it("calls a food-bank offer a free donation, not zero percent", () => {
+    render(
+      <SurplusCard
+        suggestion={offer({ price_share_of_retail: 0, expected_recovery_inr: 0, profit_vs_cost_inr: -475 })}
+        onDone={() => {}}
+      />,
+    );
+    expect(screen.getByText(/A free donation/)).toBeInTheDocument();
+    expect(screen.queryByText(/0% of the shelf price/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/You get about/)).not.toBeInTheDocument();
+  });
+
+  it("a paying buyer still shows what comes back and the share", () => {
+    render(<SurplusCard suggestion={offer({ price_share_of_retail: 0.45, expected_recovery_inr: 292, profit_vs_cost_inr: -35 })} onDone={() => {}} />);
+    expect(screen.getByText(/You get about ₹292/)).toBeInTheDocument();
+    expect(screen.getByText(/Pays 45% of the shelf price/)).toBeInTheDocument();
   });
 });
 

@@ -405,6 +405,7 @@ def build_morning(
                         units=match.units,
                         grade=SURPLUS_GRADE,
                         pickup_window=match.window,
+                        pickup_date=match.pickup_start.date(),
                         expected_recovery_inr=match.expected_recovery_inr,
                         price_share_of_retail=match.price_share,
                         profit_vs_cost_inr=match.expected_recovery_inr

@@ -23,7 +23,7 @@ from harabhara.pipeline.forecast import fit_forecaster
 from harabhara.pipeline.inputs import PackData, last_training_day, load_pack
 from harabhara.pipeline.run import Outputs, build_outputs, check_not_holdout, shift_to_today
 from harabhara.settings import AppConfig, load_config
-from tests.rules.conftest import markdown, suggestion
+from tests.rules.conftest import markdown, suggestion, surplus
 
 WORK = Path(__file__).resolve().parents[2] / "work"
 HAVE_PACK = (WORK / "PS-10_store_sales_daily.xlsx").exists()
@@ -96,6 +96,16 @@ def test_the_demo_day_mapping_moves_every_date_and_keeps_the_content() -> None:
     assert out.projections[0].days[0].on == AS_OF + delta
     assert out.suggestions[0].payload == _outputs().suggestions[0].payload
     assert out.suggestions[0].reason == _outputs().suggestions[0].reason
+
+
+def test_the_demo_day_mapping_moves_a_surplus_pickup_day_with_everything_else() -> None:
+    now = datetime(2026, 11, 4, 12, 0, tzinfo=UTC)
+    delta = now.date() - AS_OF
+    out = Outputs(suggestions=[suggestion(surplus(pickup_date=AS_OF + timedelta(days=1)))])
+    shifted = shift_to_today(out, delta, "t", now, keep_open_hours=6)
+    payload = shifted.suggestions[0].payload
+    assert payload.kind == "surplus"
+    assert payload.pickup_date == AS_OF + timedelta(days=1) + delta  # still "tomorrow", not July
 
 
 def test_no_suggestion_is_already_expired_after_the_mapping() -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from itertools import combinations
 from typing import Any
 
@@ -148,3 +149,60 @@ def test_no_two_codes_share_the_same_words() -> None:
     assert len(phrases) == len(set(phrases))
     for a, b in combinations(phrases, 2):
         assert not re.fullmatch(re.escape(a), b)
+
+
+# ---- surplus offers: say the day, say free when free, whole units, stay short -----------------
+
+
+def test_a_surplus_reason_names_the_pickup_day_so_a_morning_window_is_not_mistaken_for_today() -> (
+    None
+):
+    text = _write(surplus(pickup_date=date(2026, 11, 13)), "surplus_expected")
+    assert "pickup Fri 13 Nov 21:00-23:00" in text
+
+
+def test_a_food_bank_offer_says_free_not_zero_percent() -> None:
+    donation = surplus(
+        price_share_of_retail=0.0, profit_vs_cost_inr=-475.0, expected_recovery_inr=0.0
+    )
+    text = _write(donation, "surplus_expected")
+    assert text.startswith("Give 30 kg of tomatoes to Prime Pickle for free")
+    assert "0%" not in text
+    assert "below cost" not in text
+
+
+def test_a_priced_offer_says_what_it_pays_and_the_result_against_cost_plainly() -> None:
+    priced = surplus(price_share_of_retail=0.45, profit_vs_cost_inr=-35.0)
+    text = _write(priced, "surplus_expected")
+    assert "at 45% of retail (Rs 35 under cost)" in text
+    better = _write(surplus(price_share_of_retail=0.6, profit_vs_cost_inr=12.0), "surplus_expected")
+    assert "Rs 12 over cost" in better
+
+
+def test_units_are_whole_numbers_you_can_hand_over() -> None:
+    text = _write(surplus(units=6.7), "surplus_expected")
+    assert "Offer 7 kg" in text
+    assert "6.7" not in text
+
+
+def test_a_long_real_name_pair_still_fits_in_one_sentence() -> None:
+    long_names = Names(
+        product="banana (robusta)",
+        unit="dozen",
+        stores={"S01": "Jayanagar"},
+        buyers={"B1": "Trident Hotel (fictional)"},
+    )
+    payload = surplus(
+        units=10.5,
+        pickup_date=date(2026, 11, 13),
+        price_share_of_retail=0.45,
+        profit_vs_cost_inr=-1234.0,
+    )
+    text = write_reason(
+        payload=payload,
+        drivers=_drivers("surplus_expected", "buyer_fits"),
+        store_id="S01",
+        names=long_names,
+        max_chars=MAX,
+    )
+    assert len(text) <= MAX
