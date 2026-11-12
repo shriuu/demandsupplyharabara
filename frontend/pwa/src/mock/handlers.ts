@@ -49,10 +49,31 @@ export function createMockApi() {
       return json({ status: "ok", kill_switch: killSwitch } satisfies Health);
     }
     if (method === "GET" && path === "/auth/org") {
+      const place = (store_id: string, name: string) => ({ store_id, place: name });
       return json({
         areas: [
-          { area_id: "north", name: "North", stores: [{ store_id: "S06", place: "Malleshwaram" }] },
-          { area_id: "east", name: "East", stores: [{ store_id: "S05", place: "Whitefield" }] },
+          {
+            area_id: "south_central",
+            name: "South and central",
+            stores: [
+              place("S01", "Jayanagar"),
+              place("S02", "Indiranagar"),
+              place("S03", "Koramangala"),
+              place("S04", "HSR Layout"),
+              place("S07", "Banashankari"),
+              place("D02", "Electronic City"),
+            ],
+          },
+          {
+            area_id: "north",
+            name: "North",
+            stores: [place("S06", "Malleshwaram"), place("S08", "Yelahanka"), place("D03", "Hebbal")],
+          },
+          {
+            area_id: "east",
+            name: "East",
+            stores: [place("S05", "Whitefield"), place("D01", "Bellandur"), place("D04", "Marathahalli")],
+          },
         ],
       });
     }

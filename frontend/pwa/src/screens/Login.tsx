@@ -88,7 +88,7 @@ function OrgTree() {
               <Icon name="chart" size={28} />
               <span>
                 <b>{`${t("role.area_manager")}: ${area.name}`}</b>
-                <small>{`${area.stores.length} ${t("org.stores")}`}</small>
+                <small>{`${area.stores.length} ${area.stores.length === 1 ? t("org.store") : t("org.stores")}`}</small>
               </span>
             </div>
             <ul className="org-stores">

@@ -215,6 +215,7 @@ export const en = {
   "login.tooMany": "Too many tries. Wait a minute.",
   "login.off": "Sign-in is not ready. Carry on the usual way.",
   "org.title": "Who looks after what",
+  "org.store": "store",
   "org.stores": "stores",
   "org.farmer": "Farmer groups: sees expected volumes",
   "org.dc": "Sees every area and what each store ordered",
