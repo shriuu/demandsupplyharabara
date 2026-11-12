@@ -99,6 +99,14 @@ def test_serves_the_built_web_app_with_spa_fallback(tmp_path: Path) -> None:
     assert client.get(f"{V1}/health").json()["status"] == "ok"
 
 
+def test_the_page_is_rechecked_every_time_but_fingerprinted_files_are_kept(tmp_path: Path) -> None:
+    """A phone must not keep an old index.html: that is how people miss a new release."""
+    client = static_client(tmp_path)
+    assert client.get("/").headers["cache-control"] == "no-cache"
+    assert client.get("/store/orders").headers["cache-control"] == "no-cache"
+    assert "immutable" in client.get("/assets/app.js").headers["cache-control"]
+
+
 def test_static_serving_cannot_escape_the_directory_or_shadow_the_api(tmp_path: Path) -> None:
     client = static_client(tmp_path)
     assert "nope" not in client.get("/..%2Fsecret.txt").text

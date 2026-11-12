@@ -300,6 +300,9 @@ def create_app(
     return app
 
 
+_STATIC_CACHE = {True: "public, max-age=31536000, immutable", False: "no-cache"}
+
+
 def _serve_static(app: FastAPI, static_dir: Path | None) -> None:
     """Serve the built web app; unknown paths fall back to index.html for client routing."""
     if static_dir is None or not (static_dir / "index.html").is_file():
@@ -312,5 +315,8 @@ def _serve_static(app: FastAPI, static_dir: Path | None) -> None:
             raise HTTPException(404, "not found")
         candidate = (root / path).resolve()
         if path and candidate.is_file() and root in candidate.parents:
-            return FileResponse(candidate)
-        return FileResponse(root / "index.html")
+            # build output under assets/ carries a content hash in its name, so it never changes
+            kept = path.startswith("assets/")
+            return FileResponse(candidate, headers={"Cache-Control": _STATIC_CACHE[kept]})
+        # the page itself must be re-checked every time, or a phone keeps the old version
+        return FileResponse(root / "index.html", headers={"Cache-Control": _STATIC_CACHE[False]})
