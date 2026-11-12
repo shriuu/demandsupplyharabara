@@ -209,3 +209,21 @@ p { margin: 4px 0; }
 .talk-item { display: flex; gap: 12px; align-items: flex-start; }
 .talk ol { list-style: none; padding: 0; margin: 0; }
 .trend-detail .decided-row { justify-content: flex-start; text-align: left; }
+
+/* Wider screens: use the width. More, smaller tiles so 25 products fit in a few rows, not a long scroll. */
+@media (min-width: 640px) {
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
+  .tile { min-height: 128px; padding: 8px; }
+  .tile svg { width: 56px; height: 56px; }
+  .tile-name { font-size: 0.98rem; }
+  .tile-amount { font-size: 0.88rem; }
+}
+@media (min-width: 900px) {
+  main { max-width: 1240px; }
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+  .tile { min-height: 108px; padding: 6px; border-radius: 14px; }
+  .tile svg { width: 44px; height: 44px; }
+  .tile-name { font-size: 0.92rem; }
+  .tile-amount { font-size: 0.82rem; }
+  .tiles-2 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+}
