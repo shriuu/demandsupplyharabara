@@ -544,6 +544,10 @@ export interface components {
             areas: {
                 [key: string]: string;
             };
+            /** Store Counts */
+            store_counts: {
+                [key: string]: number;
+            };
         };
         /**
          * Driver

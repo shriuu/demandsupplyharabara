@@ -124,6 +124,8 @@ def test_demo_accounts_list_every_sign_in_when_switched_on() -> None:
     body = on.get(f"{V1}/auth/demo").json()
     assert {a["pin"] for a in body["accounts"]} == set(PINS)
     assert {a["role"] for a in body["accounts"]} == {u.role for u in PINS.values()}
+    assert set(body["store_counts"]) == set(body["areas"])
+    assert all(n > 0 for n in body["store_counts"].values())
 
 
 def test_demo_accounts_stay_off_while_sign_in_is_not_ready() -> None:

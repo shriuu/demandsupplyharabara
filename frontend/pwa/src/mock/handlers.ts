@@ -52,6 +52,7 @@ export function createMockApi() {
     if (method === "GET" && path === "/auth/demo") {
       return json({
         areas: { north: "North" },
+        store_counts: { north: 3 },
         accounts: [
           { pin: "4444", role: "dc_lead", actor_id: "mock-dc", store_id: null },
           { pin: "6666", role: "area_manager", actor_id: "mock-north", store_id: null, area_id: "north" },

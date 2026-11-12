@@ -540,10 +540,18 @@
             },
             "title": "Areas",
             "type": "object"
+          },
+          "store_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Store Counts",
+            "type": "object"
           }
         },
         "required": [
           "areas",
+          "store_counts",
           "accounts"
         ],
         "title": "DemoAccounts",

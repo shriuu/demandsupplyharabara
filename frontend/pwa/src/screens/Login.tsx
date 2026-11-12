@@ -79,44 +79,65 @@ function DemoSignIns({ onPick }: { onPick: (pin: string) => void }) {
   const of = (role: DemoAccount["role"]) => demo.accounts.filter((a) => a.role === role);
   const stores = of("store_manager");
   const areaManagers = of("area_manager");
+  const counts = demo.store_counts;
+  const totalStores = Object.values(counts).reduce((sum, n) => sum + n, 0);
 
   return (
     <div className="demo" data-testid="demo-sign-ins">
       <h3>{t("demo.title")}</h3>
-      <p className="demo-note">{t("demo.note")}</p>
       {of("dc_lead").map((a) => (
-        <Card key={a.pin} a={a} icon="box" title={t("role.dc_lead")} sub={t("demo.dc")} onPick={onPick} top />
+        <Card
+          key={a.pin}
+          a={a}
+          icon="box"
+          title={t("role.dc_lead")}
+          sub={`${t("demo.handles")} ${Object.keys(counts).length} ${t("demo.areas")} · ${totalStores} ${t("demo.stores")}`}
+          onPick={onPick}
+          top
+        />
       ))}
       <ul className="demo-tree">
         {areaManagers
           .filter((a) => !a.area_id)
           .map((a) => (
             <li key={a.pin}>
-              <Card a={a} icon="chart" title={t("demo.allAreas")} sub={t("demo.allAreasNote")} onPick={onPick} />
+              <Card a={a} icon="chart" title={t("demo.allAreas")} sub={`${t("demo.handles")} ${totalStores} ${t("demo.stores")}`} onPick={onPick} />
             </li>
           ))}
-        {Object.entries(demo.areas).map(([areaId, areaName]) => (
-          <li key={areaId} className="demo-area">
-            {areaManagers
-              .filter((a) => a.area_id === areaId)
-              .map((a) => (
-                <Card key={a.pin} a={a} icon="chart" title={`${t("role.area_manager")}: ${areaName}`} sub={t("demo.stores")} onPick={onPick} />
-              ))}
-            <ul className="demo-stores">
-              {stores
-                .filter((s) => s.area_id === areaId)
-                .map((s) => (
-                  <li key={s.pin}>
-                    <Card a={s} icon="store" title={s.store_id ?? ""} sub={s.place ?? ""} onPick={onPick} />
-                  </li>
-                ))}
-            </ul>
-          </li>
-        ))}
+        {Object.entries(demo.areas).map(([areaId, areaName]) =>
+          areaManagers
+            .filter((a) => a.area_id === areaId)
+            .map((a) => (
+              <li key={a.pin}>
+                <Card
+                  a={a}
+                  icon="chart"
+                  title={`${t("role.area_manager")}: ${areaName}`}
+                  sub={`${t("demo.handles")} ${counts[areaId] ?? 0} ${t("demo.stores")}`}
+                  onPick={onPick}
+                />
+                <span className="demo-count" aria-hidden="true">
+                  {Array.from({ length: counts[areaId] ?? 0 }, (_, i) => (
+                    <Icon key={i} name="store" size={22} />
+                  ))}
+                </span>
+              </li>
+            )),
+        )}
       </ul>
       {of("farmer_coordinator").map((a) => (
         <Card key={a.pin} a={a} icon="tractor" title={t("role.farmer_coordinator")} sub={t("demo.farmer")} onPick={onPick} side />
       ))}
+      <details className="demo-more">
+        <summary>{t("demo.storeSignIns")}</summary>
+        <ul className="demo-stores">
+          {stores.map((s) => (
+            <li key={s.pin}>
+              <Card a={s} icon="store" title={s.store_id ?? ""} sub={s.place ?? ""} onPick={onPick} />
+            </li>
+          ))}
+        </ul>
+      </details>
     </div>
   );
 }

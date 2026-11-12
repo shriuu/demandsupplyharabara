@@ -40,6 +40,7 @@ class DemoAccount(_Body):
 
 class DemoAccounts(_Body):
     areas: dict[str, str]  # area id -> area name
+    store_counts: dict[str, int]  # area id -> how many stores that area manager looks after
     accounts: list[DemoAccount]
 
 

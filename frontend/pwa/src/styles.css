@@ -180,3 +180,7 @@ p { margin: 4px 0; }
 .demo-stores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 0 0 0 14px; padding: 0 0 0 14px; border-left: 4px dotted var(--green-dark); list-style: none; }
 .demo-stores .demo-card { min-height: 52px; padding: 6px 10px; border-width: 2px; border-radius: 12px; }
 .demo-stores .demo-pin { padding: 2px 8px; font-size: 0.85rem; }
+.demo-count { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0 6px; color: var(--green-dark); }
+.demo-tree > li { display: flex; flex-direction: column; }
+.demo-more summary { cursor: pointer; font-weight: 700; color: var(--green-dark); padding: 8px 0; }
+.demo-more .demo-stores { margin-left: 0; border-left: 0; padding-left: 0; }

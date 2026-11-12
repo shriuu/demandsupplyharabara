@@ -167,7 +167,11 @@ def create_app(
                     place=places.get(u.store_id or ""),
                 )
             )
-        return DemoAccounts(areas={k: a.name for k, a in areas.items()}, accounts=accounts)
+        return DemoAccounts(
+            areas={k: a.name for k, a in areas.items()},
+            store_counts={k: len(a.stores) for k, a in areas.items()},
+            accounts=accounts,
+        )
 
     @router.post("/admin/kill-switch")
     def kill_switch(body: KillSwitchRequest, user: CurrentUser) -> KillSwitchResponse:
