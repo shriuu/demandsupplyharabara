@@ -20,9 +20,12 @@ from harabhara.api.auth import (
 from harabhara.api.schemas import (
     AskRequest,
     AskResponse,
+    DayView,
     DcOrders,
     DcTotals,
+    FarmerDay,
     HealthResponse,
+    HistorySeries,
     KillSwitchRequest,
     KillSwitchResponse,
     LoginRequest,
@@ -33,7 +36,7 @@ from harabhara.api.schemas import (
     OutcomeInput,
     WeekHistory,
 )
-from harabhara.api.service import ApiError, Service
+from harabhara.api.service import ApiError, Horizons, Service
 from harabhara.api.settings import ApiSettings, User
 from harabhara.api.storage import Storage
 from harabhara.contracts import (
@@ -103,6 +106,12 @@ def create_app(
         store_contacts,
         (config or load_config()).feeds.mandi.buying_markets,
         areas,
+        Horizons(
+            (config or load_config()).rules.farmers.share_forecast_horizon_days,
+            (config or load_config()).modeling.pipeline.history_days_back,
+            (config or load_config()).modeling.pipeline.chart_week_days,
+            (config or load_config()).modeling.pipeline.chart_month_days,
+        ),
     )
     auth = Authenticator(settings, token_clock) if token_clock else Authenticator(settings)
     app = FastAPI(title="HaraBhara Fresh", docs_url=None, redoc_url=None, openapi_url=None)
@@ -237,6 +246,22 @@ def create_app(
     @router.get("/dc/orders")
     def dc_orders(user: CurrentUser) -> DcOrders:
         return service.dc_orders(user)
+
+    @router.get("/history/day")
+    def history_day(user: CurrentUser, on: Annotated[date, Query(alias="date")]) -> DayView:
+        return service.day_view(user, on)
+
+    @router.get("/history/series")
+    def history_series(
+        user: CurrentUser,
+        period: Literal["week", "month"] = "week",
+        store_id: str | None = None,
+    ) -> HistorySeries:
+        return service.history_series(user, period, store_id)
+
+    @router.get("/farmers/day")
+    def farmer_day(user: CurrentUser, on: Annotated[date, Query(alias="date")]) -> FarmerDay:
+        return service.farmer_day(user, on)
 
     @router.get("/history/week")
     def week_history(user: CurrentUser) -> WeekHistory:

@@ -1,5 +1,8 @@
 // Small synthetic fixtures typed from the contracts. No real data.
 import type {
+  DayView,
+  FarmerDay,
+  HistorySeries,
   DcTotals,
   FarmerVolumeForecast,
   PriceQuote,
@@ -258,5 +261,67 @@ export function weekHistory(storeIds: string[], detail: boolean): WeekHistory {
         closing: detail && o <= 1 ? [{ sku_id: "P01", units_sold: 45, units_wasted: 4, sold_out: o === 0 }] : [],
       })),
     })),
+  };
+}
+
+const isoPlus = (iso: string, n: number) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+/** One day on the calendar. The mock treats any day as closed with the same small numbers. */
+export function dayView(on: string, today: string, detail: boolean): DayView {
+  const week = weekHistory(["S01"], detail).stores[0].days.find((d) => d.products_closed > 0 && d.orders_made > 0);
+  const day = { ...(week as NonNullable<typeof week>), on };
+  return { on, day, first_day: isoPlus(today, -30), last_day: today, stale: false };
+}
+
+/** A graph series: every day closed except every fifth, so the gaps show. */
+export function historySeries(period: "week" | "month", today: string, storeId?: string): HistorySeries {
+  const n = period === "week" ? 7 : 30;
+  const points = Array.from({ length: n }, (_, i) => {
+    const on = isoPlus(today, i - (n - 1));
+    const gap = i % 5 === 2;
+    return {
+      on,
+      units_sold: gap ? 0 : 900,
+      units_wasted: gap ? 0 : 60,
+      waste_pct: gap ? null : 6 + (i % 4),
+      stockout_pct: gap ? null : (i * 7) % 24,
+      products_closed: gap ? 0 : 25,
+      sold_out_products: gap ? 0 : (i * 7) % 6,
+      orders_decided: gap ? 0 : 20,
+      orders_expired: gap ? 0 : 2,
+    };
+  });
+  return {
+    period,
+    start: points[0].on,
+    end: points[n - 1].on,
+    scope: storeId ?? "chain",
+    scope_name: storeId ?? "All stores",
+    store_ids: ["S01", "S02"],
+    points,
+    waste_pct: 8,
+    stockout_pct: 12,
+    days_with_closing: points.filter((p) => p.waste_pct !== null).length,
+    farmer_share: 0.62,
+    farmer_share_definition: "Share of purchased volume that came from farmer groups.",
+    stale: false,
+  };
+}
+
+export function farmerDay(on: string, today: string): FarmerDay {
+  return {
+    on,
+    first_day: isoPlus(today, -30),
+    last_day: today,
+    label: "estimate",
+    stale: false,
+    rows: [
+      { sku_id: "P01", fpo_id: "fpo-1", estimate: { low: 60, likely: 80, high: 100 }, bought_from_groups: 72 },
+      { sku_id: "P02", fpo_id: "fpo-2", estimate: null, bought_from_groups: 40 },
+    ],
   };
 }

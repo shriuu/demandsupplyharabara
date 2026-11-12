@@ -188,3 +188,13 @@ def test_the_sign_in_page_org_chart_lists_stores_under_areas_and_no_secrets() ->
     assert not any(pin in text for pin in PINS)
     assert "pin" not in text.lower()
     assert "phone" not in text.lower()
+
+
+def test_a_series_is_for_the_managers_own_area_and_refuses_a_store_outside_it() -> None:
+    client, _ = build()
+    north = login(client, "6666")
+    mine = client.get(f"{V1}/history/series?period=month", headers=north).json()
+    assert mine["scope"] == "north"
+    assert sorted(mine["store_ids"]) == sorted(load_areas()["north"].stores)
+    assert client.get(f"{V1}/history/series?store_id={NORTH}", headers=north).status_code == 200
+    assert client.get(f"{V1}/history/series?store_id={EAST}", headers=north).status_code == 403

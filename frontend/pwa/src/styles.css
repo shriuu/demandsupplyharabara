@@ -178,3 +178,24 @@ p { margin: 4px 0; }
 .login-wrap { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 32px; width: 100%; }
 .login-wrap .org { flex: 1 1 320px; margin-bottom: 0; }
 .login-pin { flex: 0 1 340px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+/* Calendar pick */
+.cal { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.cal-next svg { transform: rotate(180deg); }
+.cal-field { display: inline-flex; align-items: center; gap: 8px; border: 2px solid var(--green-dark); border-radius: 12px; padding: 6px 10px; background: #fff; }
+.cal-field input { font: inherit; border: 0; background: transparent; min-height: 44px; color: var(--ink); }
+.farmer-history summary { cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 700; min-height: 48px; }
+
+/* Waste and empty-shelf graph. Solid line with round dots = thrown away; dashed with square dots = ran out. */
+.trend-toggle { display: flex; gap: 8px; }
+.trend-svg { width: 100%; height: auto; max-width: 560px; }
+.trend-grid { stroke: var(--line); stroke-width: 1; }
+.trend-axis { font-size: 10px; fill: #4a5a44; }
+.trend-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.trend-waste { stroke: var(--amber); }
+.trend-out { stroke: var(--red); stroke-dasharray: 6 4; }
+.trend-waste-dot { fill: var(--amber); }
+.trend-out-dot { fill: var(--red); }
+.trend-legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.trend-key { display: inline-block; width: 28px; height: 0; border-top: 3px solid var(--amber); }
+.trend-key-out { border-top: 3px dashed var(--red); }

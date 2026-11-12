@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from typing import Literal
 
 from harabhara.api import ports
 from harabhara.api.schemas import (
@@ -16,14 +18,19 @@ from harabhara.api.schemas import (
     BoughtRow,
     ClosingLine,
     DayHistory,
+    DayView,
     DcOrders,
     DcTotals,
+    FarmerDay,
+    FarmerDayRow,
     HealthResponse,
+    HistorySeries,
     KillSwitchResponse,
     OrderLine,
     OutcomeInput,
     ProductOrders,
     ProductTotal,
+    SeriesPoint,
     StoreOrder,
     StoreWeek,
     TrimmingHint,
@@ -46,6 +53,7 @@ from harabhara.contracts import (
     Suggestion,
     SuggestionState,
 )
+from harabhara.settings import load_config
 from harabhara.settings.areas import Area
 from harabhara.settings.contacts import StoreContact
 from harabhara.sim.recorded import scorecards_from_outcomes
@@ -75,6 +83,16 @@ def _latest_per_scope(rows: list[Scorecard]) -> list[Scorecard]:
     return sorted(newest.values(), key=lambda r: r.scope)
 
 
+@dataclass(frozen=True)
+class Horizons:
+    """How far the screens look. All four come from config/modeling.yaml and config/rules.yaml."""
+
+    farmer_days: int  # how many days of estimate a farmer group may see
+    history_days_back: int  # how far back the calendar may go
+    chart_week_days: int
+    chart_month_days: int
+
+
 class Service:
     def __init__(
         self,
@@ -86,12 +104,23 @@ class Service:
         contacts: list[StoreContact] | None = None,
         buying_markets: list[str] | None = None,
         areas: dict[str, Area] | None = None,
+        horizons: Horizons | None = None,
     ) -> None:
         self.storage = storage
         self._areas = areas or {}
         self._markets = buying_markets or []
         self._contacts = contacts or []
         self.scorecard_days = scorecard_days
+        if horizons is None:
+            cfg = load_config()
+            pipe = cfg.modeling.pipeline
+            horizons = Horizons(
+                cfg.rules.farmers.share_forecast_horizon_days,
+                pipe.history_days_back,
+                pipe.chart_week_days,
+                pipe.chart_month_days,
+            )
+        self.horizons = horizons
         self.prices = prices
         self.assistant = assistant
         self._clock = clock or (lambda: datetime.now(LOCAL_TZ))
@@ -423,8 +452,51 @@ class Service:
         return Served(quotes)
 
     def farmer_forecast(self, user: User, fpo_id: str | None) -> Served[FarmerVolumeForecast]:
+        """Only the next few days (config), as an estimate. Older and later days are not shown."""
         self.require_role(user, "farmer_coordinator")
-        return fallback.attempt(lambda: self.storage.list_farmer_forecasts(fpo_id))
+        first = self.now().date()
+        last = first + timedelta(days=self.horizons.farmer_days - 1)
+        return fallback.attempt(
+            lambda: [f for f in self.storage.list_farmer_forecasts(fpo_id) if first <= f.on <= last]
+        )
+
+    def farmer_day(self, user: User, on: date) -> FarmerDay:
+        """A past day for the farmer calendar: the estimate shared then, and what was bought."""
+        self.require_role(user, "farmer_coordinator")
+        today = self.now().date()
+        self._check_calendar_day(on, today)
+
+        def build() -> FarmerDay:
+            estimates = {f.sku_id: f for f in self.storage.list_farmer_forecasts() if f.on == on}
+            bought: dict[str, float] = {}
+            for r in self.storage.list_outcomes("purchase", None, on):
+                if r.source == "farmer_group" and r.units_bought is not None:
+                    bought[r.sku_id] = bought.get(r.sku_id, 0.0) + r.units_bought
+            rows = [
+                FarmerDayRow(
+                    sku_id=sku,
+                    fpo_id=estimates[sku].fpo_id if sku in estimates else None,
+                    estimate=estimates[sku].volume if sku in estimates else None,
+                    bought_from_groups=round(bought[sku], 1) if sku in bought else None,
+                )
+                for sku in sorted(set(estimates) | set(bought))
+            ]
+            return FarmerDay(on=on, rows=rows, first_day=self._first_day(today), last_day=today)
+
+        served = fallback.attempt(lambda: [build()])
+        if not served.items:
+            raise ApiError(503, "history is not available right now")
+        return served.items[0].model_copy(update={"stale": served.stale})
+
+    def _check_calendar_day(self, on: date, today: date) -> None:
+        if on > today:
+            raise ApiError(422, "that day has not happened yet")
+        if on < today - timedelta(days=self.horizons.history_days_back):
+            raise ApiError(422, "that day is further back than the history goes")
+
+    def _first_day(self, today: date) -> date:
+        """The calendar goes back this far (config) and no further."""
+        return today - timedelta(days=self.horizons.history_days_back)
 
     def scorecard(self, user: User, scope: str | None) -> Served[Scorecard]:
         self.require_role(user, "area_manager")
@@ -451,6 +523,72 @@ class Service:
             return cards if stores is None else [c for c in cards if c.scope in stores]
 
         return fallback.attempt(rows)
+
+    def _store_day(
+        self,
+        store: str,
+        day: date,
+        suggestions: list[Suggestion],
+        closings: list[OutcomeRecord],
+        detail: bool,
+    ) -> DayHistory:
+        made = [s for s in suggestions if s.store_id == store and aware(s.created_at).date() == day]
+        lines: list[OrderLine] = []
+        confirmed = 0.0
+        for s in made:
+            p = s.payload
+            assert isinstance(p, OrderPayload)
+            final: float | None = None
+            if s.state in ("approved", "edited", "done"):
+                final = p.recommended_units
+                approval = self.storage.get_approval(s.id) if s.state == "edited" else None
+                if approval is not None and approval.edited_units is not None:
+                    final = approval.edited_units
+                confirmed += final
+            lines.append(
+                OrderLine(
+                    sku_id=s.sku_id,
+                    state=s.state,
+                    suggested_units=round(p.recommended_units, 1),
+                    final_units=None if final is None else round(final, 1),
+                )
+            )
+        closed = [r for r in closings if r.store_id == store and r.on == day]
+        sold = sum(r.units_sold or 0.0 for r in closed)
+        wasted = sum(r.units_wasted or 0.0 for r in closed)
+        out_n = sum(1 for r in closed if r.sold_out)
+        state_n = {
+            k: sum(1 for s in made if s.state == k)
+            for k in ("approved", "edited", "rejected", "expired", "proposed", "done")
+        }
+        return DayHistory(
+            on=day,
+            orders_made=len(made),
+            orders_approved=state_n["approved"] + state_n["done"],
+            orders_edited=state_n["edited"],
+            orders_rejected=state_n["rejected"],
+            orders_expired=state_n["expired"],
+            orders_waiting=state_n["proposed"],
+            units_confirmed=round(confirmed, 1),
+            products_closed=len(closed),
+            units_sold=round(sold, 1),
+            units_wasted=round(wasted, 1),
+            sold_out_products=out_n,
+            waste_pct=round(100 * wasted / (sold + wasted), 1) if sold + wasted > 0 else None,
+            stockout_pct=round(100 * out_n / len(closed), 1) if closed else None,
+            orders=sorted(lines, key=lambda x: x.sku_id) if detail else [],
+            closing=[
+                ClosingLine(
+                    sku_id=r.sku_id,
+                    units_sold=r.units_sold or 0.0,
+                    units_wasted=r.units_wasted or 0.0,
+                    sold_out=bool(r.sold_out),
+                )
+                for r in sorted(closed, key=lambda x: x.sku_id)
+            ]
+            if detail
+            else [],
+        )
 
     def week_history(self, user: User) -> WeekHistory:
         """The last seven days, store by store: orders and what became of them, closing counts.
@@ -490,75 +628,7 @@ class Service:
             out: list[StoreWeek] = []
             for store in sorted(visible):
                 area_id, area_name = self._area_of(store)
-                rows: list[DayHistory] = []
-                for day in days:
-                    made = [
-                        s
-                        for s in suggestions
-                        if s.store_id == store and aware(s.created_at).date() == day
-                    ]
-                    lines: list[OrderLine] = []
-                    confirmed = 0.0
-                    for s in made:
-                        p = s.payload
-                        assert isinstance(p, OrderPayload)
-                        final: float | None = None
-                        if s.state in ("approved", "edited", "done"):
-                            final = p.recommended_units
-                            approval = (
-                                self.storage.get_approval(s.id) if s.state == "edited" else None
-                            )
-                            if approval is not None and approval.edited_units is not None:
-                                final = approval.edited_units
-                            confirmed += final
-                        lines.append(
-                            OrderLine(
-                                sku_id=s.sku_id,
-                                state=s.state,
-                                suggested_units=round(p.recommended_units, 1),
-                                final_units=None if final is None else round(final, 1),
-                            )
-                        )
-                    closed = [r for r in closings if r.store_id == store and r.on == day]
-                    sold = sum(r.units_sold or 0.0 for r in closed)
-                    wasted = sum(r.units_wasted or 0.0 for r in closed)
-                    out_n = sum(1 for r in closed if r.sold_out)
-                    state_n = {
-                        k: sum(1 for s in made if s.state == k)
-                        for k in ("approved", "edited", "rejected", "expired", "proposed", "done")
-                    }
-                    rows.append(
-                        DayHistory(
-                            on=day,
-                            orders_made=len(made),
-                            orders_approved=state_n["approved"] + state_n["done"],
-                            orders_edited=state_n["edited"],
-                            orders_rejected=state_n["rejected"],
-                            orders_expired=state_n["expired"],
-                            orders_waiting=state_n["proposed"],
-                            units_confirmed=round(confirmed, 1),
-                            products_closed=len(closed),
-                            units_sold=round(sold, 1),
-                            units_wasted=round(wasted, 1),
-                            sold_out_products=out_n,
-                            waste_pct=round(100 * wasted / (sold + wasted), 1)
-                            if sold + wasted > 0
-                            else None,
-                            stockout_pct=round(100 * out_n / len(closed), 1) if closed else None,
-                            orders=sorted(lines, key=lambda x: x.sku_id) if detail else [],
-                            closing=[
-                                ClosingLine(
-                                    sku_id=r.sku_id,
-                                    units_sold=r.units_sold or 0.0,
-                                    units_wasted=r.units_wasted or 0.0,
-                                    sold_out=bool(r.sold_out),
-                                )
-                                for r in sorted(closed, key=lambda x: x.sku_id)
-                            ]
-                            if detail
-                            else [],
-                        )
-                    )
+                rows = [self._store_day(store, d, suggestions, closings, detail) for d in days]
                 mine = [r for r in closings if r.store_id == store]
                 w_sold = sum(r.units_sold or 0.0 for r in mine)
                 w_wasted = sum(r.units_wasted or 0.0 for r in mine)
@@ -590,6 +660,139 @@ class Service:
                 ),
                 waste_basis="thrown away over sold plus thrown away, from stores' own counts",
                 stale=False,
+            )
+
+        served = fallback.attempt(lambda: [build()])
+        if not served.items:
+            raise ApiError(503, "history is not available right now")
+        return served.items[0].model_copy(update={"stale": served.stale})
+
+    def _history_stores(self, user: User) -> set[str]:
+        """The stores this person may see history for."""
+        if user.role == "store_manager":
+            return {user.store_id} if user.store_id else set()
+        scoped = self._area_stores(user)
+        if scoped is not None:
+            return set(scoped)
+        everyone = {s for a in self._areas.values() for s in a.stores}
+        everyone |= {s.store_id for s in self.storage.list_suggestions()}
+        everyone |= {r.store_id for r in self.storage.list_outcomes() if r.store_id}
+        return everyone
+
+    def day_view(self, user: User, on: date) -> DayView:
+        """One day picked on the calendar, for a store manager's own store."""
+        self.require_role(user, "store_manager")
+        today = self.now().date()
+        self._check_calendar_day(on, today)
+        store = user.store_id
+        if not store:
+            raise ApiError(403, "this sign-in has no store")
+
+        def build() -> DayView:
+            suggestions = [
+                s
+                for s in self.storage.list_suggestions()
+                if s.payload.kind == "order" and s.store_id == store
+            ]
+            closings = self.storage.list_outcomes("closing", store, on)
+            return DayView(
+                on=on,
+                day=self._store_day(store, on, suggestions, closings, True),
+                first_day=self._first_day(today),
+                last_day=today,
+            )
+
+        served = fallback.attempt(lambda: [build()])
+        if not served.items:
+            raise ApiError(503, "history is not available right now")
+        return served.items[0].model_copy(update={"stale": served.stale})
+
+    def history_series(
+        self, user: User, period: Literal["week", "month"], store_id: str | None
+    ) -> HistorySeries:
+        """Day-by-day waste and empty shelves for a graph, for an area, the chain or one store."""
+        self.require_role(user, "area_manager")
+        today = self.now().date()
+        length = (
+            self.horizons.chart_week_days if period == "week" else self.horizons.chart_month_days
+        )
+        days = [today - timedelta(days=i) for i in range(length - 1, -1, -1)]
+
+        known = fallback.attempt(lambda: [self._history_stores(user)])
+        if not known.items:
+            raise ApiError(503, "history is not available right now")
+        allowed = known.items[0]
+        if store_id is not None and store_id not in allowed:
+            raise ApiError(403, "that store is not in your area")
+
+        def build() -> HistorySeries:
+            stores = {store_id} if store_id else allowed
+            area = self._areas.get(user.area_id) if user.area_id else None
+            if store_id:
+                scope, name = store_id, store_id
+            elif area is not None and user.area_id:
+                scope, name = user.area_id, area.name
+            else:
+                scope, name = "chain", "All stores"
+            orders = [
+                s
+                for s in self.storage.list_suggestions()
+                if s.payload.kind == "order" and s.store_id in stores
+            ]
+            records = [
+                r
+                for r in self.storage.list_outcomes(since=days[0])
+                if r.kind == "purchase" or r.store_id in stores
+            ]
+            closings = [r for r in records if r.kind == "closing" and days[0] <= r.on <= days[-1]]
+            points: list[SeriesPoint] = []
+            for day in days:
+                closed = [r for r in closings if r.on == day]
+                made = [s for s in orders if aware(s.created_at).date() == day]
+                sold = sum(r.units_sold or 0.0 for r in closed)
+                wasted = sum(r.units_wasted or 0.0 for r in closed)
+                out_n = sum(1 for r in closed if r.sold_out)
+                points.append(
+                    SeriesPoint(
+                        on=day,
+                        units_sold=round(sold, 1),
+                        units_wasted=round(wasted, 1),
+                        waste_pct=round(100 * wasted / (sold + wasted), 1)
+                        if sold + wasted > 0
+                        else None,
+                        stockout_pct=round(100 * out_n / len(closed), 1) if closed else None,
+                        products_closed=len(closed),
+                        sold_out_products=out_n,
+                        orders_decided=sum(
+                            1 for s in made if s.state in ("approved", "edited", "done")
+                        ),
+                        orders_expired=sum(1 for s in made if s.state == "expired"),
+                    )
+                )
+            w_sold = sum(r.units_sold or 0.0 for r in closings)
+            w_wasted = sum(r.units_wasted or 0.0 for r in closings)
+            chain = [
+                c for c in scorecards_from_outcomes(records, today, length) if c.scope == "chain"
+            ]
+            return HistorySeries(
+                period=period,
+                start=days[0],
+                end=days[-1],
+                scope=scope,
+                scope_name=name,
+                store_ids=sorted(stores),
+                points=points,
+                waste_pct=round(100 * w_wasted / (w_sold + w_wasted), 1)
+                if w_sold + w_wasted > 0
+                else None,
+                stockout_pct=round(100 * sum(1 for r in closings if r.sold_out) / len(closings), 1)
+                if closings
+                else None,
+                days_with_closing=len({r.on for r in closings}),
+                farmer_share=chain[0].farmer_share if chain else None,
+                farmer_share_definition=(
+                    chain[0].farmer_share_definition if chain else "No closing counts recorded."
+                ),
             )
 
         served = fallback.attempt(lambda: [build()])

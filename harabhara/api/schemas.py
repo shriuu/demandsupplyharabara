@@ -208,3 +208,59 @@ class OutcomeInput(_Body):
     source: Literal["farmer_group", "spot"] | None = None
     market: str | None = Field(default=None, max_length=60)
     suggestion_id: str | None = None
+
+
+class DayView(_Body):
+    """One past day for a store manager's calendar: what was ordered and how the day closed."""
+
+    on: date
+    day: DayHistory
+    first_day: date
+    last_day: date
+    stale: bool = False
+
+
+class SeriesPoint(_Body):
+    on: date
+    units_sold: float
+    units_wasted: float
+    waste_pct: float | None  # None when nothing was recorded that day, never zero
+    stockout_pct: float | None
+    products_closed: int
+    sold_out_products: int
+    orders_decided: int
+    orders_expired: int
+
+
+class HistorySeries(_Body):
+    """Day-by-day waste and empty shelves for a graph. Always the two together (guardrail 4)."""
+
+    period: Literal["week", "month"]
+    start: date
+    end: date
+    scope: str  # "chain", an area id, or a store id
+    scope_name: str
+    store_ids: list[str]
+    points: list[SeriesPoint]
+    waste_pct: float | None
+    stockout_pct: float | None
+    days_with_closing: int
+    farmer_share: float | None
+    farmer_share_definition: str | None
+    stale: bool = False
+
+
+class FarmerDayRow(_Body):
+    sku_id: str
+    fpo_id: str | None
+    estimate: Range | None  # what was shared that day, if anything was
+    bought_from_groups: float | None  # units recorded as bought from farmer groups
+
+
+class FarmerDay(_Body):
+    on: date
+    rows: list[FarmerDayRow]
+    first_day: date
+    last_day: date
+    label: Literal["estimate"] = "estimate"
+    stale: bool = False

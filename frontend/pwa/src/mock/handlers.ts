@@ -11,7 +11,8 @@ import type {
   Role,
   Suggestion,
 } from "../api/types";
-import { dcTotals, farmerForecast, prices, scorecards, suggestions, weekHistory } from "./fixtures";
+import { dayView, dcTotals, farmerDay, farmerForecast, historySeries, prices, scorecards, suggestions, weekHistory } from "./fixtures";
+import { todayIso } from "../components/CalendarPick";
 
 export interface MockResponse {
   status: number;
@@ -145,6 +146,18 @@ export function createMockApi() {
       const denied = need("store_manager", "area_manager");
       if (denied) return denied;
       return json(weekHistory(user.role === "store_manager" ? ["S01"] : ["S01", "S02"], user.role === "store_manager"));
+    }
+    if (method === "GET" && path === "/history/day") {
+      const denied = need("store_manager");
+      return denied ?? json(dayView(q.get("date") ?? todayIso(), todayIso(), true));
+    }
+    if (method === "GET" && path === "/history/series") {
+      const denied = need("area_manager");
+      return denied ?? json(historySeries(q.get("period") === "month" ? "month" : "week", todayIso(), q.get("store_id") ?? undefined));
+    }
+    if (method === "GET" && path === "/farmers/day") {
+      const denied = need("farmer_coordinator");
+      return denied ?? json(farmerDay(q.get("date") ?? todayIso(), todayIso()));
     }
     if (method === "GET" && path === "/dc/orders") {
       const denied = need("dc_lead");

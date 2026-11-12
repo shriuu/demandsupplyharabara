@@ -190,11 +190,29 @@ class FirestoreStorage:
         self._set_all(OUTCOMES, [(outcome_key(record), record)])
 
     def list_outcomes(
-        self, kind: str | None = None, store_id: str | None = None, on: date | None = None
+        self,
+        kind: str | None = None,
+        store_id: str | None = None,
+        on: date | None = None,
+        since: date | None = None,
     ) -> list[OutcomeRecord]:
-        rows = self._stream(
-            OUTCOMES, OutcomeRecord, kind=kind, store_id=store_id, on=on.isoformat() if on else None
-        )
+        if since is not None:
+            # one range on a single field needs no composite index; the rest is filtered here
+            query = self._col(OUTCOMES).where("on", ">=", since.isoformat())
+            found = [OutcomeRecord.model_validate(doc.to_dict()) for doc in query.stream()]
+            rows = [
+                r
+                for r in found
+                if kind in (None, r.kind) and store_id in (None, r.store_id) and on in (None, r.on)
+            ]
+        else:
+            rows = self._stream(
+                OUTCOMES,
+                OutcomeRecord,
+                kind=kind,
+                store_id=store_id,
+                on=on.isoformat() if on else None,
+            )
         return sorted(rows, key=lambda r: (r.on, r.store_id or "", r.sku_id, r.source or ""))
 
     # control

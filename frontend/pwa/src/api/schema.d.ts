@@ -143,6 +143,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/farmers/day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Farmer Day */
+        get: operations["farmer_day_api_v1_farmers_day_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/farmers/forecast": {
         parameters: {
             query?: never;
@@ -186,6 +203,40 @@ export interface paths {
         };
         /** Health */
         get: operations["health_api_v1_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/history/day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History Day */
+        get: operations["history_day_api_v1_history_day_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/history/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History Series */
+        get: operations["history_series_api_v1_history_series_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -486,6 +537,33 @@ export interface components {
             /** Waste Pct */
             waste_pct: number | null;
         };
+        /**
+         * DayView
+         * @description One past day for a store manager's calendar: what was ordered and how the day closed.
+         */
+        DayView: {
+            day: components["schemas"]["DayHistory"];
+            /**
+             * First Day
+             * Format: date
+             */
+            first_day: string;
+            /**
+             * Last Day
+             * Format: date
+             */
+            last_day: string;
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+        };
         /** DcOrders */
         DcOrders: {
             /** All Decided */
@@ -541,6 +619,47 @@ export interface components {
              * @enum {string}
              */
             kind: "weather" | "weekday" | "festival" | "stock_age" | "shelf_life" | "recent_sellout" | "price" | "promotion" | "rule";
+        };
+        /** FarmerDay */
+        FarmerDay: {
+            /**
+             * First Day
+             * Format: date
+             */
+            first_day: string;
+            /**
+             * Label
+             * @default estimate
+             * @constant
+             */
+            label: "estimate";
+            /**
+             * Last Day
+             * Format: date
+             */
+            last_day: string;
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Rows */
+            rows: components["schemas"]["FarmerDayRow"][];
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+        };
+        /** FarmerDayRow */
+        FarmerDayRow: {
+            /** Bought From Groups */
+            bought_from_groups: number | null;
+            estimate: components["schemas"]["Range"] | null;
+            /** Fpo Id */
+            fpo_id: string | null;
+            /** Sku Id */
+            sku_id: string;
         };
         /** FarmerVolumeForecast */
         FarmerVolumeForecast: {
@@ -601,6 +720,50 @@ export interface components {
             kill_switch: boolean;
             /** Status */
             status: string;
+        };
+        /**
+         * HistorySeries
+         * @description Day-by-day waste and empty shelves for a graph. Always the two together (guardrail 4).
+         */
+        HistorySeries: {
+            /** Days With Closing */
+            days_with_closing: number;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Farmer Share */
+            farmer_share: number | null;
+            /** Farmer Share Definition */
+            farmer_share_definition: string | null;
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "week" | "month";
+            /** Points */
+            points: components["schemas"]["SeriesPoint"][];
+            /** Scope */
+            scope: string;
+            /** Scope Name */
+            scope_name: string;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /** Stockout Pct */
+            stockout_pct: number | null;
+            /** Store Ids */
+            store_ids: string[];
+            /** Waste Pct */
+            waste_pct: number | null;
         };
         /** KillSwitchRequest */
         KillSwitchRequest: {
@@ -944,6 +1107,30 @@ export interface components {
             stockout_pct: number;
             /** Waste Pct */
             waste_pct: number;
+        };
+        /** SeriesPoint */
+        SeriesPoint: {
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Orders Decided */
+            orders_decided: number;
+            /** Orders Expired */
+            orders_expired: number;
+            /** Products Closed */
+            products_closed: number;
+            /** Sold Out Products */
+            sold_out_products: number;
+            /** Stockout Pct */
+            stockout_pct: number | null;
+            /** Units Sold */
+            units_sold: number;
+            /** Units Wasted */
+            units_wasted: number;
+            /** Waste Pct */
+            waste_pct: number | null;
         };
         /** StoreContact */
         StoreContact: {
@@ -1391,6 +1578,39 @@ export interface operations {
             };
         };
     };
+    farmer_day_api_v1_farmers_day_get: {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FarmerDay"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     farmers_api_v1_farmers_forecast_get: {
         parameters: {
             query?: {
@@ -1475,6 +1695,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    history_day_api_v1_history_day_get: {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    history_series_api_v1_history_series_get: {
+        parameters: {
+            query?: {
+                period?: "week" | "month";
+                store_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistorySeries"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

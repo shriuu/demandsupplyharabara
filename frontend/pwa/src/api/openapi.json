@@ -367,6 +367,43 @@
         "title": "DayHistory",
         "type": "object"
       },
+      "DayView": {
+        "additionalProperties": false,
+        "description": "One past day for a store manager's calendar: what was ordered and how the day closed.",
+        "properties": {
+          "day": {
+            "$ref": "#/components/schemas/DayHistory"
+          },
+          "first_day": {
+            "format": "date",
+            "title": "First Day",
+            "type": "string"
+          },
+          "last_day": {
+            "format": "date",
+            "title": "Last Day",
+            "type": "string"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on",
+          "day",
+          "first_day",
+          "last_day"
+        ],
+        "title": "DayView",
+        "type": "object"
+      },
       "DcOrders": {
         "additionalProperties": false,
         "properties": {
@@ -508,6 +545,101 @@
         "title": "Driver",
         "type": "object"
       },
+      "FarmerDay": {
+        "additionalProperties": false,
+        "properties": {
+          "first_day": {
+            "format": "date",
+            "title": "First Day",
+            "type": "string"
+          },
+          "label": {
+            "const": "estimate",
+            "default": "estimate",
+            "title": "Label",
+            "type": "string"
+          },
+          "last_day": {
+            "format": "date",
+            "title": "Last Day",
+            "type": "string"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/FarmerDayRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on",
+          "rows",
+          "first_day",
+          "last_day"
+        ],
+        "title": "FarmerDay",
+        "type": "object"
+      },
+      "FarmerDayRow": {
+        "additionalProperties": false,
+        "properties": {
+          "bought_from_groups": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bought From Groups"
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Range"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fpo_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fpo Id"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku_id",
+          "fpo_id",
+          "estimate",
+          "bought_from_groups"
+        ],
+        "title": "FarmerDayRow",
+        "type": "object"
+      },
       "FarmerVolumeForecast": {
         "additionalProperties": false,
         "properties": {
@@ -644,6 +776,121 @@
           "kill_switch"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HistorySeries": {
+        "additionalProperties": false,
+        "description": "Day-by-day waste and empty shelves for a graph. Always the two together (guardrail 4).",
+        "properties": {
+          "days_with_closing": {
+            "title": "Days With Closing",
+            "type": "integer"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "farmer_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farmer Share"
+          },
+          "farmer_share_definition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farmer Share Definition"
+          },
+          "period": {
+            "enum": [
+              "week",
+              "month"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "scope_name": {
+            "title": "Scope Name",
+            "type": "string"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "stockout_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stockout Pct"
+          },
+          "store_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Store Ids",
+            "type": "array"
+          },
+          "waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waste Pct"
+          }
+        },
+        "required": [
+          "period",
+          "start",
+          "end",
+          "scope",
+          "scope_name",
+          "store_ids",
+          "points",
+          "waste_pct",
+          "stockout_pct",
+          "days_with_closing",
+          "farmer_share",
+          "farmer_share_definition"
+        ],
+        "title": "HistorySeries",
         "type": "object"
       },
       "KillSwitchRequest": {
@@ -1589,6 +1836,75 @@
           "farmer_share"
         ],
         "title": "Scorecard",
+        "type": "object"
+      },
+      "SeriesPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "orders_decided": {
+            "title": "Orders Decided",
+            "type": "integer"
+          },
+          "orders_expired": {
+            "title": "Orders Expired",
+            "type": "integer"
+          },
+          "products_closed": {
+            "title": "Products Closed",
+            "type": "integer"
+          },
+          "sold_out_products": {
+            "title": "Sold Out Products",
+            "type": "integer"
+          },
+          "stockout_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stockout Pct"
+          },
+          "units_sold": {
+            "title": "Units Sold",
+            "type": "number"
+          },
+          "units_wasted": {
+            "title": "Units Wasted",
+            "type": "number"
+          },
+          "waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waste Pct"
+          }
+        },
+        "required": [
+          "on",
+          "units_sold",
+          "units_wasted",
+          "waste_pct",
+          "stockout_pct",
+          "products_closed",
+          "sold_out_products",
+          "orders_decided",
+          "orders_expired"
+        ],
+        "title": "SeriesPoint",
         "type": "object"
       },
       "StoreContact": {
@@ -2541,6 +2857,62 @@
         "summary": "Dc Totals"
       }
     },
+    "/api/v1/farmers/day": {
+      "get": {
+        "operationId": "farmer_day_api_v1_farmers_day_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmerDay"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Farmer Day"
+      }
+    },
     "/api/v1/farmers/forecast": {
       "get": {
         "operationId": "farmers_api_v1_farmers_forecast_get",
@@ -2722,6 +3094,138 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/v1/history/day": {
+      "get": {
+        "operationId": "history_day_api_v1_history_day_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History Day"
+      }
+    },
+    "/api/v1/history/series": {
+      "get": {
+        "operationId": "history_series_api_v1_history_series_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "week",
+              "enum": [
+                "week",
+                "month"
+              ],
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "store_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Store Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorySeries"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History Series"
       }
     },
     "/api/v1/history/week": {

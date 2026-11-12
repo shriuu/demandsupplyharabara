@@ -1,6 +1,9 @@
 import { API_BASE } from "../config";
 import { clearSession, loadSession, saveSession, signalExpired, signalSwitchedOff } from "./session";
 import type {
+  DayView,
+  FarmerDay,
+  HistorySeries,
   OrgChart,
   Approval,
   AskResponse,
@@ -94,6 +97,10 @@ export const api = {
   farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),
   scorecard: () => request<Scorecard[]>("/scorecard"),
   weekHistory: () => request<WeekHistory>("/history/week"),
+  dayHistory: (date: string) => request<DayView>(`/history/day${query({ date })}`),
+  historySeries: (period: "week" | "month", storeId?: string) =>
+    request<HistorySeries>(`/history/series${query({ period, store_id: storeId })}`),
+  farmerDay: (date: string) => request<FarmerDay>(`/farmers/day${query({ date })}`),
   contacts: () => request<StoreContact[]>("/contacts"),
   recordedScorecard: () => request<Scorecard[]>("/scorecard/recorded"),
   recordOutcome: (body: OutcomeInput) =>
