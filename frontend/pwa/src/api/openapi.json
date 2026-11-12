@@ -2348,6 +2348,18 @@
             "title": "Kind",
             "type": "string"
           },
+          "pickup_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pickup Date"
+          },
           "pickup_window": {
             "title": "Pickup Window",
             "type": "string"

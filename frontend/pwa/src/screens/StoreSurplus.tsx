@@ -6,11 +6,21 @@ import { TickCross } from "../components/Buttons";
 import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
-import { Empty, Loading, LoadError } from "../components/Status";
+import { Loading, LoadError } from "../components/Status";
+import { todayIso } from "../dates";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
 
-function SurplusCard({ suggestion, onDone }: { suggestion: Suggestion; onDone: () => void }) {
+/** "today", "tomorrow", or the weekday and date: a morning window must never look like this morning. */
+function pickupDay(iso: string): string {
+  const days = Math.round((Date.parse(`${iso}T00:00:00Z`) - Date.parse(`${todayIso()}T00:00:00Z`)) / 86_400_000);
+  if (days === 0) return t("surplus.today");
+  if (days === 1) return t("surplus.tomorrow");
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+}
+
+export function SurplusCard({ suggestion, onDone }: { suggestion: Suggestion; onDone: () => void }) {
   const p = suggestion.payload as SurplusPayload;
+  const free = p.price_share_of_retail === 0; // a food bank: nothing comes back
   const [failed, setFailed] = useState(false);
   async function decide(action: "approve" | "reject") {
     setFailed(false);
@@ -39,12 +49,16 @@ function SurplusCard({ suggestion, onDone }: { suggestion: Suggestion; onDone: (
             <Icon name="home" size={22} /> {t("surplus.from", { store: storeLabel(suggestion.store_id) })}
           </p>
           <p>
-            <Icon name="clock" size={22} /> {t("surplus.pickup", { window: p.pickup_window })}
+            <Icon name="clock" size={22} />{" "}
+            {p.pickup_date
+              ? t("surplus.pickupDay", { day: pickupDay(p.pickup_date), window: p.pickup_window })
+              : t("surplus.pickup", { window: p.pickup_window })}
           </p>
           <p>
-            <Icon name="coin" size={22} /> {t("surplus.youGet", { inr: Math.round(p.expected_recovery_inr) })}
+            <Icon name="coin" size={22} />{" "}
+            {free ? t("surplus.free") : t("surplus.youGet", { inr: Math.round(p.expected_recovery_inr) })}
           </p>
-          {p.price_share_of_retail != null && (
+          {p.price_share_of_retail != null && !free && (
             <p className="small">{t("surplus.share", { pct: Math.round(p.price_share_of_retail * 100) })}</p>
           )}
           {p.profit_vs_cost_inr != null && (
@@ -70,7 +84,7 @@ export function StoreSurplus({ storeId }: { storeId: string }) {
   useChatFocus(state.status === "ready" ? (state.data[0]?.id ?? null) : null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
-  if (!state.data.length) return <Empty />;
+  if (!state.data.length) return <p className="notice" role="status">{t("surplus.none")}</p>;
   return (
     <ul className="stack">
       {state.data.map((s) => (

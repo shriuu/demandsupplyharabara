@@ -56,6 +56,19 @@ def known_codes(language: str = "en") -> frozenset[str]:
     return frozenset(load_templates(language)["phrases"])
 
 
+def _whole(value: float) -> str:
+    """A count a person can hand over: no 6.7 bunches."""
+    return str(max(1, round(value)))
+
+
+def _when(payload: SurplusPayload) -> str:
+    """The pickup day and window, e.g. "Fri 13 Nov 06:00-08:00". No day if it is not known."""
+    day = payload.pickup_date
+    if day is None:
+        return payload.pickup_window
+    return f"{day:%a} {day.day} {day:%b} {payload.pickup_window}"
+
+
 def _n(value: float) -> str:
     return str(round(value)) if abs(value - round(value)) < 0.05 else f"{value:.1f}"
 
@@ -84,29 +97,27 @@ def _opener(payload: Payload, store_id: str, names: Names, templates: Mapping[st
             )
         )
     if isinstance(payload, SurplusPayload):
+        buyer = names.buyers.get(payload.buyer_id, payload.buyer_id)
+        fields = {
+            "units": _whole(payload.units),
+            "product": names.product,
+            "unit": names.unit,
+            "buyer": buyer,
+            "when": _when(payload),
+        }
+        if payload.price_share_of_retail == 0:  # a food bank: nothing is paid, so say so
+            return str(openers["surplus_donation"].format(**fields))
         if payload.price_share_of_retail is not None and payload.profit_vs_cost_inr is not None:
             gain = payload.profit_vs_cost_inr
             return str(
                 openers["surplus_priced"].format(
-                    units=_n(payload.units),
-                    product=names.product,
-                    unit=names.unit,
-                    buyer=names.buyers.get(payload.buyer_id, payload.buyer_id),
-                    window=payload.pickup_window,
                     share=_n(payload.price_share_of_retail * 100),
                     amount=_n(abs(gain)),
                     versus=templates["versus"]["above" if gain >= 0 else "below"],
+                    **fields,
                 )
             )
-        return str(
-            openers["surplus"].format(
-                units=_n(payload.units),
-                product=names.product,
-                unit=names.unit,
-                buyer=names.buyers.get(payload.buyer_id, payload.buyer_id),
-                window=payload.pickup_window,
-            )
-        )
+        return str(openers["surplus"].format(**fields))
     msg = f"no opener for {type(payload).__name__}"
     raise NoReasonError(msg)
 

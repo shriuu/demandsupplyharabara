@@ -266,12 +266,14 @@ def test_what_a_markdown_will_not_sell_is_offered_to_a_buyer() -> None:
     payload = offers[0].payload
     assert payload.price_share_of_retail == 0.35  # type: ignore[union-attr]
     assert payload.buyer_name == "Prime Pickle"  # type: ignore[union-attr]
-    assert "35% of the shelf price" in offers[0].reason
+    assert "35% of retail" in offers[0].reason
+    assert "pickup Wed 4 Nov 21:00" in offers[0].reason  # the day, not just the window
+    assert payload.pickup_date == date(2026, 11, 4)  # type: ignore[union-attr]
     cost = payload.units * _store("S01", [], DEMAND).series.unit_cost  # type: ignore[union-attr]
     assert payload.profit_vs_cost_inr == pytest.approx(  # type: ignore[union-attr]
         payload.expected_recovery_inr - cost  # type: ignore[union-attr]
     )
-    assert ("below cost" in offers[0].reason) == (payload.profit_vs_cost_inr < 0)  # type: ignore[union-attr]
+    assert ("under cost" in offers[0].reason) == (payload.profit_vs_cost_inr < 0)  # type: ignore[union-attr]
 
 
 def test_a_quiet_morning_raises_no_alerts() -> None:
