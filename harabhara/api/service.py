@@ -28,7 +28,10 @@ from harabhara.api.schemas import (
     KillSwitchResponse,
     OrderLine,
     OutcomeInput,
+    ProductDay,
+    ProductHistory,
     ProductOrders,
+    ProductSeries,
     ProductTotal,
     SeriesPoint,
     StoreOrder,
@@ -593,6 +596,7 @@ class Service:
                     sku_id=r.sku_id,
                     units_sold=r.units_sold or 0.0,
                     units_wasted=r.units_wasted or 0.0,
+                    units_left=r.units_left,
                     sold_out=bool(r.sold_out),
                 )
                 for r in sorted(closed, key=lambda x: x.sku_id)
@@ -832,6 +836,78 @@ class Service:
                 )
                 if all_closings
                 else None,
+            )
+
+        served = fallback.attempt(lambda: [build()])
+        if not served.items:
+            raise ApiError(503, "history is not available right now")
+        return served.items[0].model_copy(update={"stale": served.stale})
+
+    def product_history(
+        self, user: User, period: Literal["week", "month"], store_id: str | None
+    ) -> ProductHistory:
+        """A store's products day by day. A store manager sees their own store; an area manager
+        names a store in their area."""
+        self.require_role(user, "store_manager", "area_manager")
+        store = user.store_id if user.role == "store_manager" else store_id
+        if store is None:
+            raise ApiError(422, "say which store")
+        if user.role == "store_manager" and store_id not in (None, user.store_id):
+            raise ApiError(403, "a store manager sees only their own store")
+        known = fallback.attempt(lambda: [self._history_stores(user)])
+        if not known.items:
+            raise ApiError(503, "history is not available right now")
+        if store not in known.items[0]:
+            raise ApiError(403, "that store is not in your area")
+        today = self.now().date()
+        length = (
+            self.horizons.chart_week_days if period == "week" else self.horizons.chart_month_days
+        )
+        days = [today - timedelta(days=i) for i in range(length - 1, -1, -1)]
+
+        def build() -> ProductHistory:
+            rows = [
+                r
+                for r in self.storage.list_outcomes("closing", store, None, since=days[0])
+                if days[0] <= r.on <= days[-1]
+            ]
+            by_sku: dict[str, dict[date, OutcomeRecord]] = {}
+            for r in rows:
+                by_sku.setdefault(r.sku_id, {})[r.on] = r
+            products: list[ProductSeries] = []
+            for sku, per_day in by_sku.items():
+                series = [
+                    ProductDay(
+                        on=d,
+                        units_sold=per_day[d].units_sold if d in per_day else None,
+                        units_wasted=per_day[d].units_wasted if d in per_day else None,
+                        units_left=per_day[d].units_left if d in per_day else None,
+                        sold_out=per_day[d].sold_out if d in per_day else None,
+                    )
+                    for d in days
+                ]
+                sold = sum(r.units_sold or 0.0 for r in per_day.values())
+                wasted = sum(r.units_wasted or 0.0 for r in per_day.values())
+                lefts = [r.units_left for r in per_day.values() if r.units_left is not None]
+                latest = max(per_day)
+                products.append(
+                    ProductSeries(
+                        sku_id=sku,
+                        days=series,
+                        units_sold=round(sold, 1),
+                        units_wasted=round(wasted, 1),
+                        waste_pct=round(100 * wasted / (sold + wasted), 1)
+                        if sold + wasted > 0
+                        else None,
+                        days_counted=len(per_day),
+                        days_ran_out=sum(1 for r in per_day.values() if r.sold_out),
+                        average_left=round(sum(lefts) / len(lefts), 1) if lefts else None,
+                        latest_left=per_day[latest].units_left,
+                    )
+                )
+            products.sort(key=lambda p: (-p.units_wasted, p.sku_id))
+            return ProductHistory(
+                period=period, start=days[0], end=days[-1], store_id=store, products=products
             )
 
         served = fallback.attempt(lambda: [build()])

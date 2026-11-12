@@ -6,6 +6,7 @@ import { Icon } from "../components/Icons";
 import { Loading, LoadError } from "../components/Status";
 import { productName, t, unitOf } from "../i18n/strings";
 import { pct } from "./StoreHistory";
+import { ProductDashboard } from "./ProductDashboard";
 import { Chart, DayDetail, Names } from "./Trend";
 
 /**
@@ -60,6 +61,7 @@ export function MyNumbers() {
                 <p className="small">{t("numbers.pickDay")}</p>
                 <DayDetail p={data.points[shown]} onPick={() => {}} />
               </section>
+              <ProductDashboard period={period} />
               <section className="card stack">
                 {data.period_top_waste.length > 0 && (
                   <>

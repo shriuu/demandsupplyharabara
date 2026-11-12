@@ -185,6 +185,7 @@ describe("store manager closing", () => {
       units_sold: 3,
       units_wasted: 0,
       sold_out: true,
+      units_left: 0, // it ran out, so nothing is left
       suggestion_id: "s-order-tomato",
     });
     expect(await screen.findByText("No approved orders to close yet.")).toBeInTheDocument();
@@ -197,6 +198,18 @@ describe("store manager closing", () => {
     await user.click(await screen.findByRole("button", { name: /Closing/ }));
     expect(await screen.findAllByText("Tomato")).toHaveLength(1);
     expect(screen.getAllByText("Banana")).toHaveLength(1);
+  });
+
+  it("records what was left on the shelf, and only if it did not run out", async () => {
+    const user = await openRole("Store manager");
+    await openProduct(user, "Tomato");
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click(await screen.findByRole("button", { name: /Closing/ }));
+    await openProduct(user, "Tomato");
+    for (let i = 0; i < 4; i++) await user.click(screen.getByRole("button", { name: "Left on the shelf: More" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mock.outcomes).toHaveLength(1));
+    expect(mock.outcomes[0]).toMatchObject({ units_left: 4, sold_out: false });
   });
 
   it("big counts are typed in whole numbers, not tapped one at a time", async () => {
@@ -351,6 +364,23 @@ describe("store manager: my numbers", () => {
     expect(await within(box).findByText("Thrown away most")).toBeInTheDocument();
     expect(within(box).getByText(/Tomato · 120/)).toBeInTheDocument();
     expect(within(box).queryByText(/What to talk about/)).not.toBeInTheDocument(); // for the area manager
+  });
+
+  it("has a dashboard for each product, with what was left on the shelf and what was thrown away", async () => {
+    const user = await openRole("Store manager");
+    await user.click(await screen.findByRole("button", { name: /My numbers/ }));
+    const tiles = await screen.findByTestId("product-tiles");
+    expect(within(tiles).getAllByRole("button").length).toBe(3);
+    expect(within(tiles).getAllByText(/left each day/)).toHaveLength(2); // two count the shelf
+    expect(within(tiles).getByText("Shelf stock not counted")).toBeInTheDocument(); // one that does not: not zero
+    await user.click(within(tiles).getAllByRole("button")[0]);
+    const detail = await screen.findByTestId("product-detail");
+    expect(within(detail).getByRole("img", { name: /Left on the shelf and thrown away by day/ })).toBeInTheDocument();
+    const rows = within(detail).getAllByRole("row");
+    expect(rows.length).toBe(1 + 7); // a header and one row per day
+    expect(within(detail).getAllByText("no count").length).toBeGreaterThan(0); // a day nobody counted
+    await user.click(within(detail).getByRole("button", { name: /All products/ }));
+    expect(await screen.findByTestId("product-tiles")).toBeInTheDocument();
   });
 
   it("has a weekly and a monthly view", async () => {

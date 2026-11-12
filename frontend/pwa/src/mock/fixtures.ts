@@ -1,6 +1,7 @@
 // Small synthetic fixtures typed from the contracts. No real data.
 import type {
   DayView,
+  ProductHistory,
   FarmerDay,
   HistorySeries,
   DcTotals,
@@ -335,5 +336,46 @@ export function farmerDay(on: string, today: string): FarmerDay {
       { sku_id: "P01", fpo_id: "fpo-1", estimate: { low: 60, likely: 80, high: 100 }, bought_from_groups: 72 },
       { sku_id: "P02", fpo_id: "fpo-2", estimate: null, bought_from_groups: 40 },
     ],
+  };
+}
+
+/** Three products over the period: every fifth day not counted, one product not counting shelf stock. */
+export function productHistory(period: "week" | "month", today: string): ProductHistory {
+  const n = period === "week" ? 7 : 30;
+  const mk = (sku_id: string, sold: number, left: number | null, wasted: number, outEvery: number) => {
+    const days = Array.from({ length: n }, (_, i) => {
+      const on = isoPlus(today, i - (n - 1));
+      const gap = i % 5 === 2;
+      return {
+        on,
+        units_sold: gap ? null : sold,
+        units_wasted: gap ? null : wasted + (i % 3),
+        units_left: gap || left === null ? null : left + (i % 4),
+        sold_out: gap ? null : i % outEvery === 0,
+      };
+    });
+    const counted = days.filter((d) => d.units_sold !== null);
+    const lefts = counted.map((d) => d.units_left).filter((v): v is number => v !== null);
+    const totalSold = counted.reduce((a, d) => a + (d.units_sold ?? 0), 0);
+    const totalWasted = counted.reduce((a, d) => a + (d.units_wasted ?? 0), 0);
+    return {
+      sku_id,
+      days,
+      units_sold: totalSold,
+      units_wasted: totalWasted,
+      waste_pct: Math.round((1000 * totalWasted) / (totalSold + totalWasted)) / 10,
+      days_counted: counted.length,
+      days_ran_out: counted.filter((d) => d.sold_out).length,
+      average_left: lefts.length ? Math.round(lefts.reduce((a, v) => a + v, 0) / lefts.length) : null,
+      latest_left: counted.length ? counted[counted.length - 1].units_left : null,
+    };
+  };
+  return {
+    period,
+    start: isoPlus(today, -(n - 1)),
+    end: today,
+    store_id: "S01",
+    stale: false,
+    products: [mk("P01", 60, 8, 9, 6), mk("P02", 40, null, 4, 9), mk("P03", 25, 3, 1, 3)],
   };
 }

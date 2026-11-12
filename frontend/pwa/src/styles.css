@@ -214,7 +214,7 @@ p { margin: 4px 0; }
 @media (min-width: 640px) {
   .tiles { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
   .tile { min-height: 128px; padding: 8px; }
-  .tile svg { width: 56px; height: 56px; }
+  .tile > svg { width: 56px; height: 56px; }
   .tile-name { font-size: 0.98rem; }
   .tile-amount { font-size: 0.88rem; }
 }
@@ -222,7 +222,7 @@ p { margin: 4px 0; }
   main { max-width: 1240px; }
   .tiles { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
   .tile { min-height: 108px; padding: 6px; border-radius: 14px; }
-  .tile svg { width: 44px; height: 44px; }
+  .tile > svg { width: 44px; height: 44px; }
   .tile-name { font-size: 0.92rem; }
   .tile-amount { font-size: 0.82rem; }
   .tiles-2 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
@@ -242,3 +242,15 @@ p { margin: 4px 0; }
   .dc-grid .send-to { margin-top: 2px; }
   .dc-grid .send-to summary { min-height: 32px; }
 }
+
+/* Per-product dashboard */
+.bar-left { fill: var(--green); }
+.bar-wasted { fill: var(--amber); }
+.key-box { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; }
+.day-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.day-table th, .day-table td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.day-table th:first-child, .day-table td:first-child { text-align: left; }
+.ran-out { color: var(--red); font-weight: 700; }
+.key-box.bar-left { background: var(--green); }
+.key-box.bar-wasted { background: var(--amber); }
+.key-box.trend-out-dot { background: var(--red); }

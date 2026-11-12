@@ -79,6 +79,7 @@ export function StoreClosing({ storeId }: { storeId: string }) {
 function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; storeId: string; onDone: () => void }) {
   const [sold, setSold] = useState(0);
   const [wasted, setWasted] = useState(0);
+  const [left, setLeft] = useState(0);
   const [ranOut, setRanOut] = useState(false);
   const [failed, setFailed] = useState(false);
   const unit = unitOf(suggestion.sku_id);
@@ -94,6 +95,7 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
         units_sold: sold,
         units_wasted: wasted,
         sold_out: ranOut,
+        units_left: ranOut ? 0 : left, // nothing is left if it ran out
         suggestion_id: suggestion.id,
       });
       onDone();
@@ -110,9 +112,13 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
       </div>
       <Counter label={t("closing.sold")} value={sold} step={1} unit={unit} onChange={setSold} />
       <Counter label={t("closing.wasted")} value={wasted} step={1} unit={unit} onChange={setWasted} />
+      <Counter label={t("closing.left")} value={ranOut ? 0 : left} step={1} unit={unit} onChange={setLeft} />
       <p className="counter-label">{t("closing.ranOut")}</p>
       <div className="tickcross">
-        <button className={`btn btn-yes ${ranOut ? "" : "btn-dim"}`} aria-pressed={ranOut} onClick={() => setRanOut(true)}>
+        <button className={`btn btn-yes ${ranOut ? "" : "btn-dim"}`} aria-pressed={ranOut} onClick={() => {
+            setRanOut(true);
+            setLeft(0);
+          }}>
           <Icon name="tick" size={36} /> {t("closing.yes")}
         </button>
         <button className={`btn btn-no ${ranOut ? "btn-dim" : ""}`} aria-pressed={!ranOut} onClick={() => setRanOut(false)}>

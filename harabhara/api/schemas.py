@@ -149,6 +149,7 @@ class ClosingLine(_Body):
     units_sold: float
     units_wasted: float
     sold_out: bool
+    units_left: float | None = None  # on the shelf at close, if it was counted
 
 
 class DayHistory(_Body):
@@ -204,6 +205,7 @@ class OutcomeInput(_Body):
     units_sold: float | None = Field(default=None, ge=0)
     units_wasted: float | None = Field(default=None, ge=0)
     sold_out: bool | None = None
+    units_left: float | None = Field(default=None, ge=0)  # on the shelf at close, not thrown away
     units_bought: float | None = Field(default=None, ge=0)
     source: Literal["farmer_group", "spot"] | None = None
     market: str | None = Field(default=None, max_length=60)
@@ -312,4 +314,35 @@ class FarmerDay(_Body):
     first_day: date
     last_day: date
     label: Literal["estimate"] = "estimate"
+    stale: bool = False
+
+
+class ProductDay(_Body):
+    on: date
+    units_sold: float | None  # None: no closing count for this product that day, never zero
+    units_wasted: float | None
+    units_left: float | None  # left on the shelf at close; None if not counted
+    sold_out: bool | None
+
+
+class ProductSeries(_Body):
+    sku_id: str
+    days: list[ProductDay]
+    units_sold: float
+    units_wasted: float
+    waste_pct: float | None
+    days_counted: int
+    days_ran_out: int
+    average_left: float | None  # over the days it was counted
+    latest_left: float | None
+
+
+class ProductHistory(_Body):
+    """One store's products, day by day: sold, left on the shelf, thrown away."""
+
+    period: Literal["week", "month"]
+    start: date
+    end: date
+    store_id: str
+    products: list[ProductSeries]
     stale: bool = False

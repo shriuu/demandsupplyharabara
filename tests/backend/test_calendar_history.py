@@ -189,3 +189,74 @@ def test_a_store_manager_cannot_ask_for_another_store(env: Env) -> None:
     h = env.login("1111")
     assert env.client.get(f"{V1}/history/series?store_id=S2", headers=h).status_code == 403
     assert env.client.get(f"{V1}/history/series?store_id=S1", headers=h).status_code == 200
+
+
+# ---- each product, day by day, with what was left on the shelf -------------------------------
+
+
+def counted(
+    day: date, sku: str, sold: float, left: float | None, wasted: float, out: bool
+) -> OutcomeRecord:
+    return OutcomeRecord(
+        kind="closing", on=day, store_id="S1", sku_id=sku, units_sold=sold, units_wasted=wasted,
+        units_left=left, sold_out=out, recorded_by="t", recorded_at=WHEN,
+    )  # fmt: skip
+
+
+def test_a_store_manager_sees_each_product_day_by_day_with_the_leftover(env: Env) -> None:
+    d1, d2 = TODAY - timedelta(days=2), TODAY - timedelta(days=1)
+    env.storage.put_outcome(counted(d1, "tomato", 80, 12, 5, False))
+    env.storage.put_outcome(counted(d2, "tomato", 90, 0, 0, True))
+    env.storage.put_outcome(counted(d2, "onion", 50, None, 10, False))  # shelf stock not counted
+    env.storage.put_outcome(
+        closing(d2, "S2", "tomato", 999, 999, False)
+    )  # another store: never shown
+    r = env.client.get(f"{V1}/history/products?period=week", headers=env.login("1111"))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["store_id"] == "S1"
+    assert [p["sku_id"] for p in body["products"]] == ["onion", "tomato"]  # most thrown away first
+    tomato = next(p for p in body["products"] if p["sku_id"] == "tomato")
+    assert (tomato["units_sold"], tomato["units_wasted"]) == (170.0, 5.0)
+    assert tomato["days_counted"] == 2
+    assert tomato["days_ran_out"] == 1
+    assert tomato["average_left"] == 6.0
+    assert tomato["latest_left"] == 0.0
+    days = {d["on"]: d for d in tomato["days"]}
+    assert len(tomato["days"]) == 7
+    assert days[d1.isoformat()]["units_left"] == 12.0
+    assert days[TODAY.isoformat()]["units_sold"] is None  # not counted: unknown, never zero
+    onion = next(p for p in body["products"] if p["sku_id"] == "onion")
+    assert onion["average_left"] is None  # no shelf count was entered: not read as zero
+    assert onion["latest_left"] is None
+
+
+def test_a_store_manager_cannot_open_another_stores_products(env: Env) -> None:
+    h = env.login("1111")
+    assert env.client.get(f"{V1}/history/products?store_id=S2", headers=h).status_code == 403
+    assert env.client.get(f"{V1}/history/products?store_id=S1", headers=h).status_code == 200
+    assert env.client.get(f"{V1}/history/products", headers=env.login("4444")).status_code == 403
+
+
+def test_an_area_manager_names_the_store_to_open(env: Env) -> None:
+    env.storage.put_outcome(counted(TODAY - timedelta(days=1), "tomato", 80, 4, 2, False))
+    h = env.login("3333")
+    assert env.client.get(f"{V1}/history/products", headers=h).status_code == 422  # which store?
+    r = env.client.get(f"{V1}/history/products?store_id=S1", headers=h)
+    assert r.status_code == 200
+    assert r.json()["products"][0]["latest_left"] == 4.0
+
+
+def test_a_shelf_count_can_be_recorded_with_the_closing_and_only_with_a_closing(env: Env) -> None:
+    body = {
+        "kind": "closing", "on": TODAY.isoformat(), "store_id": "S1", "sku_id": "tomato",
+        "units_sold": 80, "units_wasted": 5, "sold_out": False, "units_left": 11,
+    }  # fmt: skip
+    ok = env.client.post(f"{V1}/outcomes", json=body, headers=env.login("1111"))
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["units_left"] == 11
+    bad = {
+        "kind": "purchase", "on": TODAY.isoformat(), "sku_id": "tomato",
+        "units_bought": 10, "source": "spot", "units_left": 3,
+    }  # fmt: skip
+    assert env.client.post(f"{V1}/outcomes", json=bad, headers=env.login("4444")).status_code == 422

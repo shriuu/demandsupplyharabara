@@ -249,6 +249,9 @@ class OutcomeRecord(_Frozen):
     units_sold: float | None = Field(default=None, ge=0)
     units_wasted: float | None = Field(default=None, ge=0)
     sold_out: bool | None = None
+    # Stock still on the shelf when the store closed (not thrown away). Optional: older records and
+    # stores that do not count it leave it blank, and a blank is never read as zero.
+    units_left: float | None = Field(default=None, ge=0)
     units_bought: float | None = Field(default=None, ge=0)
     source: Literal["farmer_group", "spot"] | None = None
     market: str | None = Field(
@@ -266,7 +269,11 @@ class OutcomeRecord(_Frozen):
             ok = self.store_id and None not in closing and all(v is None for v in buying)
             msg = "a closing record needs a store, sold, wasted, sold-out and nothing about buying"
         else:
-            ok = self.store_id is None and None not in buying and all(v is None for v in closing)
+            ok = (
+                self.store_id is None
+                and None not in buying
+                and all(v is None for v in (*closing, self.units_left))
+            )
             msg = "a purchase record needs units bought and a source, and nothing about a store"
         if (
             ok

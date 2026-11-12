@@ -87,6 +87,7 @@ export function DayCard({
                     sold: Math.round(c.units_sold),
                     wasted: Math.round(c.units_wasted),
                   })}
+                  {c.units_left != null ? ` · ${t("hist.left", { n: Math.round(c.units_left) })}` : ""}
                   {c.sold_out ? ` · ${t("hist.ranOut")}` : ""}
                 </span>
               </li>
