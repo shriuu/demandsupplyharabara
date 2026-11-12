@@ -251,7 +251,7 @@ p { margin: 4px 0; }
   .farmer-grid .farmer-head svg { width: 36px; height: 36px; flex: 0 0 36px; }
   .farmer-grid h3 { font-size: 1rem; margin: 0; flex: 1; min-width: 0; }
   .farmer-grid .badge { padding: 0 8px; font-size: 0.8rem; }
-  .farmer-grid .day-row { grid-template-columns: 74px 1fr; gap: 6px; margin-top: 4px; }
+  .farmer-grid .day-row { grid-template-columns: 92px 1fr; gap: 6px; margin-top: 4px; }
   .farmer-grid .day { font-size: 0.78rem; }
   .farmer-grid .rangebar-track { height: 10px; }
   .farmer-grid .digits { margin: 2px 0 0; }
