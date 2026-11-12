@@ -242,3 +242,20 @@ p { margin: 4px 0; }
   .dc-grid .send-to { margin-top: 2px; }
   .dc-grid .send-to summary { min-height: 32px; }
 }
+
+/* Farmer group on a wide screen: the product's three days in one compact card, 3 or 4 across. */
+@media (min-width: 900px) {
+  .farmer-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+  .farmer-grid .card { padding: 8px 12px; border-radius: 14px; }
+  .farmer-grid .total-card.farmer-head { flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; text-align: left; gap: 8px; }
+  .farmer-grid .farmer-head svg { width: 36px; height: 36px; flex: 0 0 36px; }
+  .farmer-grid h3 { font-size: 1rem; margin: 0; flex: 1; min-width: 0; }
+  .farmer-grid .badge { padding: 0 8px; font-size: 0.8rem; }
+  .farmer-grid .day-row { grid-template-columns: 74px 1fr; gap: 6px; margin-top: 4px; }
+  .farmer-grid .day { font-size: 0.78rem; }
+  .farmer-grid .rangebar-track { height: 10px; }
+  .farmer-grid .digits { margin: 2px 0 0; }
+  .farmer-grid .digits strong { font-size: 1.05rem; }
+  .farmer-grid .digits small { font-size: 0.78rem; }
+  .dc-grid .digits strong { font-size: 1.15rem; }
+}

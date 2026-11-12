@@ -103,7 +103,7 @@ export function FarmerScreen() {
       <p className="small">
         {t("farmer.what")} {t("farmer.threeDays")}
       </p>
-      <div className="tiles-2">
+      <div className="tiles-2 farmer-grid">
         {ordered.map(([sku, rows]) => (
           <section key={sku} className="card">
             <div className="total-card farmer-head">
