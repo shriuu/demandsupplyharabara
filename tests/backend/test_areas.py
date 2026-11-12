@@ -173,3 +173,18 @@ def test_the_dc_lead_sees_each_products_order_per_store_and_area() -> None:
         "S01": ("south_central", "South and central", 40),
     }
     assert tomato["waiting_units"] == sum(r[2] for r in rows.values())
+
+
+def test_the_sign_in_page_org_chart_lists_stores_under_areas_and_no_secrets() -> None:
+    client, _ = build()
+    r = client.get(f"{V1}/auth/org")  # no sign-in needed: it is shown on the sign-in page
+    assert r.status_code == 200
+    chart = r.json()
+    shipped = load_areas()
+    assert {a["area_id"] for a in chart["areas"]} == set(shipped)
+    for a in chart["areas"]:
+        assert [s["store_id"] for s in a["stores"]] == shipped[a["area_id"]].stores
+    text = r.text
+    assert not any(pin in text for pin in PINS)
+    assert "pin" not in text.lower()
+    assert "phone" not in text.lower()

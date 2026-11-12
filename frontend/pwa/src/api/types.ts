@@ -33,3 +33,7 @@ export type TrimmingHint = S["TrimmingHint"];
 
 export type Role = Suggestion["approver_role"];
 export type Driver = Suggestion["drivers"][number];
+
+export interface OrgChart {
+  areas: { area_id: string; name: string; stores: { store_id: string; place: string | null }[] }[];
+}

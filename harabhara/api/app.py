@@ -27,6 +27,9 @@ from harabhara.api.schemas import (
     KillSwitchResponse,
     LoginRequest,
     LoginResponse,
+    OrgArea,
+    OrgChart,
+    OrgStore,
     OutcomeInput,
     WeekHistory,
 )
@@ -86,6 +89,7 @@ def create_app(
 ) -> FastAPI:
     assert_manual_only(config or load_config())  # guardrail 1: refuse to start otherwise
     areas = load_areas()
+    store_contacts = load_contacts()
     for pin_user in settings.pins.values():
         if pin_user.area_id and pin_user.area_id not in areas:
             msg = f"{pin_user.actor_id} has an unknown area {pin_user.area_id!r}"
@@ -96,7 +100,7 @@ def create_app(
         assistant or ports.NotConfiguredAssistant(),
         clock,
         (config or load_config()).modeling.pipeline.scorecard_days,
-        load_contacts(),
+        store_contacts,
         (config or load_config()).feeds.mandi.buying_markets,
         areas,
     )
@@ -139,6 +143,23 @@ def create_app(
             store_id=user.store_id,
             area_id=user.area_id,
             area_name=area.name if area else None,
+        )
+
+    @router.get("/auth/org")
+    def org_chart() -> OrgChart:
+        """Which stores report to which area manager, for the sign-in page. Carries no secrets."""
+        places = {
+            c.store_id: (c.name or "").removeprefix("Manager, ") or None for c in store_contacts
+        }
+        return OrgChart(
+            areas=[
+                OrgArea(
+                    area_id=k,
+                    name=a.name,
+                    stores=[OrgStore(store_id=s, place=places.get(s)) for s in a.stores],
+                )
+                for k, a in areas.items()
+            ]
         )
 
     @router.post("/admin/kill-switch")

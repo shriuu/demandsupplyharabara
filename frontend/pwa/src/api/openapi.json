@@ -876,6 +876,76 @@
         "title": "OrderPayload",
         "type": "object"
       },
+      "OrgArea": {
+        "additionalProperties": false,
+        "properties": {
+          "area_id": {
+            "title": "Area Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/OrgStore"
+            },
+            "title": "Stores",
+            "type": "array"
+          }
+        },
+        "required": [
+          "area_id",
+          "name",
+          "stores"
+        ],
+        "title": "OrgArea",
+        "type": "object"
+      },
+      "OrgChart": {
+        "additionalProperties": false,
+        "description": "Who looks after which stores. Names only: no PINs, no phone numbers, no sign-in details.",
+        "properties": {
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/OrgArea"
+            },
+            "title": "Areas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "areas"
+        ],
+        "title": "OrgChart",
+        "type": "object"
+      },
+      "OrgStore": {
+        "additionalProperties": false,
+        "properties": {
+          "place": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store_id"
+        ],
+        "title": "OrgStore",
+        "type": "object"
+      },
       "OutcomeInput": {
         "additionalProperties": false,
         "description": "What a person enters. Who and when come from the sign-in and the server clock.",
@@ -2291,6 +2361,25 @@
           }
         },
         "summary": "Login"
+      }
+    },
+    "/api/v1/auth/org": {
+      "get": {
+        "description": "Which stores report to which area manager, for the sign-in page. Carries no secrets.",
+        "operationId": "org_chart_api_v1_auth_org_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgChart"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Org Chart"
       }
     },
     "/api/v1/contacts": {

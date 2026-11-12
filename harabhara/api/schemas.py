@@ -27,6 +27,23 @@ class LoginResponse(_Body):
     area_name: str | None = None
 
 
+class OrgStore(_Body):
+    store_id: str
+    place: str | None = None
+
+
+class OrgArea(_Body):
+    area_id: str
+    name: str
+    stores: list[OrgStore]
+
+
+class OrgChart(_Body):
+    """Who looks after which stores. Names only: no PINs, no phone numbers, no sign-in details."""
+
+    areas: list[OrgArea]
+
+
 class KillSwitchRequest(_Body):
     on: bool
 

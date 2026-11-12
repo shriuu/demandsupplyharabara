@@ -1,6 +1,7 @@
 import { API_BASE } from "../config";
 import { clearSession, loadSession, saveSession, signalExpired, signalSwitchedOff } from "./session";
 import type {
+  OrgChart,
   Approval,
   AskResponse,
   DcOrders,
@@ -65,6 +66,7 @@ export const api = {
     saveSession(session);
     return session;
   },
+  orgChart: () => request<OrgChart>("/auth/org"),
   logout: () => clearSession(),
   suggestions: (params: { role?: Role; store_id?: string; kind?: string; state?: string }) =>
     request<Suggestion[]>(`/suggestions${query(params)}`),
