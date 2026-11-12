@@ -22,3 +22,16 @@
 - **Buyer prices.** Surplus suggestions now carry the buyer's price as a share of the shelf price and the result against cost, and the reason says so ("at 60% of the shelf price, Rs 12 below cost"). The best buyer beats cost on only 6 of 25 products, so a buyer is a loss-reducer for most. Limit: unit cost comes from purchase records; "best buyer" in the analysis ignored notice, capacity and distance, which the matcher does respect.
 - Farmer screen: product names beside ids (P01 map added), and volumes are rounded to whole units.
 | 2026-11-06 | Discounts: the 50% step (leafy greens, bananas) is proposed from `step_2_start_hour` (19:00), one hour after the 30% step, which on a below-cost product waits for 18:00. The playbook says the 50% step may start after 18:00, so 19:00 is allowed; `step_2_after_hour` still blocks anything earlier. 19:00 is an assumption for the owner to confirm. | The user chose different hours so the two steps are not one tile with the same time. |
+
+## Graph detail and talking points for area managers
+- Each day on the weekly and monthly graph can be hovered, focused or tapped. It shows what was thrown
+  away most, what ran out and in how many stores, how many orders ran out of time, and, for a group
+  graph, the stores to look at first (waste and empty shelves together).
+- "What to talk about" is rule-based, never free text: codes plus the numbers behind them
+  (`harabhara/api/talking.py`), worded on the screen so it can be translated. At most a few, most
+  important first: a product that keeps running out, a store far worse than the group, a product
+  thrown away a lot, orders that run out of time, missing closing counts, a worsening trend. An
+  improvement is only reported if empty shelves did not get worse.
+- All thresholds are in `config/modeling.yaml` (`talk_*`, `chart_detail_items`) and are ASSUMED: the
+  playbook gives none. The owner should confirm them.
+- Each point is a question to ask, not a verdict: it cannot tell why a product ran out.

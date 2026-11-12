@@ -39,6 +39,7 @@ from harabhara.api.schemas import (
 from harabhara.api.service import ApiError, Horizons, Service
 from harabhara.api.settings import ApiSettings, User
 from harabhara.api.storage import Storage
+from harabhara.api.talking import TalkLimits
 from harabhara.contracts import (
     Approval,
     AuditEvent,
@@ -112,6 +113,7 @@ def create_app(
             (config or load_config()).modeling.pipeline.chart_week_days,
             (config or load_config()).modeling.pipeline.chart_month_days,
         ),
+        TalkLimits.from_config((config or load_config()).modeling.pipeline),
     )
     auth = Authenticator(settings, token_clock) if token_clock else Authenticator(settings)
     app = FastAPI(title="HaraBhara Fresh", docs_url=None, redoc_url=None, openapi_url=None)

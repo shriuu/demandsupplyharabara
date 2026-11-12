@@ -101,4 +101,13 @@ pipeline:
   history_days_back: 92
   chart_week_days: 7
   chart_month_days: 30
+  # What the area manager's graph points out. ASSUMED thresholds; the playbook gives none.
+  chart_detail_items: 3        # products and stores named for one day
+  talk_waste_min_pct: 10       # a product is "thrown away a lot" from this share of its units
+  talk_out_min_pct: 20         # "ran out a lot" when it ran out in this share of the store counts
+  talk_late_orders_days: 2     # days with orders that ran out of time before it is raised
+  talk_no_count_days: 2        # days with no closing count before it is raised
+  talk_store_gap_pts: 5        # a store this many points worse than the group is named
+  talk_trend_pts: 2            # a change this big between the first and second half is a trend
+  talk_max_points: 4           # at most this many things to talk about, most important first
 

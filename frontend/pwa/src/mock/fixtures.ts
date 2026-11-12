@@ -293,6 +293,9 @@ export function historySeries(period: "week" | "month", today: string, storeId?:
       sold_out_products: gap ? 0 : (i * 7) % 6,
       orders_decided: gap ? 0 : 20,
       orders_expired: gap ? 0 : 2,
+      top_waste: gap ? [] : [{ sku_id: "P01", units: 22 }, { sku_id: "P02", units: 11 }],
+      ran_out: gap ? [] : [{ sku_id: "P03", stores: 2 }],
+      by_store: gap || storeId ? [] : [{ store_id: "S01", waste_pct: 12, stockout_pct: 24 }, { store_id: "S02", waste_pct: 5, stockout_pct: 8 }],
     };
   });
   return {
@@ -308,6 +311,11 @@ export function historySeries(period: "week" | "month", today: string, storeId?:
     days_with_closing: points.filter((p) => p.waste_pct !== null).length,
     farmer_share: 0.62,
     farmer_share_definition: "Share of purchased volume that came from farmer groups.",
+    talk: [
+      { code: "out_product", sku_id: "P03", value: 36, value2: 25, n: 9 },
+      { code: "store_out", store_id: "S01", value: 24 },
+      { code: "late_orders", n: 4, value: 9 },
+    ],
     stale: false,
   };
 }

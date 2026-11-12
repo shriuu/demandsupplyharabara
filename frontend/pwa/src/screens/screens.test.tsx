@@ -353,10 +353,22 @@ describe("one week of history", () => {
   it("an area manager has a weekly and a monthly graph with waste and empty shelves together", async () => {
     const user = await openRole("Area manager");
     const trend = await screen.findByTestId("trend");
-    expect(await within(trend).findByRole("img", { name: /Thrown away and ran out by day/ })).toBeInTheDocument();
+    expect(await within(trend).findByRole("group", { name: /Thrown away and ran out by day/ })).toBeInTheDocument();
     expect(within(trend).getByText(/Farmer-group share, whole chain: 62%/)).toBeInTheDocument();
+    // hovering a day says what happened that day and where; the latest day is shown to start with
+    const detail = within(trend).getByTestId("trend-detail");
+    expect(within(detail).getByText(/Most thrown away/)).toBeInTheDocument();
+    expect(within(detail).getByText(/Stores to look at/)).toBeInTheDocument();
+    const days = within(trend).getAllByRole("button", { name: /Thrown away/ });
+    await user.hover(days[0]);
+    expect(within(trend).getByTestId("trend-detail")).toBeInTheDocument();
+    // what to talk about, with a way into the store that needs the call
+    const talk = within(trend).getByTestId("talk");
+    expect(within(talk).getByText(/ran out in 9 of 25 counts/)).toBeInTheDocument();
+    expect(within(talk).getByText(/was the order too small/i)).toBeInTheDocument();
+    expect(within(talk).getAllByRole("button", { name: "Open this store" }).length).toBeGreaterThan(0);
     await user.click(within(trend).getByRole("button", { name: "Monthly" }));
-    const chart = await within(trend).findByRole("img", { name: /Thrown away and ran out by day/ });
+    const chart = await within(trend).findByRole("group", { name: /Thrown away and ran out by day/ });
     expect(chart.querySelectorAll("circle").length).toBeGreaterThan(7);
   });
 

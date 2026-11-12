@@ -762,6 +762,8 @@ export interface components {
             stockout_pct: number | null;
             /** Store Ids */
             store_ids: string[];
+            /** Talk */
+            talk: components["schemas"]["TalkPoint"][];
             /** Waste Pct */
             waste_pct: number | null;
         };
@@ -1110,6 +1112,8 @@ export interface components {
         };
         /** SeriesPoint */
         SeriesPoint: {
+            /** By Store */
+            by_store: components["schemas"]["StoreDay"][];
             /**
              * On
              * Format: date
@@ -1121,16 +1125,34 @@ export interface components {
             orders_expired: number;
             /** Products Closed */
             products_closed: number;
+            /** Ran Out */
+            ran_out: components["schemas"]["SkuCount"][];
             /** Sold Out Products */
             sold_out_products: number;
             /** Stockout Pct */
             stockout_pct: number | null;
+            /** Top Waste */
+            top_waste: components["schemas"]["SkuAmount"][];
             /** Units Sold */
             units_sold: number;
             /** Units Wasted */
             units_wasted: number;
             /** Waste Pct */
             waste_pct: number | null;
+        };
+        /** SkuAmount */
+        SkuAmount: {
+            /** Sku Id */
+            sku_id: string;
+            /** Units */
+            units: number;
+        };
+        /** SkuCount */
+        SkuCount: {
+            /** Sku Id */
+            sku_id: string;
+            /** Stores */
+            stores: number;
         };
         /** StoreContact */
         StoreContact: {
@@ -1140,6 +1162,15 @@ export interface components {
             phone?: string | null;
             /** Store Id */
             store_id: string;
+        };
+        /** StoreDay */
+        StoreDay: {
+            /** Stockout Pct */
+            stockout_pct: number | null;
+            /** Store Id */
+            store_id: string;
+            /** Waste Pct */
+            waste_pct: number | null;
         };
         /**
          * StoreOrder
@@ -1251,6 +1282,27 @@ export interface components {
             profit_vs_cost_inr?: number | null;
             /** Units */
             units: number;
+        };
+        /**
+         * TalkPoint
+         * @description One thing to raise with a store manager. Numbers only; the screen words it.
+         */
+        TalkPoint: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "out_product" | "waste_product" | "store_out" | "store_waste" | "late_orders" | "no_counts" | "out_rising" | "waste_rising" | "improving" | "all_fine";
+            /** N */
+            n?: number | null;
+            /** Sku Id */
+            sku_id?: string | null;
+            /** Store Id */
+            store_id?: string | null;
+            /** Value */
+            value?: number | null;
+            /** Value2 */
+            value2?: number | null;
         };
         /** TransferPayload */
         TransferPayload: {
