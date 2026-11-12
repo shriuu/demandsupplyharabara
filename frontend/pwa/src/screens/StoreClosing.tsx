@@ -10,15 +10,27 @@ import { todayIso } from "../dates";
 import { productName, t, unitOf } from "../i18n/strings";
 import { biggestFirst } from "./priority";
 
+/**
+ * One tile per product, not one per day. Only the newest decided order of each product counts, and
+ * it is listed only while it is still waiting for its closing count (approved or edited, not done).
+ * Older approved orders of the same product are history, not something to close again.
+ */
+function toClose(orders: Suggestion[]): Suggestion[] {
+  const newest = new Map<string, Suggestion>();
+  for (const s of orders) {
+    if (!["approved", "edited", "done"].includes(s.state)) continue;
+    const seen = newest.get(s.sku_id);
+    if (!seen || s.created_at > seen.created_at) newest.set(s.sku_id, s);
+  }
+  return [...newest.values()].filter((s) => s.state !== "done");
+}
+
 /** The store records how the day went for each product it ordered. A record only. */
 export function StoreClosing({ storeId }: { storeId: string }) {
   const { state, reload } = useLoad(
     async () => {
-      const [approved, edited] = await Promise.all([
-        api.suggestions({ role: "store_manager", store_id: storeId, kind: "order", state: "approved" }),
-        api.suggestions({ role: "store_manager", store_id: storeId, kind: "order", state: "edited" }),
-      ]);
-      return [...approved, ...edited];
+      const orders = await api.suggestions({ role: "store_manager", store_id: storeId, kind: "order" });
+      return toClose(orders);
     },
     [storeId],
   );

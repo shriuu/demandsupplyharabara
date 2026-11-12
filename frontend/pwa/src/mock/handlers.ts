@@ -228,7 +228,18 @@ export function createMockApi() {
     items = items.map((s) => (s.payload.kind === "order" && s.state === "proposed" ? { ...s, state: "approved" } : s));
   };
 
-  return { handle, asked, decisions, outcomes, expireOrders, answerOrders };
+  /** Earlier days' approved orders for the same products, as a store has after a week of use. */
+  const addOlderApproved = (days: number) => {
+    const orders = items.filter((s) => s.payload.kind === "order");
+    for (let d = 1; d <= days; d++) {
+      for (const o of orders) {
+        const at = new Date(new Date(o.created_at).getTime() - d * 86_400_000).toISOString();
+        items.push({ ...o, id: `${o.id}-old${d}`, created_at: at, state: "approved" });
+      }
+    }
+  };
+
+  return { handle, asked, decisions, outcomes, expireOrders, answerOrders, addOlderApproved };
 }
 
 /** Replace window.fetch with the mock (browser or jsdom). Returns the mock for assertions. */
