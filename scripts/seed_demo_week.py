@@ -125,6 +125,12 @@ def _wasted(row: pd.Series) -> float:
     return float(row["waste_rebuilt"] if recorded != recorded else recorded)
 
 
+def _left(row: pd.Series) -> float | None:
+    """What was still on the shelf at close, from the pack's closing stock. Blank stays blank."""
+    stock = row["closing_stock"]
+    return None if stock != stock else max(0.0, float(stock))
+
+
 def _outcomes(pack: PackData, day: date, data_day: date, tz: ZoneInfo) -> list[OutcomeRecord]:
     at = datetime(day.year, day.month, day.day, 22, 30, tzinfo=tz)
     panel = pack.panel
@@ -138,6 +144,7 @@ def _outcomes(pack: PackData, day: date, data_day: date, tz: ZoneInfo) -> list[O
             units_sold=max(0.0, float(r["sold"])),
             units_wasted=max(0.0, float(_wasted(r))),
             sold_out=bool(r["stockout_flag"]),
+            units_left=_left(r),
             recorded_by=SEED,
             recorded_at=at,
         )
