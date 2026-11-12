@@ -173,3 +173,8 @@ p { margin: 4px 0; }
 .org-stores { margin: 4px 0 0 20px; padding-left: 10px; border-left: 2px dashed var(--green-dark); display: flex; flex-direction: column; gap: 2px; }
 .org-stores li { display: flex; align-items: center; gap: 6px; }
 .org-side { align-self: stretch; }
+
+/* Wide screens: who-looks-after-what on the left, the PIN pad on the right. A phone stacks them. */
+.login-wrap { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 32px; width: 100%; }
+.login-wrap .org { flex: 1 1 320px; margin-bottom: 0; }
+.login-pin { flex: 0 1 340px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
