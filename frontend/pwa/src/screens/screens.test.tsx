@@ -339,6 +339,30 @@ describe("chat panel", () => {
   });
 });
 
+describe("store manager: my numbers", () => {
+  it("shows thrown away, ran out and farmer share together, beside all stores", async () => {
+    const user = await openRole("Store manager");
+    await user.click(await screen.findByRole("button", { name: /My numbers/ }));
+    const box = await screen.findByTestId("my-numbers");
+    expect(within(box).getByText("Wasted")).toBeInTheDocument();
+    expect(within(box).getByText("Empty shelves")).toBeInTheDocument();
+    expect(within(box).getByText("Farmer share")).toBeInTheDocument();
+    expect(within(box).getByTestId("vs-all")).toHaveTextContent("All stores together: wasted 6% · empty shelves 9%");
+    expect(await within(box).findByText("Thrown away most")).toBeInTheDocument();
+    expect(within(box).getByText(/Tomato · 120/)).toBeInTheDocument();
+    expect(within(box).queryByText(/What to talk about/)).not.toBeInTheDocument(); // for the area manager
+  });
+
+  it("has a weekly and a monthly view", async () => {
+    const user = await openRole("Store manager");
+    await user.click(await screen.findByRole("button", { name: /My numbers/ }));
+    const box = await screen.findByTestId("my-numbers");
+    await user.click(within(box).getByRole("button", { name: "Monthly" }));
+    const chart = await within(box).findByRole("group", { name: /Thrown away and ran out by day/ });
+    expect(chart.querySelectorAll("circle").length).toBeGreaterThan(7);
+  });
+});
+
 describe("surplus offer card", () => {
   const offer = (payload: object) => {
     const base = suggestions().find((s) => s.id === "s-surplus-onion")!;

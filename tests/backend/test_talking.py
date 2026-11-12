@@ -11,6 +11,7 @@ from tests.backend.conftest import NOW
 
 LIM = TalkLimits(
     detail_items=2,
+    period_items=3,
     waste_min_pct=10,
     out_min_pct=20,
     late_orders_days=2,

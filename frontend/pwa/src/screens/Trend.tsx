@@ -63,7 +63,7 @@ function summary(p: SeriesPoint): string {
  * Two lines on one chart, always together: thrown away (solid, round dots) and ran out (dashed,
  * square dots). Each day is a column you can hover, focus or tap to see what happened that day.
  */
-function Chart({
+export function Chart({
   data,
   active,
   onActive,
@@ -185,7 +185,7 @@ function Chart({
   );
 }
 
-function Names({
+export function Names({
   rows,
   kind,
 }: {
@@ -204,7 +204,7 @@ function Names({
 }
 
 /** What happened on the day under the finger or pointer, and where. */
-function DayDetail({
+export function DayDetail({
   p,
   onPick,
 }: {

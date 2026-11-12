@@ -782,6 +782,28 @@
         "additionalProperties": false,
         "description": "Day-by-day waste and empty shelves for a graph. Always the two together (guardrail 4).",
         "properties": {
+          "chain_stockout_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain Stockout Pct"
+          },
+          "chain_waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain Waste Pct"
+          },
           "days_with_closing": {
             "title": "Days With Closing",
             "type": "integer"
@@ -820,6 +842,20 @@
             ],
             "title": "Period",
             "type": "string"
+          },
+          "period_ran_out": {
+            "items": {
+              "$ref": "#/components/schemas/SkuCount"
+            },
+            "title": "Period Ran Out",
+            "type": "array"
+          },
+          "period_top_waste": {
+            "items": {
+              "$ref": "#/components/schemas/SkuAmount"
+            },
+            "title": "Period Top Waste",
+            "type": "array"
           },
           "points": {
             "items": {
@@ -896,7 +932,11 @@
           "days_with_closing",
           "farmer_share",
           "farmer_share_definition",
-          "talk"
+          "talk",
+          "period_top_waste",
+          "period_ran_out",
+          "chain_waste_pct",
+          "chain_stockout_pct"
         ],
         "title": "HistorySeries",
         "type": "object"

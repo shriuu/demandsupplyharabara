@@ -292,6 +292,10 @@ class HistorySeries(_Body):
     farmer_share: float | None
     farmer_share_definition: str | None
     talk: list[TalkPoint]
+    period_top_waste: list[SkuAmount]  # thrown away most over the whole period
+    period_ran_out: list[SkuCount]  # ran out most often (``stores`` = number of counts)
+    chain_waste_pct: float | None  # all stores together, for comparison
+    chain_stockout_pct: float | None
     stale: bool = False
 
 

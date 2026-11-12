@@ -726,6 +726,10 @@ export interface components {
          * @description Day-by-day waste and empty shelves for a graph. Always the two together (guardrail 4).
          */
         HistorySeries: {
+            /** Chain Stockout Pct */
+            chain_stockout_pct: number | null;
+            /** Chain Waste Pct */
+            chain_waste_pct: number | null;
             /** Days With Closing */
             days_with_closing: number;
             /**
@@ -742,6 +746,10 @@ export interface components {
              * @enum {string}
              */
             period: "week" | "month";
+            /** Period Ran Out */
+            period_ran_out: components["schemas"]["SkuCount"][];
+            /** Period Top Waste */
+            period_top_waste: components["schemas"]["SkuAmount"][];
             /** Points */
             points: components["schemas"]["SeriesPoint"][];
             /** Scope */

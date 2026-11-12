@@ -147,9 +147,45 @@ def test_the_weekly_and_monthly_series_have_the_configured_length_and_keep_gaps(
     assert week["farmer_share"] == 0.3
 
 
-def test_a_series_can_be_asked_for_one_store_and_only_by_an_area_manager(env: Env) -> None:
+def test_a_series_can_be_asked_for_one_store_by_an_area_manager(env: Env) -> None:
     env.storage.put_outcome(closing(TODAY - timedelta(days=1), "S1", "tomato", 80, 20, True))
     r = env.client.get(f"{V1}/history/series?period=week&store_id=S1", headers=env.login("3333"))
     assert r.status_code == 200, r.text
     assert r.json()["scope"] == "S1"
-    assert env.client.get(f"{V1}/history/series", headers=env.login("1111")).status_code == 403
+    assert env.client.get(f"{V1}/history/series", headers=env.login("4444")).status_code == 403
+
+
+# ---- store manager: my numbers -------------------------------------------------------------
+
+
+def _two_stores(env: Env) -> None:
+    day = TODAY - timedelta(days=1)
+    env.storage.put_outcome(closing(day, "S1", "tomato", 80, 20, True))  # 20% waste, ran out
+    env.storage.put_outcome(closing(day, "S1", "onion", 100, 0, False))
+    env.storage.put_outcome(closing(day, "S2", "tomato", 100, 0, False))  # another store, no waste
+
+
+def test_my_numbers_are_my_store_only_with_the_all_stores_figure_beside_them(env: Env) -> None:
+    _two_stores(env)
+    body = env.client.get(f"{V1}/history/series?period=week", headers=env.login("1111")).json()
+    assert body["scope"] == "S1"
+    assert body["store_ids"] == ["S1"]
+    assert body["waste_pct"] == round(100 * 20 / 200, 1)  # my 20 thrown away of 200 handled
+    assert body["stockout_pct"] == 50.0  # tomato ran out, onion did not
+    assert body["chain_waste_pct"] == round(100 * 20 / 300, 1)  # all stores, for comparison
+    assert body["chain_stockout_pct"] == round(100 * 1 / 3, 1)
+    assert body["talk"] == []  # what to raise with a manager is for their area manager
+
+
+def test_my_numbers_name_what_was_thrown_away_and_what_ran_out(env: Env) -> None:
+    _two_stores(env)
+    body = env.client.get(f"{V1}/history/series?period=month", headers=env.login("1111")).json()
+    assert body["period_top_waste"] == [{"sku_id": "tomato", "units": 20.0}]
+    assert body["period_ran_out"] == [{"sku_id": "tomato", "stores": 1}]
+
+
+def test_a_store_manager_cannot_ask_for_another_store(env: Env) -> None:
+    _two_stores(env)
+    h = env.login("1111")
+    assert env.client.get(f"{V1}/history/series?store_id=S2", headers=h).status_code == 403
+    assert env.client.get(f"{V1}/history/series?store_id=S1", headers=h).status_code == 200

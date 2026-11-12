@@ -18,6 +18,7 @@ from harabhara.settings.schema import PipelineParams
 @dataclass(frozen=True)
 class TalkLimits:
     detail_items: int
+    period_items: int
     waste_min_pct: float
     out_min_pct: float
     late_orders_days: int
@@ -30,6 +31,7 @@ class TalkLimits:
     def from_config(cls, p: PipelineParams) -> TalkLimits:
         return cls(
             p.chart_detail_items,
+            p.chart_period_items,
             p.talk_waste_min_pct,
             p.talk_out_min_pct,
             p.talk_late_orders_days,
@@ -206,3 +208,22 @@ def talking_points(
     if not out and closings:
         return [TalkPoint(code="all_fine")]
     return out
+
+
+def period_summary(closings: list[OutcomeRecord], n: int) -> tuple[list[SkuAmount], list[SkuCount]]:
+    """Over a whole period: what was thrown away most, and what ran out most often.
+
+    The second list counts closing counts where the product ran out (``stores`` holds that count).
+    """
+    wasted: dict[str, float] = defaultdict(float)
+    ran: dict[str, int] = defaultdict(int)
+    for r in closings:
+        wasted[r.sku_id] += r.units_wasted or 0.0
+        if r.sold_out:
+            ran[r.sku_id] += 1
+    top = sorted(((k, v) for k, v in wasted.items() if v > 0), key=lambda kv: (-kv[1], kv[0]))[:n]
+    most = sorted(ran.items(), key=lambda kv: (-kv[1], kv[0]))[:n]
+    return (
+        [SkuAmount(sku_id=k, units=round(v, 1)) for k, v in top],
+        [SkuCount(sku_id=k, stores=v) for k, v in most],
+    )
