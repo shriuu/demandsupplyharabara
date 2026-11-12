@@ -72,6 +72,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/org": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Org Chart
+         * @description Which stores report to which area manager, for the sign-in page. Carries no secrets.
+         */
+        get: operations["org_chart_api_v1_auth_org_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contacts": {
         parameters: {
             query?: never;
@@ -665,6 +685,30 @@ export interface components {
             /** Recommended Units */
             recommended_units: number;
         };
+        /** OrgArea */
+        OrgArea: {
+            /** Area Id */
+            area_id: string;
+            /** Name */
+            name: string;
+            /** Stores */
+            stores: components["schemas"]["OrgStore"][];
+        };
+        /**
+         * OrgChart
+         * @description Who looks after which stores. Names only: no PINs, no phone numbers, no sign-in details.
+         */
+        OrgChart: {
+            /** Areas */
+            areas: components["schemas"]["OrgArea"][];
+        };
+        /** OrgStore */
+        OrgStore: {
+            /** Place */
+            place?: string | null;
+            /** Store Id */
+            store_id: string;
+        };
         /**
          * OutcomeInput
          * @description What a person enters. Who and when come from the sign-in and the server clock.
@@ -1228,6 +1272,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    org_chart_api_v1_auth_org_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgChart"];
                 };
             };
         };

@@ -48,6 +48,14 @@ export function createMockApi() {
     if (method === "GET" && path === "/health") {
       return json({ status: "ok", kill_switch: killSwitch } satisfies Health);
     }
+    if (method === "GET" && path === "/auth/org") {
+      return json({
+        areas: [
+          { area_id: "north", name: "North", stores: [{ store_id: "S06", place: "Malleshwaram" }] },
+          { area_id: "east", name: "East", stores: [{ store_id: "S05", place: "Whitefield" }] },
+        ],
+      });
+    }
     if (method === "POST" && path === "/auth/login") {
       if (failedPins >= MAX_FAILED_PINS) return detail(429, "too many attempts");
       const { pin } = JSON.parse(rawBody ?? "{}") as { pin: string };
