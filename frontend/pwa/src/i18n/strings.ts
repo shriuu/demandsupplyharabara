@@ -34,6 +34,8 @@ export const en = {
   "order.allDone": "All orders answered",
   "order.notYet": "Tonight's orders have not arrived yet. They come in the evening.",
   "order.expiredAll": "Last night's orders ran out of time. Nothing was ordered from them. New orders come in the evening.",
+  "order.expiredTonight": "Tonight's orders ran out of time. Nothing was ordered from them.",
+  "order.lastNight": "Last night: {ok} orders answered · {late} ran out of time.",
   "order.someExpired": "{n} orders ran out of time before anyone answered.",
   "tab.history": "History",
   "hist.title": "Your history",

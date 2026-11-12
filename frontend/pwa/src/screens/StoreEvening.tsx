@@ -6,6 +6,7 @@ import { Confirm, TickCross } from "../components/Buttons";
 import { Crates } from "../components/Crates";
 import { NumberField } from "../components/NumberField";
 import { useChatFocus } from "../components/chatContext";
+import { todayIso } from "../components/CalendarPick";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { ReasonBadge } from "../components/ReasonBadge";
@@ -20,26 +21,59 @@ const TOP_TILES = 3;
 
 export function StoreEvening({ storeId }: { storeId: string }) {
   const { state, reload } = useLoad(
-    () => api.suggestions({ role: "store_manager", store_id: storeId, kind: "order" }),
+    () =>
+      api.suggestions({
+        role: "store_manager",
+        store_id: storeId,
+        kind: "order",
+      }),
     [storeId],
   );
   const [openId, setOpenId] = useState<string | null>(null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
-  const queue = state.data.filter((s) => s.state === "proposed").sort(biggestFirst);
+  const queue = state.data
+    .filter((s) => s.state === "proposed")
+    .sort(biggestFirst);
   if (!queue.length) {
-    // Say what really happened: answered, ran out of time, or nothing has arrived yet.
-    const latest = state.data.map((s) => s.created_at.slice(0, 10)).sort().pop();
-    const lastRun = state.data.filter((s) => s.created_at.slice(0, 10) === latest);
-    const answered = lastRun.filter((s) => ["approved", "edited", "rejected", "done"].includes(s.state)).length;
+    // Say what really happened tonight. An older batch is not tonight's: if the last batch was
+    // answered, tonight's have simply not arrived yet.
+    const latest = state.data
+      .map((s) => s.created_at.slice(0, 10))
+      .sort()
+      .pop();
+    const lastRun = state.data.filter(
+      (s) => s.created_at.slice(0, 10) === latest,
+    );
+    const answered = lastRun.filter((s) =>
+      ["approved", "edited", "rejected", "done"].includes(s.state),
+    ).length;
     const late = lastRun.filter((s) => s.state === "expired").length;
-    const message = answered > 0 ? "order.allDone" : late > 0 ? "order.expiredAll" : "order.notYet";
+    const tonight = latest === todayIso();
+    const message = tonight
+      ? answered > 0
+        ? "order.allDone"
+        : late > 0
+          ? "order.expiredTonight"
+          : "order.notYet"
+      : answered === 0 && late > 0
+        ? "order.expiredAll"
+        : "order.notYet";
+    const good = tonight && answered > 0;
     return (
       <>
-        <p className={`notice ${answered > 0 ? "notice-ok" : ""}`} role="status">
-          <Icon name={answered > 0 ? "tick" : "clock"} size={answered > 0 ? 48 : 32} /> {t(message)}
+        <p className={`notice ${good ? "notice-ok" : ""}`} role="status">
+          <Icon name={good ? "tick" : "clock"} size={good ? 48 : 32} />{" "}
+          {t(message)}
         </p>
-        {answered > 0 && late > 0 && <p className="small">{t("order.someExpired", { n: late })}</p>}
+        {tonight && answered > 0 && late > 0 && (
+          <p className="small">{t("order.someExpired", { n: late })}</p>
+        )}
+        {!tonight && answered > 0 && (
+          <p className="small">
+            {t("order.lastNight", { ok: answered, late })}
+          </p>
+        )}
       </>
     );
   }
@@ -81,7 +115,12 @@ export function StoreEvening({ storeId }: { storeId: string }) {
                 <span className="tile-rank">{i + 1}</span>
                 <ProductIcon skuId={s.sku_id} size={72} />
                 <span className="tile-name">{productName(s.sku_id)}</span>
-                <span className="tile-amount">{t("order.units", { n: Math.round(units), unit: unitOf(s.sku_id) })}</span>
+                <span className="tile-amount">
+                  {t("order.units", {
+                    n: Math.round(units),
+                    unit: unitOf(s.sku_id),
+                  })}
+                </span>
               </button>
             </li>
           );
@@ -106,7 +145,9 @@ export function OrderCard({
   const suggested = Math.round(payload.recommended_units);
   const [units, setUnits] = useState(suggested);
   const [reason, setReason] = useState("");
-  const [confirming, setConfirming] = useState<"reject" | "bigEdit" | null>(null);
+  const [confirming, setConfirming] = useState<"reject" | "bigEdit" | null>(
+    null,
+  );
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const edited = units !== suggested;
@@ -126,7 +167,8 @@ export function OrderCard({
       setBusy(false);
     }
   }
-  const saveEdit = () => send({ action: "edit", edited_units: units, reason: reason.trim() });
+  const saveEdit = () =>
+    send({ action: "edit", edited_units: units, reason: reason.trim() });
   const onTick = () => {
     if (!edited) return void send({ action: "approve" });
     if (needsReason) return;
@@ -136,7 +178,10 @@ export function OrderCard({
 
   return (
     <article className="card order-card">
-      <p className="progress" aria-label={t("order.progress", { n: position, total })}>
+      <p
+        className="progress"
+        aria-label={t("order.progress", { n: position, total })}
+      >
         {t("order.progress", { n: position, total })}
       </p>
       <div className="product">
@@ -153,13 +198,24 @@ export function OrderCard({
         >
           <Icon name="minus" size={40} />
         </button>
-        <NumberField label={t("order.amount")} value={units} onChange={setUnits} unit={unitOf(suggestion.sku_id)} />
-        <button className="btn btn-step" aria-label={t("action.plus")} onClick={() => setUnits((n) => n + EDIT_STEP_UNITS)}>
+        <NumberField
+          label={t("order.amount")}
+          value={units}
+          onChange={setUnits}
+          unit={unitOf(suggestion.sku_id)}
+        />
+        <button
+          className="btn btn-step"
+          aria-label={t("action.plus")}
+          onClick={() => setUnits((n) => n + EDIT_STEP_UNITS)}
+        >
           <Icon name="plus" size={40} />
         </button>
       </div>
       {payload.manager_rule_units != null && (
-        <p className="usual">{t("order.usual", { n: Math.round(payload.manager_rule_units) })}</p>
+        <p className="usual">
+          {t("order.usual", { n: Math.round(payload.manager_rule_units) })}
+        </p>
       )}
       <ReasonBadge driver={suggestion.drivers[0]} reason={suggestion.reason} />
       {edited && (
@@ -175,7 +231,11 @@ export function OrderCard({
           />
         </label>
       )}
-      {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
+      {failed && (
+        <p className="notice notice-error" role="alert">
+          {t("app.error")}
+        </p>
+      )}
       <TickCross
         onTick={onTick}
         onCross={() => setConfirming("reject")}
@@ -183,10 +243,18 @@ export function OrderCard({
         disabled={busy || (edited && needsReason)}
       />
       {confirming === "reject" && (
-        <Confirm message={t("action.confirm.sure")} onYes={() => void send({ action: "reject" })} onNo={() => setConfirming(null)} />
+        <Confirm
+          message={t("action.confirm.sure")}
+          onYes={() => void send({ action: "reject" })}
+          onNo={() => setConfirming(null)}
+        />
       )}
       {confirming === "bigEdit" && (
-        <Confirm message={`${t("edit.large")} ${t("action.confirm.sure")}`} onYes={() => void saveEdit()} onNo={() => setConfirming(null)} />
+        <Confirm
+          message={`${t("edit.large")} ${t("action.confirm.sure")}`}
+          onYes={() => void saveEdit()}
+          onNo={() => setConfirming(null)}
+        />
       )}
     </article>
   );
