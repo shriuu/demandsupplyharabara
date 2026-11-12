@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from typing import Literal
 
 from harabhara.contracts import FarmerVolumeForecast, OutcomeRecord, Range
 from tests.backend.conftest import NOW, TODAY, Env, make_suggestion
@@ -11,21 +12,25 @@ V1 = "/api/v1"
 WHEN = datetime(2026, 11, 1, 22, 0, tzinfo=NOW.tzinfo)
 
 
-def closing(day, store: str, sku: str, sold: float, wasted: float, out: bool) -> OutcomeRecord:  # type: ignore[no-untyped-def]
+def closing(
+    day: date, store: str, sku: str, sold: float, wasted: float, out: bool
+) -> OutcomeRecord:
     return OutcomeRecord(
         kind="closing", on=day, store_id=store, sku_id=sku, units_sold=sold,
         units_wasted=wasted, sold_out=out, recorded_by="t", recorded_at=WHEN,
     )  # fmt: skip
 
 
-def bought(day, sku: str, units: float, source: str) -> OutcomeRecord:  # type: ignore[no-untyped-def]
+def bought(
+    day: date, sku: str, units: float, source: Literal["farmer_group", "spot"]
+) -> OutcomeRecord:
     return OutcomeRecord(
-        kind="purchase", on=day, sku_id=sku, units_bought=units, source=source,  # type: ignore[arg-type]
+        kind="purchase", on=day, sku_id=sku, units_bought=units, source=source,
         recorded_by="t", recorded_at=WHEN,
     )  # fmt: skip
 
 
-def est(day, sku: str = "tomato") -> FarmerVolumeForecast:  # type: ignore[no-untyped-def]
+def est(day: date, sku: str = "tomato") -> FarmerVolumeForecast:
     return FarmerVolumeForecast(
         fpo_id="fpo-1", sku_id=sku, on=day, volume=Range(low=1, likely=2, high=3)
     )
