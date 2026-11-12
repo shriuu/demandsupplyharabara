@@ -227,3 +227,18 @@ p { margin: 4px 0; }
   .tile-amount { font-size: 0.82rem; }
   .tiles-2 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 }
+
+/* DC buying lead on a wide screen: compact cards with the picture beside the text, 3 or 4 across. */
+@media (min-width: 900px) {
+  .dc-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+  .dc-grid .card { padding: 8px 12px; border-radius: 14px; }
+  .dc-grid .alert-body, .dc-grid .total-card, .dc-grid .price-card { flex-direction: row; text-align: left; align-items: flex-start; gap: 10px; }
+  .dc-grid .total-card > .grow, .dc-grid .total-card > div { width: auto; flex: 1; min-width: 0; }
+  .dc-grid .total-card > svg, .dc-grid .price-card > svg { width: 44px; height: 44px; flex: 0 0 44px; }
+  .dc-grid h3 { font-size: 1rem; margin: 0; }
+  .dc-grid .big-number { font-size: 1.3rem; }
+  .dc-grid p { margin: 2px 0; }
+  .dc-grid .light { padding: 1px 8px; }
+  .dc-grid .send-to { margin-top: 2px; }
+  .dc-grid .send-to summary { min-height: 32px; }
+}

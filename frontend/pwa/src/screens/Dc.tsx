@@ -67,7 +67,7 @@ function Purchases({ skus, markets }: { skus: string[]; markets: string[] }) {
           }}
         />
       ) : (
-        <ul className="tiles-2">
+        <ul className="tiles">
           {skus.map((sku) => (
             <li key={sku}>
               <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpenSku(sku)}>
@@ -184,7 +184,7 @@ function OrdersSoFar({ orders }: { orders: DcOrders }) {
       <p className={`notice ${orders.all_decided ? "notice-ok" : ""}`} role="status">
         <Icon name={orders.all_decided ? "tick" : "clock"} size={28} /> {orders.all_decided ? t("dc.orderedAll") : t("dc.orderedSome")}
       </p>
-      <ul className="tiles-2">
+      <ul className="tiles-2 dc-grid">
         {[...orders.products]
           .sort((a, b) => b.confirmed_units + b.waiting_units - (a.confirmed_units + a.waiting_units))
           .map((p) => (
@@ -257,7 +257,7 @@ export function DcScreen() {
         (() => {
           const max = Math.max(1, ...totals.state.data.totals.map((r) => r.demand.high));
           return (
-            <ul className="tiles-2">
+            <ul className="tiles-2 dc-grid">
               {[...totals.state.data.totals].sort((a, b) => b.demand.likely - a.demand.likely).map((row) => (
                 <li key={row.sku_id} className="card total-card">
                   <ProductIcon skuId={row.sku_id} size={64} />
@@ -287,7 +287,7 @@ export function DcScreen() {
         </p>
       )}
       {prices.state.status === "ready" && (
-        <ul className="tiles-2">
+        <ul className="tiles-2 dc-grid">
           {prices.state.data.map((q) => (
             <PriceCard key={`${q.sku_id}-${q.market}`} quote={q} />
           ))}
@@ -300,7 +300,7 @@ export function DcScreen() {
       <p className="small">{t("dc.trimNote")}</p>
       {totals.state.status === "ready" &&
         (totals.state.data.trimming.length ? (
-          <ul className="tiles-2">
+          <ul className="tiles-2 dc-grid">
             {totals.state.data.trimming.map((tr) => (
               <li key={tr.sku_id} className="card total-card">
                 <ProductIcon skuId={tr.sku_id} size={64} />
