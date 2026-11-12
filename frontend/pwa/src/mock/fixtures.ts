@@ -311,6 +311,10 @@ export function historySeries(period: "week" | "month", today: string, storeId?:
     days_with_closing: points.filter((p) => p.waste_pct !== null).length,
     farmer_share: 0.62,
     farmer_share_definition: "Share of purchased volume that came from farmer groups.",
+    period_top_waste: [{ sku_id: "P01", units: 120 }, { sku_id: "P02", units: 64 }],
+    period_ran_out: [{ sku_id: "P03", stores: 9 }],
+    chain_waste_pct: 6,
+    chain_stockout_pct: 9,
     talk: [
       { code: "out_product", sku_id: "P03", value: 36, value2: 25, n: 9 },
       { code: "store_out", store_id: "S01", value: 24 },

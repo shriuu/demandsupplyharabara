@@ -152,8 +152,10 @@ export function createMockApi() {
       return denied ?? json(dayView(q.get("date") ?? todayIso(), todayIso(), true));
     }
     if (method === "GET" && path === "/history/series") {
-      const denied = need("area_manager");
-      return denied ?? json(historySeries(q.get("period") === "month" ? "month" : "week", todayIso(), q.get("store_id") ?? undefined));
+      const denied = need("area_manager", "store_manager");
+      if (denied) return denied;
+      const series = historySeries(q.get("period") === "month" ? "month" : "week", todayIso(), user.role === "store_manager" ? "S01" : (q.get("store_id") ?? undefined));
+      return json(user.role === "store_manager" ? { ...series, talk: [] } : series);
     }
     if (method === "GET" && path === "/farmers/day") {
       const denied = need("farmer_coordinator");

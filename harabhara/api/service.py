@@ -38,7 +38,7 @@ from harabhara.api.schemas import (
 )
 from harabhara.api.settings import User
 from harabhara.api.storage import AlreadyExistsError, Storage
-from harabhara.api.talking import TalkLimits, day_detail, talking_points
+from harabhara.api.talking import TalkLimits, day_detail, period_summary, talking_points
 from harabhara.contracts import (
     Approval,
     AuditEvent,
@@ -721,8 +721,12 @@ class Service:
     def history_series(
         self, user: User, period: Literal["week", "month"], store_id: str | None
     ) -> HistorySeries:
-        """Day-by-day waste and empty shelves for a graph, for an area, the chain or one store."""
-        self.require_role(user, "area_manager")
+        """Day-by-day waste and empty shelves for a graph: an area, the chain or one store.
+
+        A store manager sees only their own store; they are also told how all stores did, for
+        comparison, but never another store's numbers.
+        """
+        self.require_role(user, "area_manager", "store_manager")
         today = self.now().date()
         length = (
             self.horizons.chart_week_days if period == "week" else self.horizons.chart_month_days
@@ -739,8 +743,9 @@ class Service:
         def build() -> HistorySeries:
             stores = {store_id} if store_id else allowed
             area = self._areas.get(user.area_id) if user.area_id else None
-            if store_id:
-                scope, name = store_id, store_id
+            mine = store_id or (user.store_id if user.role == "store_manager" else None)
+            if mine:
+                scope, name = mine, mine
             elif area is not None and user.area_id:
                 scope, name = user.area_id, area.name
             else:
@@ -750,12 +755,15 @@ class Service:
                 for s in self.storage.list_suggestions()
                 if s.payload.kind == "order" and s.store_id in stores
             ]
-            records = [
-                r
-                for r in self.storage.list_outcomes(since=days[0])
-                if r.kind == "purchase" or r.store_id in stores
-            ]
+            everything = self.storage.list_outcomes(since=days[0])
+            records = [r for r in everything if r.kind == "purchase" or r.store_id in stores]
             closings = [r for r in records if r.kind == "closing" and days[0] <= r.on <= days[-1]]
+            all_closings = [
+                r for r in everything if r.kind == "closing" and days[0] <= r.on <= days[-1]
+            ]
+            a_sold = sum(r.units_sold or 0.0 for r in all_closings)
+            a_wasted = sum(r.units_wasted or 0.0 for r in all_closings)
+            top_period, ran_period = period_summary(closings, self.talk.period_items)
             points: list[SeriesPoint] = []
             for day in days:
                 closed = [r for r in closings if r.on == day]
@@ -810,7 +818,20 @@ class Service:
                 farmer_share_definition=(
                     chain[0].farmer_share_definition if chain else "No closing counts recorded."
                 ),
-                talk=talking_points(points, closings, self.talk),
+                # what to raise with a store manager is for their area manager, not for them
+                talk=[]
+                if user.role == "store_manager"
+                else talking_points(points, closings, self.talk),
+                period_top_waste=top_period,
+                period_ran_out=ran_period,
+                chain_waste_pct=round(100 * a_wasted / (a_sold + a_wasted), 1)
+                if a_sold + a_wasted > 0
+                else None,
+                chain_stockout_pct=round(
+                    100 * sum(1 for r in all_closings if r.sold_out) / len(all_closings), 1
+                )
+                if all_closings
+                else None,
             )
 
         served = fallback.attempt(lambda: [build()])
