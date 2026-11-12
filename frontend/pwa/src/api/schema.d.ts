@@ -55,6 +55,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Demo Accounts
+         * @description The sample sign-ins, for an online trial only. 404 unless switched on.
+         */
+        get: operations["demo_accounts_api_v1_auth_demo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -494,6 +514,36 @@ export interface components {
             totals: components["schemas"]["ProductTotal"][];
             /** Trimming */
             trimming: components["schemas"]["TrimmingHint"][];
+        };
+        /**
+         * DemoAccount
+         * @description One sample sign-in shown on the login page of an online trial.
+         */
+        DemoAccount: {
+            /** Actor Id */
+            actor_id: string;
+            /** Area Id */
+            area_id?: string | null;
+            /** Pin */
+            pin: string;
+            /** Place */
+            place?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "store_manager" | "area_manager" | "dc_lead" | "farmer_coordinator";
+            /** Store Id */
+            store_id: string | null;
+        };
+        /** DemoAccounts */
+        DemoAccounts: {
+            /** Accounts */
+            accounts: components["schemas"]["DemoAccount"][];
+            /** Areas */
+            areas: {
+                [key: string]: string;
+            };
         };
         /**
          * Driver
@@ -1195,6 +1245,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_accounts_api_v1_auth_demo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoAccounts"];
                 };
             };
         };

@@ -58,3 +58,9 @@ variable "daily_job_timezone" {
   type    = string
   default = "Asia/Kolkata"
 }
+
+variable "demo_login" {
+  description = "Online trial only: list the sample sign-ins (with their PINs) on the login page. Set false for a real deployment."
+  type        = bool
+  default     = true
+}

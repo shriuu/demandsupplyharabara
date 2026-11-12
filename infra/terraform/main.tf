@@ -173,6 +173,11 @@ resource "google_cloud_run_v2_service" "app" {
         value = var.project_id
       }
 
+      env {
+        name  = "HARABHARA_DEMO_LOGIN"
+        value = var.demo_login ? "1" : "0"
+      }
+
       dynamic "env" {
         for_each = var.mount_secrets ? local.mounted_secrets : {}
         content {

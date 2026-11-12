@@ -22,6 +22,8 @@ from harabhara.api.schemas import (
     AskResponse,
     DcOrders,
     DcTotals,
+    DemoAccount,
+    DemoAccounts,
     HealthResponse,
     KillSwitchRequest,
     KillSwitchResponse,
@@ -86,6 +88,7 @@ def create_app(
 ) -> FastAPI:
     assert_manual_only(config or load_config())  # guardrail 1: refuse to start otherwise
     areas = load_areas()
+    store_contacts = load_contacts()
     for pin_user in settings.pins.values():
         if pin_user.area_id and pin_user.area_id not in areas:
             msg = f"{pin_user.actor_id} has an unknown area {pin_user.area_id!r}"
@@ -96,7 +99,7 @@ def create_app(
         assistant or ports.NotConfiguredAssistant(),
         clock,
         (config or load_config()).modeling.pipeline.scorecard_days,
-        load_contacts(),
+        store_contacts,
         (config or load_config()).feeds.mandi.buying_markets,
         areas,
     )
@@ -140,6 +143,31 @@ def create_app(
             area_id=user.area_id,
             area_name=area.name if area else None,
         )
+
+    @router.get("/auth/demo")
+    def demo_accounts() -> DemoAccounts:
+        """The sample sign-ins, for an online trial only. 404 unless switched on."""
+        if not settings.demo_login or not settings.sign_in_ready:
+            raise HTTPException(404, "not found")
+        places = {
+            c.store_id: (c.name or "").removeprefix("Manager, ") or None for c in store_contacts
+        }
+        accounts = []
+        for pin, u in settings.pins.items():
+            area_id = u.area_id
+            if u.role == "store_manager" and u.store_id:
+                area_id = next((k for k, a in areas.items() if u.store_id in a.stores), None)
+            accounts.append(
+                DemoAccount(
+                    pin=pin,
+                    role=u.role,
+                    actor_id=u.actor_id,
+                    store_id=u.store_id,
+                    area_id=area_id,
+                    place=places.get(u.store_id or ""),
+                )
+            )
+        return DemoAccounts(areas={k: a.name for k, a in areas.items()}, accounts=accounts)
 
     @router.post("/admin/kill-switch")
     def kill_switch(body: KillSwitchRequest, user: CurrentUser) -> KillSwitchResponse:

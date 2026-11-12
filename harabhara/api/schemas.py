@@ -27,6 +27,22 @@ class LoginResponse(_Body):
     area_name: str | None = None
 
 
+class DemoAccount(_Body):
+    """One sample sign-in shown on the login page of an online trial."""
+
+    pin: str
+    role: Role
+    actor_id: str
+    store_id: str | None
+    area_id: str | None = None
+    place: str | None = None  # the locality, for a store
+
+
+class DemoAccounts(_Body):
+    areas: dict[str, str]  # area id -> area name
+    accounts: list[DemoAccount]
+
+
 class KillSwitchRequest(_Body):
     on: bool
 

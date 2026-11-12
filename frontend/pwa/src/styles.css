@@ -162,3 +162,21 @@ p { margin: 4px 0; }
 .week-green { background: #c8e6c9; border-color: var(--green); }
 .week-amber { background: #ffe0b2; border-color: var(--amber); }
 .week-red { background: #ffcdd2; border-color: var(--red); }
+
+/* Trial sign-ins: who manages what, as a small tree. Tap a card to sign in as that person. */
+.demo { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; margin-top: 16px; color: var(--ink); }
+.demo h3 { margin: 0; text-align: center; color: var(--green-dark); }
+.demo-note { margin: 0; text-align: center; font-size: 0.85rem; opacity: 0.75; }
+.demo-card { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 14px; text-align: left;
+  border: 3px solid var(--green-dark); border-radius: 16px; background: #fff; color: inherit; font: inherit; cursor: pointer; }
+.demo-card:active { background: #eef7ee; }
+.demo-card b { display: block; }
+.demo-card small { display: block; opacity: 0.8; }
+.demo-pin { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: var(--green-dark); color: #fff; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; }
+.demo-top { border-width: 4px; }
+.demo-side { border-style: dashed; }
+.demo-tree { display: flex; flex-direction: column; gap: 12px; margin: 0 0 0 14px; padding: 0 0 0 14px; border-left: 4px solid var(--green-dark); list-style: none; }
+.demo-area { display: flex; flex-direction: column; gap: 8px; }
+.demo-stores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 0 0 0 14px; padding: 0 0 0 14px; border-left: 4px dotted var(--green-dark); list-style: none; }
+.demo-stores .demo-card { min-height: 52px; padding: 6px 10px; border-width: 2px; border-radius: 12px; }
+.demo-stores .demo-pin { padding: 2px 8px; font-size: 0.85rem; }

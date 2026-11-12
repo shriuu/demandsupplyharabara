@@ -5,6 +5,7 @@ import type {
   AskResponse,
   DcOrders,
   DcTotals,
+  DemoAccounts,
   FarmerVolumeForecast,
   Health,
   KillSwitchResponse,
@@ -65,6 +66,7 @@ export const api = {
     saveSession(session);
     return session;
   },
+  demoAccounts: () => request<DemoAccounts>("/auth/demo"),
   logout: () => clearSession(),
   suggestions: (params: { role?: Role; store_id?: string; kind?: string; state?: string }) =>
     request<Suggestion[]>(`/suggestions${query(params)}`),

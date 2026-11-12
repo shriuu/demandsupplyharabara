@@ -459,6 +459,96 @@
         "title": "DcTotals",
         "type": "object"
       },
+      "DemoAccount": {
+        "additionalProperties": false,
+        "description": "One sample sign-in shown on the login page of an online trial.",
+        "properties": {
+          "actor_id": {
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Id"
+          },
+          "pin": {
+            "title": "Pin",
+            "type": "string"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "role": {
+            "enum": [
+              "store_manager",
+              "area_manager",
+              "dc_lead",
+              "farmer_coordinator"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "store_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Store Id"
+          }
+        },
+        "required": [
+          "pin",
+          "role",
+          "actor_id",
+          "store_id"
+        ],
+        "title": "DemoAccount",
+        "type": "object"
+      },
+      "DemoAccounts": {
+        "additionalProperties": false,
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/DemoAccount"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "areas": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Areas",
+            "type": "object"
+          }
+        },
+        "required": [
+          "areas",
+          "accounts"
+        ],
+        "title": "DemoAccounts",
+        "type": "object"
+      },
       "Driver": {
         "additionalProperties": false,
         "description": "A real cause behind a suggestion. Reasons are built only from these.",
@@ -2253,6 +2343,25 @@
           }
         },
         "summary": "Audit Log"
+      }
+    },
+    "/api/v1/auth/demo": {
+      "get": {
+        "description": "The sample sign-ins, for an online trial only. 404 unless switched on.",
+        "operationId": "demo_accounts_api_v1_auth_demo_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Demo Accounts"
       }
     },
     "/api/v1/auth/login": {

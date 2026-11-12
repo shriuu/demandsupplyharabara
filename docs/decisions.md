@@ -22,3 +22,15 @@
 - **Buyer prices.** Surplus suggestions now carry the buyer's price as a share of the shelf price and the result against cost, and the reason says so ("at 60% of the shelf price, Rs 12 below cost"). The best buyer beats cost on only 6 of 25 products, so a buyer is a loss-reducer for most. Limit: unit cost comes from purchase records; "best buyer" in the analysis ignored notice, capacity and distance, which the matcher does respect.
 - Farmer screen: product names beside ids (P01 map added), and volumes are rounded to whole units.
 | 2026-11-06 | Discounts: the 50% step (leafy greens, bananas) is proposed from `step_2_start_hour` (19:00), one hour after the 30% step, which on a below-cost product waits for 18:00. The playbook says the 50% step may start after 18:00, so 19:00 is allowed; `step_2_after_hour` still blocks anything earlier. 19:00 is an assumption for the owner to confirm. | The user chose different hours so the two steps are not one tile with the same time. |
+
+## 12 Nov 2026: sample sign-ins on the login page (online trial)
+
+The owner wants to show, on the public trial, who manages what. The login page now draws a small tree
+(DC buying lead, then each area manager, then that area's stores, with the farmer group set to one side).
+Each card shows its PIN and one tap signs in as that person.
+
+- The PINs are not in the repo or the page. The server lists them at `GET /auth/demo` only when
+  `HARABHARA_DEMO_LOGIN=1`; otherwise it answers 404 and the login page shows only the number pad.
+- Terraform variable `demo_login` (default true for the trial) sets it. Set it to false for a real
+  deployment, because anyone who opens the page can then sign in as anyone.
+- Throttling of wrong PINs is unchanged. Guardrail 1 is untouched: signing in does not approve anything.

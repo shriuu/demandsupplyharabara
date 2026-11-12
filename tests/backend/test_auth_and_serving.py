@@ -111,3 +111,24 @@ def test_without_a_built_app_the_api_still_runs(tmp_path: Path) -> None:
     client = TestClient(create_app(InMemoryStorage(), settings, clock=Clock()))
     assert client.get("/").status_code == 404
     assert client.get(f"{V1}/health").status_code == 200
+
+
+def test_demo_accounts_are_hidden_unless_switched_on() -> None:
+    off = TestClient(create_app(InMemoryStorage(), ApiSettings(signing_key="k", pins=PINS)))
+    assert off.get(f"{V1}/auth/demo").status_code == 404
+
+
+def test_demo_accounts_list_every_sign_in_when_switched_on() -> None:
+    settings = ApiSettings(signing_key="k", pins=PINS, demo_login=True)
+    on = TestClient(create_app(InMemoryStorage(), settings))
+    body = on.get(f"{V1}/auth/demo").json()
+    assert {a["pin"] for a in body["accounts"]} == set(PINS)
+    assert {a["role"] for a in body["accounts"]} == {u.role for u in PINS.values()}
+
+
+def test_demo_accounts_stay_off_while_sign_in_is_not_ready() -> None:
+    settings = ApiSettings(signing_key=None, pins=PINS, demo_login=True)
+    assert (
+        TestClient(create_app(InMemoryStorage(), settings)).get(f"{V1}/auth/demo").status_code
+        == 404
+    )

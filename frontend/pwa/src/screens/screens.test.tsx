@@ -37,6 +37,18 @@ async function openRole(name: string) {
 }
 
 describe("sign-in", () => {
+  it("shows the sample sign-ins as a tree, and one tap signs in as that person", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const panel = await screen.findByTestId("demo-sign-ins");
+    expect(within(panel).getByText("DC buying lead")).toBeInTheDocument();
+    expect(within(panel).getByText("Area manager: North")).toBeInTheDocument();
+    expect(within(panel).getByText("Jayanagar")).toBeInTheDocument();
+    expect(within(panel).getByText("1111")).toBeInTheDocument();
+    await user.click(within(panel).getByRole("button", { name: /Jayanagar/ }));
+    await waitFor(() => expect(screen.queryByTestId("demo-sign-ins")).not.toBeInTheDocument());
+  });
+
   it("a wrong PIN shows a message and stays on the pad", async () => {
     const user = userEvent.setup();
     render(<App />);

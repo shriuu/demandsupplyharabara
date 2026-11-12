@@ -3,6 +3,7 @@
 import type {
   Approval,
   AskResponse,
+  DemoAccounts,
   Health,
   KillSwitchResponse,
   LoginResponse,
@@ -47,6 +48,17 @@ export function createMockApi() {
 
     if (method === "GET" && path === "/health") {
       return json({ status: "ok", kill_switch: killSwitch } satisfies Health);
+    }
+    if (method === "GET" && path === "/auth/demo") {
+      return json({
+        areas: { north: "North" },
+        accounts: [
+          { pin: "4444", role: "dc_lead", actor_id: "mock-dc", store_id: null },
+          { pin: "6666", role: "area_manager", actor_id: "mock-north", store_id: null, area_id: "north" },
+          { pin: "1111", role: "store_manager", actor_id: "mock-store", store_id: "S01", area_id: "north", place: "Jayanagar" },
+          { pin: "5555", role: "farmer_coordinator", actor_id: "mock-farmer", store_id: null },
+        ],
+      } satisfies DemoAccounts);
     }
     if (method === "POST" && path === "/auth/login") {
       if (failedPins >= MAX_FAILED_PINS) return detail(429, "too many attempts");

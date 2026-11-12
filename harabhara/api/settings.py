@@ -31,6 +31,8 @@ class ApiSettings:
     login_window_seconds: int = 60
     static_dir: Path | None = None
     firestore_project: str | None = None
+    # An online trial only: show the sample sign-ins on the login page. Off unless asked for.
+    demo_login: bool = False
 
     @property
     def sign_in_ready(self) -> bool:
@@ -65,4 +67,5 @@ def from_env(env: dict[str, str] | None = None) -> ApiSettings:
         pins=parse_pins(e["HARABHARA_PIN_DIRECTORY"]) if e.get("HARABHARA_PIN_DIRECTORY") else {},
         static_dir=Path(static) if static else None,
         firestore_project=e.get("GOOGLE_CLOUD_PROJECT") or None,
+        demo_login=e.get("HARABHARA_DEMO_LOGIN") == "1",
     )
