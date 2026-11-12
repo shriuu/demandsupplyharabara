@@ -11,7 +11,7 @@ import type {
   Role,
   Suggestion,
 } from "../api/types";
-import { dcTotals, farmerForecast, prices, scorecards, suggestions } from "./fixtures";
+import { dcTotals, farmerForecast, prices, scorecards, suggestions, weekHistory } from "./fixtures";
 
 export interface MockResponse {
   status: number;
@@ -112,6 +112,11 @@ export function createMockApi() {
       );
       return json(record);
     }
+    if (method === "GET" && path === "/history/week") {
+      const denied = need("store_manager", "area_manager");
+      if (denied) return denied;
+      return json(weekHistory(user.role === "store_manager" ? ["S01"] : ["S01", "S02"], user.role === "store_manager"));
+    }
     if (method === "GET" && path === "/dc/orders") {
       const denied = need("dc_lead");
       if (denied) return denied;
@@ -171,7 +176,12 @@ export function createMockApi() {
     return detail(404, "not found");
   }
 
-  return { handle, asked, decisions, outcomes };
+  /** Make every waiting order run out of time, as it does once the deadline passes. */
+  const expireOrders = () => {
+    items = items.map((s) => (s.payload.kind === "order" && s.state === "proposed" ? { ...s, state: "expired" } : s));
+  };
+
+  return { handle, asked, decisions, outcomes, expireOrders };
 }
 
 /** Replace window.fetch with the mock (browser or jsdom). Returns the mock for assertions. */

@@ -26,6 +26,9 @@ export type StoreContact = S["StoreContact"];
 export type Suggestion = S["Suggestion"];
 export type SurplusPayload = S["SurplusPayload"];
 export type TransferPayload = S["TransferPayload"];
+export type WeekHistory = S["WeekHistory"];
+export type StoreWeek = S["StoreWeek"];
+export type DayHistory = S["DayHistory"];
 export type TrimmingHint = S["TrimmingHint"];
 
 export type Role = Suggestion["approver_role"];

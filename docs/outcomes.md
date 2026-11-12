@@ -47,3 +47,12 @@ together (guardrail 4), over the scorecard window in `config/modeling.yaml`.
 ## DC lead: where each product goes
 
 Each product on the "What the stores ordered" list opens to "Send to which area and store": the area's total, then each store's confirmed amount (or the suggested amount, marked amber, where the store has not decided; "no order" where it rejected). Areas come from `config/areas.yaml`. Information only: it orders and changes nothing, and it never lowers a confirmed farmer-group volume.
+
+## Last seven days
+
+`GET /api/v1/history/week` (store managers and area managers only). Seven days ending today, store by store.
+- **Store manager:** their own store only, with every order line (suggested amount, what was confirmed, or "refused", "ran out of time", "still waiting") and every closing line. Tab "Last 7 days".
+- **Area manager:** a summary per store in their area (or all stores if they have no area): thrown away and ran out together, how many days were closed, orders answered against orders that ran out of time, and a seven-day strip. Tapping a store opens its scoreboard.
+- **Waste here** is thrown away over sold plus thrown away, from the counts stores enter (units received are not recorded). A day with no closing count shows a dash: unknown, never zero.
+- **Farmer share** is chain-wide only, because purchases are not recorded per store; the screen says so. It is shown beside waste and empty shelves (guardrail 4).
+- Orders are counted on the day they were made. Orders past their deadline show as "ran out of time", not as answered.

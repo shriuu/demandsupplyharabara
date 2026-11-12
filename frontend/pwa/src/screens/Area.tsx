@@ -10,6 +10,7 @@ import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
+import { WeekBoard } from "./WeekBoard";
 import { decideAll } from "./decide";
 import { biggestGroupFirst, groupSteps, type Group } from "./priority";
 
@@ -316,6 +317,14 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
       {!shown && scope === "chain" && stores.length > 0 && <p className="notice" role="status">{t("area.pickStore")}</p>}
       {scope !== "chain" && <CallStore storeId={scope} />}
       <StoresDecided scope={scope} onPick={setScope} />
+      {scope === "chain" && (
+        <WeekBoard
+          onPick={(store) => {
+            setScope(store);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      )}
       {recorded.state.status === "ready" && (
         <>
           <h3>{t("area.recorded")}</h3>

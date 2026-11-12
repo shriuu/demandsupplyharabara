@@ -157,3 +157,8 @@ p { margin: 4px 0; }
 .send-to summary { cursor: pointer; font-weight: 700; min-height: 48px; display: flex; align-items: center; }
 .send-area { margin-top: 8px; }
 .send-head { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
+.week-strip { display: flex; gap: 4px; justify-content: center; margin-top: 6px; }
+.week-cell { width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--line); background: #fff; }
+.week-green { background: #c8e6c9; border-color: var(--green); }
+.week-amber { background: #ffe0b2; border-color: var(--amber); }
+.week-red { background: #ffcdd2; border-color: var(--red); }

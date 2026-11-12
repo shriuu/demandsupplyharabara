@@ -14,6 +14,7 @@ import type {
   PriceQuote,
   Role,
   Scorecard,
+  WeekHistory,
   StoreContact,
   Suggestion,
 } from "./types";
@@ -90,6 +91,7 @@ export const api = {
   prices: () => request<PriceQuote[]>("/prices"),
   farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),
   scorecard: () => request<Scorecard[]>("/scorecard"),
+  weekHistory: () => request<WeekHistory>("/history/week"),
   contacts: () => request<StoreContact[]>("/contacts"),
   recordedScorecard: () => request<Scorecard[]>("/scorecard/recorded"),
   recordOutcome: (body: OutcomeInput) =>

@@ -227,6 +227,146 @@
         "title": "BoughtRow",
         "type": "object"
       },
+      "ClosingLine": {
+        "additionalProperties": false,
+        "properties": {
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "sold_out": {
+            "title": "Sold Out",
+            "type": "boolean"
+          },
+          "units_sold": {
+            "title": "Units Sold",
+            "type": "number"
+          },
+          "units_wasted": {
+            "title": "Units Wasted",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sku_id",
+          "units_sold",
+          "units_wasted",
+          "sold_out"
+        ],
+        "title": "ClosingLine",
+        "type": "object"
+      },
+      "DayHistory": {
+        "additionalProperties": false,
+        "description": "One day for one store: orders counted on the day made, closings on their own day.",
+        "properties": {
+          "closing": {
+            "items": {
+              "$ref": "#/components/schemas/ClosingLine"
+            },
+            "title": "Closing",
+            "type": "array"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          },
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLine"
+            },
+            "title": "Orders",
+            "type": "array"
+          },
+          "orders_approved": {
+            "title": "Orders Approved",
+            "type": "integer"
+          },
+          "orders_edited": {
+            "title": "Orders Edited",
+            "type": "integer"
+          },
+          "orders_expired": {
+            "title": "Orders Expired",
+            "type": "integer"
+          },
+          "orders_made": {
+            "title": "Orders Made",
+            "type": "integer"
+          },
+          "orders_rejected": {
+            "title": "Orders Rejected",
+            "type": "integer"
+          },
+          "orders_waiting": {
+            "title": "Orders Waiting",
+            "type": "integer"
+          },
+          "products_closed": {
+            "title": "Products Closed",
+            "type": "integer"
+          },
+          "sold_out_products": {
+            "title": "Sold Out Products",
+            "type": "integer"
+          },
+          "stockout_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stockout Pct"
+          },
+          "units_confirmed": {
+            "title": "Units Confirmed",
+            "type": "number"
+          },
+          "units_sold": {
+            "title": "Units Sold",
+            "type": "number"
+          },
+          "units_wasted": {
+            "title": "Units Wasted",
+            "type": "number"
+          },
+          "waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waste Pct"
+          }
+        },
+        "required": [
+          "on",
+          "orders_made",
+          "orders_approved",
+          "orders_edited",
+          "orders_rejected",
+          "orders_expired",
+          "orders_waiting",
+          "units_confirmed",
+          "products_closed",
+          "units_sold",
+          "units_wasted",
+          "sold_out_products",
+          "waste_pct",
+          "stockout_pct",
+          "orders",
+          "closing"
+        ],
+        "title": "DayHistory",
+        "type": "object"
+      },
       "DcOrders": {
         "additionalProperties": false,
         "properties": {
@@ -660,6 +800,43 @@
           "expected_recovery_inr"
         ],
         "title": "MarkdownPayload",
+        "type": "object"
+      },
+      "OrderLine": {
+        "additionalProperties": false,
+        "description": "One order a store was asked about, and what became of it.",
+        "properties": {
+          "final_units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Units"
+          },
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "suggested_units": {
+            "title": "Suggested Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sku_id",
+          "state",
+          "suggested_units",
+          "final_units"
+        ],
+        "title": "OrderLine",
         "type": "object"
       },
       "OrderPayload": {
@@ -1436,6 +1613,91 @@
         "title": "StoreOrder",
         "type": "object"
       },
+      "StoreWeek": {
+        "additionalProperties": false,
+        "properties": {
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Id"
+          },
+          "area_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Name"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/DayHistory"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "days_with_closing": {
+            "title": "Days With Closing",
+            "type": "integer"
+          },
+          "orders_decided": {
+            "title": "Orders Decided",
+            "type": "integer"
+          },
+          "orders_expired": {
+            "title": "Orders Expired",
+            "type": "integer"
+          },
+          "stockout_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stockout Pct"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          },
+          "waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waste Pct"
+          }
+        },
+        "required": [
+          "store_id",
+          "area_id",
+          "area_name",
+          "days",
+          "waste_pct",
+          "stockout_pct",
+          "days_with_closing",
+          "orders_decided",
+          "orders_expired"
+        ],
+        "title": "StoreWeek",
+        "type": "object"
+      },
       "Suggestion": {
         "additionalProperties": false,
         "properties": {
@@ -1742,6 +2004,69 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WeekHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "farmer_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farmer Share"
+          },
+          "farmer_share_definition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farmer Share Definition"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/StoreWeek"
+            },
+            "title": "Stores",
+            "type": "array"
+          },
+          "waste_basis": {
+            "title": "Waste Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "stores",
+          "farmer_share",
+          "farmer_share_definition",
+          "waste_basis",
+          "stale"
+        ],
+        "title": "WeekHistory",
         "type": "object"
       }
     }
@@ -2308,6 +2633,52 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/v1/history/week": {
+      "get": {
+        "operationId": "week_history_api_v1_history_week_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Week History"
       }
     },
     "/api/v1/outcomes": {
