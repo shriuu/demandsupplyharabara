@@ -864,6 +864,13 @@
             "title": "Store Ids",
             "type": "array"
           },
+          "talk": {
+            "items": {
+              "$ref": "#/components/schemas/TalkPoint"
+            },
+            "title": "Talk",
+            "type": "array"
+          },
           "waste_pct": {
             "anyOf": [
               {
@@ -888,7 +895,8 @@
           "stockout_pct",
           "days_with_closing",
           "farmer_share",
-          "farmer_share_definition"
+          "farmer_share_definition",
+          "talk"
         ],
         "title": "HistorySeries",
         "type": "object"
@@ -1841,6 +1849,13 @@
       "SeriesPoint": {
         "additionalProperties": false,
         "properties": {
+          "by_store": {
+            "items": {
+              "$ref": "#/components/schemas/StoreDay"
+            },
+            "title": "By Store",
+            "type": "array"
+          },
           "on": {
             "format": "date",
             "title": "On",
@@ -1858,6 +1873,13 @@
             "title": "Products Closed",
             "type": "integer"
           },
+          "ran_out": {
+            "items": {
+              "$ref": "#/components/schemas/SkuCount"
+            },
+            "title": "Ran Out",
+            "type": "array"
+          },
           "sold_out_products": {
             "title": "Sold Out Products",
             "type": "integer"
@@ -1872,6 +1894,13 @@
               }
             ],
             "title": "Stockout Pct"
+          },
+          "top_waste": {
+            "items": {
+              "$ref": "#/components/schemas/SkuAmount"
+            },
+            "title": "Top Waste",
+            "type": "array"
           },
           "units_sold": {
             "title": "Units Sold",
@@ -1902,9 +1931,50 @@
           "products_closed",
           "sold_out_products",
           "orders_decided",
-          "orders_expired"
+          "orders_expired",
+          "top_waste",
+          "ran_out",
+          "by_store"
         ],
         "title": "SeriesPoint",
+        "type": "object"
+      },
+      "SkuAmount": {
+        "additionalProperties": false,
+        "properties": {
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "units": {
+            "title": "Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sku_id",
+          "units"
+        ],
+        "title": "SkuAmount",
+        "type": "object"
+      },
+      "SkuCount": {
+        "additionalProperties": false,
+        "properties": {
+          "sku_id": {
+            "title": "Sku Id",
+            "type": "string"
+          },
+          "stores": {
+            "title": "Stores",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku_id",
+          "stores"
+        ],
+        "title": "SkuCount",
         "type": "object"
       },
       "StoreContact": {
@@ -1943,6 +2013,44 @@
           "store_id"
         ],
         "title": "StoreContact",
+        "type": "object"
+      },
+      "StoreDay": {
+        "additionalProperties": false,
+        "properties": {
+          "stockout_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stockout Pct"
+          },
+          "store_id": {
+            "title": "Store Id",
+            "type": "string"
+          },
+          "waste_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waste Pct"
+          }
+        },
+        "required": [
+          "store_id",
+          "waste_pct",
+          "stockout_pct"
+        ],
+        "title": "StoreDay",
         "type": "object"
       },
       "StoreOrder": {
@@ -2282,6 +2390,88 @@
           "expected_recovery_inr"
         ],
         "title": "SurplusPayload",
+        "type": "object"
+      },
+      "TalkPoint": {
+        "additionalProperties": false,
+        "description": "One thing to raise with a store manager. Numbers only; the screen words it.",
+        "properties": {
+          "code": {
+            "enum": [
+              "out_product",
+              "waste_product",
+              "store_out",
+              "store_waste",
+              "late_orders",
+              "no_counts",
+              "out_rising",
+              "waste_rising",
+              "improving",
+              "all_fine"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "store_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Store Id"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "value2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value2"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "TalkPoint",
         "type": "object"
       },
       "TransferPayload": {

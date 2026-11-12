@@ -38,6 +38,7 @@ from harabhara.api.schemas import (
 )
 from harabhara.api.settings import User
 from harabhara.api.storage import AlreadyExistsError, Storage
+from harabhara.api.talking import TalkLimits, day_detail, talking_points
 from harabhara.contracts import (
     Approval,
     AuditEvent,
@@ -105,6 +106,7 @@ class Service:
         buying_markets: list[str] | None = None,
         areas: dict[str, Area] | None = None,
         horizons: Horizons | None = None,
+        talk: TalkLimits | None = None,
     ) -> None:
         self.storage = storage
         self._areas = areas or {}
@@ -121,6 +123,7 @@ class Service:
                 pipe.chart_month_days,
             )
         self.horizons = horizons
+        self.talk = talk or TalkLimits.from_config(load_config().modeling.pipeline)
         self.prices = prices
         self.assistant = assistant
         self._clock = clock or (lambda: datetime.now(LOCAL_TZ))
@@ -749,6 +752,9 @@ class Service:
             for day in days:
                 closed = [r for r in closings if r.on == day]
                 made = [s for s in orders if aware(s.created_at).date() == day]
+                top_waste, ran_out, by_store = day_detail(
+                    closed, len(stores) > 1, self.talk.detail_items
+                )
                 sold = sum(r.units_sold or 0.0 for r in closed)
                 wasted = sum(r.units_wasted or 0.0 for r in closed)
                 out_n = sum(1 for r in closed if r.sold_out)
@@ -767,6 +773,9 @@ class Service:
                             1 for s in made if s.state in ("approved", "edited", "done")
                         ),
                         orders_expired=sum(1 for s in made if s.state == "expired"),
+                        top_waste=top_waste,
+                        ran_out=ran_out,
+                        by_store=by_store,
                     )
                 )
             w_sold = sum(r.units_sold or 0.0 for r in closings)
@@ -793,6 +802,7 @@ class Service:
                 farmer_share_definition=(
                     chain[0].farmer_share_definition if chain else "No closing counts recorded."
                 ),
+                talk=talking_points(points, closings, self.talk),
             )
 
         served = fallback.attempt(lambda: [build()])

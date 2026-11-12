@@ -199,3 +199,13 @@ p { margin: 4px 0; }
 .trend-legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .trend-key { display: inline-block; width: 28px; height: 0; border-top: 3px solid var(--amber); }
 .trend-key-out { border-top: 3px dashed var(--red); }
+
+.trend-hit { fill: transparent; cursor: pointer; }
+.trend-hit:hover, .trend-hit:focus { fill: rgba(27, 94, 32, 0.08); outline: none; }
+.trend-guide { stroke: var(--green-dark); stroke-width: 1; stroke-dasharray: 2 3; }
+.trend-detail { display: flex; flex-direction: column; gap: 4px; }
+.trend-names { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.trend-names li { display: inline-flex; align-items: center; gap: 6px; }
+.talk-item { display: flex; gap: 12px; align-items: flex-start; }
+.talk ol { list-style: none; padding: 0; margin: 0; }
+.trend-detail .decided-row { justify-content: flex-start; text-align: left; }

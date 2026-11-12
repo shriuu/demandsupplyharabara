@@ -220,6 +220,47 @@ class DayView(_Body):
     stale: bool = False
 
 
+class SkuAmount(_Body):
+    sku_id: str
+    units: float
+
+
+class SkuCount(_Body):
+    sku_id: str
+    stores: int  # in how many stores it ran out that day
+
+
+class StoreDay(_Body):
+    store_id: str
+    waste_pct: float | None
+    stockout_pct: float | None
+
+
+TalkCode = Literal[
+    "out_product",  # a product keeps running out: ask about the order range, a transfer
+    "waste_product",  # a product keeps being thrown away: ask about the order size, stock age
+    "store_out",  # one store runs out much more than the rest
+    "store_waste",  # one store throws away much more than the rest
+    "late_orders",  # evening orders keep running out of time
+    "no_counts",  # closing counts are missing on some days
+    "out_rising",  # empty shelves are getting worse
+    "waste_rising",  # waste is getting worse
+    "improving",  # both are getting better
+    "all_fine",  # nothing stands out
+]
+
+
+class TalkPoint(_Body):
+    """One thing to raise with a store manager. Numbers only; the screen words it."""
+
+    code: TalkCode
+    store_id: str | None = None
+    sku_id: str | None = None
+    value: float | None = None
+    value2: float | None = None
+    n: int | None = None
+
+
 class SeriesPoint(_Body):
     on: date
     units_sold: float
@@ -230,6 +271,9 @@ class SeriesPoint(_Body):
     sold_out_products: int
     orders_decided: int
     orders_expired: int
+    top_waste: list[SkuAmount]  # what was thrown away most that day
+    ran_out: list[SkuCount]  # what ran out, by how many stores
+    by_store: list[StoreDay]  # worst first; empty when the graph is for one store
 
 
 class HistorySeries(_Body):
@@ -247,6 +291,7 @@ class HistorySeries(_Body):
     days_with_closing: int
     farmer_share: float | None
     farmer_share_definition: str | None
+    talk: list[TalkPoint]
     stale: bool = False
 
 

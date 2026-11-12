@@ -32,6 +32,7 @@ export type DayHistory = S["DayHistory"];
 export type DayView = S["DayView"];
 export type HistorySeries = S["HistorySeries"];
 export type SeriesPoint = S["SeriesPoint"];
+export type TalkPoint = S["TalkPoint"];
 export type FarmerDay = S["FarmerDay"];
 export type TrimmingHint = S["TrimmingHint"];
 

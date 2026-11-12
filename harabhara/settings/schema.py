@@ -276,6 +276,14 @@ class PipelineParams(_Strict):
     history_days_back: int = Field(ge=1)
     chart_week_days: int = Field(ge=1)
     chart_month_days: int = Field(ge=1)
+    chart_detail_items: int = Field(ge=1)
+    talk_waste_min_pct: float = Field(ge=0)
+    talk_out_min_pct: float = Field(ge=0)
+    talk_late_orders_days: int = Field(ge=1)
+    talk_no_count_days: int = Field(ge=1)
+    talk_store_gap_pts: float = Field(ge=0)
+    talk_trend_pts: float = Field(ge=0)
+    talk_max_points: int = Field(ge=1)
 
 
 class Modeling(_Strict):

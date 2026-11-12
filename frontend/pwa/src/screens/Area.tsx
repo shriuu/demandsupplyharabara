@@ -316,7 +316,13 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
         </>
       )}
       {!shown && scope === "chain" && stores.length > 0 && <p className="notice" role="status">{t("area.pickStore")}</p>}
-      <Trend scope={scope} />
+      <Trend
+        scope={scope}
+        onPick={(store) => {
+          setScope(store);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
       {scope !== "chain" && <CallStore storeId={scope} />}
       <StoresDecided scope={scope} onPick={setScope} />
       {scope === "chain" && (
