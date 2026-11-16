@@ -100,7 +100,9 @@ function SendTo({ product }: { product: DcOrders["products"][number] }) {
   }
   return (
     <details className="send-to">
-      <summary>{t("dc.sendTo")}</summary>
+      <summary className="btn btn-plain send-btn">
+        <Icon name="van" size={24} /> {t("dc.sendTo")}
+      </summary>
       {[...groups.entries()].map(([key, group]) => {
         const sum = group.rows.reduce((n, r) => n + r.confirmed_units, 0);
         const waiting = group.rows.reduce((n, r) => n + r.waiting_units, 0);
@@ -157,8 +159,9 @@ function ProductRow({
   return (
     <li className="card dc-row" data-sku={sku}>
       <div className="dc-product">
-        <ProductIcon skuId={sku} size={56} />
+        <ProductIcon skuId={sku} size={48} />
         <h3>{productName(sku)}</h3>
+        {order && <TrafficLight light={order.stores_waiting === 0 ? "green" : "amber"} />}
       </div>
       <div className="dc-block">
         <p className="dc-label">{t("dc.blockOrdered")}</p>
@@ -167,10 +170,7 @@ function ProductRow({
             <p>
               <strong className="big-number">{Math.round(order.confirmed_units)}</strong> {unit}
             </p>
-            <p className="small">
-              <TrafficLight light={order.stores_waiting === 0 ? "green" : "amber"} />{" "}
-              {t("dc.orderedStores", { done: order.stores_decided + order.stores_rejected, total: stores })}
-            </p>
+            <p className="small">{t("dc.orderedStores", { done: order.stores_decided + order.stores_rejected, total: stores })}</p>
             {order.waiting_units > 0 && <p className="small">{t("dc.orderedWaiting", { n: Math.round(order.waiting_units), unit })}</p>}
           </>
         ) : (
@@ -188,7 +188,10 @@ function ProductRow({
             <p>
               <Icon name="minus" size={20} /> {t("dc.trimUnits", { n: Math.round(trim.spot_units_to_trim), unit })}
             </p>
-            <p className="small">{trim.reason}</p>
+            <details className="dc-why">
+              <summary>{t("dc.why")}</summary>
+              <p className="small">{trim.reason}</p>
+            </details>
           </>
         ) : (
           <p className="small">{t("dc.noTrim")}</p>
@@ -285,7 +288,6 @@ export function DcScreen() {
           <Icon name="clock" /> {t("app.stale")}
         </p>
       )}
-      <p className="small">{t("dc.trimNote")}</p>
       {skus.length === 0 ? (
         <Empty />
       ) : (

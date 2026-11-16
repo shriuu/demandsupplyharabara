@@ -97,9 +97,6 @@ export function FarmerScreen() {
       <h2>
         <Icon name="tractor" /> {t("farmer.title")}
       </h2>
-      <p className="notice">
-        <Icon name="alert" /> {t("farmer.note")}
-      </p>
       <p className="small">
         {t("farmer.what")} {t("farmer.threeDays")}
       </p>
