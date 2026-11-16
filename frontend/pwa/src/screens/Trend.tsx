@@ -454,6 +454,8 @@ export function Trend({
             <p className="notice">{t("trend.noData")}</p>
           ) : (
             <>
+              <div className="perf-grid">
+              <div className="stack">
               <Chart
                 data={data}
                 active={shown}
@@ -466,7 +468,9 @@ export function Trend({
               </p>
               <p className="small">{t("trend.hint")}</p>
               <DayDetail p={data.points[shown]} onPick={onPick} />
+              </div>
               <TalkList talk={data.talk} onPick={onPick} />
+              </div>
             </>
           )}
         </>

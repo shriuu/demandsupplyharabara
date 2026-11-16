@@ -305,3 +305,7 @@ p { margin: 4px 0; }
   .chat-fab { right: 64px; top: 10px; min-height: 44px; min-width: 44px; padding: 6px 10px; }
   .chat-fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 }
+
+.perf-grid { display: grid; gap: 16px; }
+@media (min-width: 800px) { .perf-grid { grid-template-columns: 3fr 2fr; align-items: start; } }
+.area-tabs { display: flex; gap: 8px; }
