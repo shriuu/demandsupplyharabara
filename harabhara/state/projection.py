@@ -112,9 +112,17 @@ def expected_value(outcome: Range) -> float:
     return 0.3 * outcome.low + 0.4 * outcome.likely + 0.3 * outcome.high
 
 
+ROUNDING = 1e-9  # float arithmetic can leave -0.000000000000004 where the answer is zero
+
+
+def _quantity(value: float) -> float:
+    """A quantity is never below zero. Only rounding dust is cleaned; a real negative stays."""
+    return 0.0 if -ROUNDING < value < 0 else value
+
+
 def _range(low: float, likely: float, high: float) -> Range:
-    values = sorted((low, likely, high))
-    return Range(low=values[0], likely=likely, high=values[2])
+    values = sorted(_quantity(v) for v in (low, likely, high))
+    return Range(low=values[0], likely=_quantity(likely), high=values[2])
 
 
 def project(
