@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 
 from harabhara.api.snapshot import SnapshotStorage
 from harabhara.api.storage import InMemoryStorage
-from harabhara.contracts import Approval, OutcomeRecord, Suggestion
+from harabhara.contracts import Approval, OutcomeRecord, Suggestion, SuggestionState
 from tests.backend.conftest import NOW, TODAY, make_suggestion
 
 WHEN = datetime(2026, 11, 1, 22, 0, tzinfo=NOW.tzinfo)
@@ -20,9 +20,11 @@ class Counting(InMemoryStorage):
         super().__init__()
         self.reads = 0
 
-    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+    def list_suggestions(
+        self, since: date | None = None, state: SuggestionState | None = None
+    ) -> list[Suggestion]:
         self.reads += 1
-        return super().list_suggestions(since)
+        return super().list_suggestions(since, state)
 
     def list_outcomes(
         self,
@@ -112,15 +114,77 @@ def test_a_new_count_and_a_new_suggestion_show_at_once() -> None:
     assert len(inner.list_outcomes()) == 1
 
 
-def test_what_another_process_wrote_appears_after_the_refresh_interval() -> None:
+def test_what_another_process_wrote_appears_on_the_first_read_after_the_interval() -> None:
     snap, inner, clock = build(refresh=60)
     snap.list_suggestions()
     inner.create_suggestion(make_suggestion("from-the-daily-job"))
     assert snap.list_suggestions() == []  # not yet
     clock.t += 61
-    snap.list_suggestions()  # starts a refresh in the background
-    snap.refresh()  # (run it here too, so the test does not wait for the thread)
+    # the next read does the cheap refresh itself, inside the request: no background thread
     assert [s.id for s in snap.list_suggestions()] == ["from-the-daily-job"]
+
+
+def test_a_batch_being_retired_is_noticed_by_the_cheap_refresh() -> None:
+    """The daily job expires yesterday's waiting proposals when it loads the new batch."""
+    snap, inner, clock = build(refresh=60)
+    yesterday = make_suggestion("last-night").model_copy(
+        update={"created_at": NOW - timedelta(days=1)}
+    )
+    inner.create_suggestion(yesterday)
+    assert [s.state for s in snap.list_suggestions()] == ["proposed"]
+    inner.transition("last-night", "proposed", "expired")  # done by another process
+    inner.create_suggestion(make_suggestion("tonight"))
+    clock.t += 61
+    states = {s.id: s.state for s in snap.list_suggestions()}
+    assert states == {"last-night": "expired", "tonight": "proposed"}
+
+
+def test_the_cheap_refresh_does_not_read_everything() -> None:
+    snap, inner, clock = build(refresh=60)
+    old = make_suggestion("old-decided").model_copy(
+        update={"created_at": NOW - timedelta(days=30), "state": "approved"}
+    )
+    inner.create_suggestion(old)
+    snap.list_suggestions()
+    inner._suggestions["old-decided"] = old.model_copy(
+        update={"state": "rejected"}
+    )  # changed outside
+    clock.t += 61
+    assert (
+        snap.list_suggestions()[0].state == "approved"
+    )  # a cheap refresh leaves old decided ones alone
+    clock.t += 1800
+    assert snap.list_suggestions()[0].state == "rejected"  # the full re-read corrects it
+
+
+def test_a_count_written_by_another_process_appears_after_the_full_re_read() -> None:
+    snap, inner, clock = build(refresh=60)
+    snap.list_outcomes()
+    inner.put_outcome(closing(TODAY))
+    clock.t += 61
+    assert snap.list_outcomes() == []  # the cheap look does not read counts
+    clock.t += 1800
+    assert len(snap.list_outcomes()) == 1
+
+
+def test_a_refresh_that_fails_keeps_the_data_and_waits_for_the_next_interval() -> None:
+    snap, inner, clock = build(refresh=60)
+    inner.create_suggestion(make_suggestion("a"))
+    snap.list_suggestions()
+    calls = {"n": 0}
+    real = inner.list_suggestions
+
+    def broken(since: date | None = None, state: str | None = None) -> list[Suggestion]:
+        calls["n"] += 1
+        raise RuntimeError("database unavailable")
+
+    inner.list_suggestions = broken  # type: ignore[method-assign]
+    clock.t += 61
+    assert [s.id for s in snap.list_suggestions()] == ["a"]  # still served
+    snap.list_suggestions()
+    snap.list_suggestions()
+    assert calls["n"] == 1  # it did not retry on every request
+    inner.list_suggestions = real  # type: ignore[method-assign]
 
 
 def test_a_failed_refresh_keeps_the_previous_data() -> None:

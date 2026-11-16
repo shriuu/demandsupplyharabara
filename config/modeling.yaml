@@ -101,9 +101,12 @@ pipeline:
   history_days_back: 92
   chart_week_days: 7
   chart_month_days: 30
-  # Speed. The server keeps recent suggestions and recorded counts in memory and checks the database
-  # for changes this often (seconds). Changes made through the app show at once.
+  # Speed. The server keeps recent suggestions and recorded counts in memory. Changes made through the
+  # app show at once. Other changes (the daily job's batch) are picked up inside a request: a cheap
+  # look at yesterday, today and what is still waiting every snapshot_refresh_seconds, and a full
+  # re-read every snapshot_full_refresh_seconds. Nothing waits for idle CPU, which a small server lacks.
   snapshot_refresh_seconds: 60
+  snapshot_full_refresh_seconds: 1800
   # Screens that only need the latest orders ask for this many days (tonight's, last night's, the one before).
   recent_days: 3
   # What the area manager's graph points out. ASSUMED thresholds; the playbook gives none.
