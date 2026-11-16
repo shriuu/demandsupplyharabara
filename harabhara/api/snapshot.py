@@ -8,9 +8,12 @@ How it behaves:
 - Reads of suggestions and outcomes come from memory. Everything else goes straight to the database.
 - A change made through the app (a decision, a new count) goes to the database first and is then
   put in memory, so the person who made it sees it at once.
-- A background refresh re-reads the recent window every ``refresh_seconds`` to pick up what other
-  processes wrote (the daily job loads new suggestions). A failed refresh keeps the old data: show
-  something slightly old rather than nothing (guardrail 12).
+- What other processes wrote (the daily job loads a new batch and retires the old one) is picked up
+  inside a request, never in a background thread: a small server only gets CPU while it is handling
+  a request, so a background refresh barely progressed and new data stayed hidden. A cheap look at
+  yesterday, today and everything still waiting runs at most every ``refresh_seconds``, and a full
+  re-read every ``full_refresh_seconds``. A failed refresh keeps the old data: show something
+  slightly old rather than nothing (guardrail 12).
 - Only the recent window is held (the calendar's limit), so memory stays bounded.
 - It assumes one server process. With several, a decision on one would not show on another until
   its next refresh. The service is deployed with a single instance for that reason.
@@ -43,6 +46,7 @@ from harabhara.contracts import (
 )
 
 log = logging.getLogger("harabhara.snapshot")
+RECENT_LOOKUPS = 100  # old proposals checked one by one in a cheap refresh
 
 
 class SnapshotStorage:
@@ -52,12 +56,14 @@ class SnapshotStorage:
         *,
         retention_days: int,
         refresh_seconds: float,
+        full_refresh_seconds: float = 1800.0,
         today: Callable[[], date] | None = None,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self._inner = inner
         self._retention = retention_days
         self._refresh_seconds = refresh_seconds
+        self._full_refresh_seconds = full_refresh_seconds
         self._today = today or (lambda: datetime.now().astimezone().date())
         self._monotonic = monotonic
         self._lock = threading.RLock()
@@ -65,8 +71,9 @@ class SnapshotStorage:
         self._suggestions: dict[str, Suggestion] | None = None
         self._outcomes: dict[str, OutcomeRecord] = {}
         self._approvals: dict[str, Approval] = {}
-        self._loaded_at = 0.0
-        self._refreshing = False
+        self._loaded_at = 0.0  # the last refresh of any kind
+        self._full_at = 0.0  # the last full re-read
+        self._refresh_lock = threading.Lock()
 
     # ---- loading -------------------------------------------------------------------------
 
@@ -81,7 +88,7 @@ class SnapshotStorage:
         approvals = {a.suggestion_id: a for a in self._inner.list_approvals(since=start)}
         with self._lock:
             self._suggestions, self._outcomes, self._approvals = suggestions, outcomes, approvals
-            self._loaded_at = self._monotonic()
+            self._loaded_at = self._full_at = self._monotonic()
 
     def warm(self) -> None:
         """Load before the first request. A failure is left for the first read to retry."""
@@ -90,31 +97,52 @@ class SnapshotStorage:
         except Exception:
             log.exception("could not warm the snapshot; the first read will try again")
 
+    def refresh_recent(self) -> None:
+        """A cheap look: yesterday's and today's suggestions and everything still waiting.
+
+        Covers a new batch (created today) and the old one being retired (yesterday's proposals
+        turning to expired). Proposals older than that which were decided elsewhere are looked up
+        one by one, up to a limit; a full re-read catches any beyond it.
+        """
+        recent_start = self._today() - timedelta(days=1)
+        recent = self._inner.list_suggestions(since=recent_start)
+        waiting = self._inner.list_suggestions(state="proposed")
+        seen = {s.id for s in recent} | {s.id for s in waiting}
+        with self._lock:
+            held = self._suggestions if self._suggestions is not None else {}
+            behind = [i for i, s in held.items() if s.state == "proposed" and i not in seen]
+        corrected = [c for i in behind[:RECENT_LOOKUPS] if (c := self._inner.get_suggestion(i))]
+        with self._lock:
+            if self._suggestions is None:
+                return
+            for s in [*recent, *waiting, *corrected]:
+                self._suggestions[s.id] = s
+            self._loaded_at = self._monotonic()
+
     def _ensure_loaded(self) -> None:
         if self._suggestions is None:
             with self._load_lock:  # one caller loads; the others wait for it
                 if self._suggestions is None:
                     self.refresh()
-        elif self._monotonic() - self._loaded_at > self._refresh_seconds:
-            self._refresh_in_background()
+            return
+        now = self._monotonic()
+        if now - self._full_at > self._full_refresh_seconds:
+            self._refresh_now(full=True)
+        elif now - self._loaded_at > self._refresh_seconds:
+            self._refresh_now(full=False)
 
-    def _refresh_in_background(self) -> None:
-        with self._lock:
-            if self._refreshing:
-                return
-            self._refreshing = True
-            self._loaded_at = self._monotonic()  # do not start another while this one runs
-
-        def work() -> None:
-            try:
-                self.refresh()
-            except Exception:
-                log.exception("snapshot refresh failed; serving the previous data")
-            finally:
-                with self._lock:
-                    self._refreshing = False
-
-        threading.Thread(target=work, daemon=True, name="snapshot-refresh").start()
+    def _refresh_now(self, *, full: bool) -> None:
+        """Refresh inside this request; if another one is already at it, serve what we have."""
+        if not self._refresh_lock.acquire(blocking=False):
+            return
+        try:
+            self.refresh() if full else self.refresh_recent()
+        except Exception:
+            log.exception("snapshot refresh failed; serving the previous data")
+            with self._lock:
+                self._loaded_at = self._monotonic()  # do not retry on every request
+        finally:
+            self._refresh_lock.release()
 
     # ---- suggestions: read from memory, write through -----------------------------------
 
@@ -124,13 +152,17 @@ class SnapshotStorage:
             held = (self._suggestions or {}).get(suggestion_id)
         return held if held is not None else self._inner.get_suggestion(suggestion_id)
 
-    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+    def list_suggestions(
+        self, since: date | None = None, state: SuggestionState | None = None
+    ) -> list[Suggestion]:
         self._ensure_loaded()
         with self._lock:
             rows = list((self._suggestions or {}).values())
-        if since is None:
-            return rows
-        return [s for s in rows if s.created_at.date() >= since]
+        return [
+            s
+            for s in rows
+            if (since is None or s.created_at.date() >= since) and state in (None, s.state)
+        ]
 
     def create_suggestion(self, suggestion: Suggestion) -> None:
         self._inner.create_suggestion(suggestion)

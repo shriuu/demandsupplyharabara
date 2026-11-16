@@ -95,7 +95,13 @@ class FirestoreStorage:
         snap = self._col(SUGGESTIONS).document(_id(suggestion_id)).get()
         return Suggestion.model_validate(snap.to_dict()) if snap.exists else None
 
-    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+    def list_suggestions(
+        self, since: date | None = None, state: SuggestionState | None = None
+    ) -> list[Suggestion]:
+        if state is not None:
+            # equality on one field needs no index; the date is checked here
+            rows = self._stream(SUGGESTIONS, Suggestion, state=state)
+            return [s for s in rows if since is None or s.created_at.date() >= since]
         if since is None:
             return self._stream(SUGGESTIONS, Suggestion)
         # created_at is stored as an ISO string, so one range on that single field needs no index

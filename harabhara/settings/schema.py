@@ -278,6 +278,7 @@ class PipelineParams(_Strict):
     chart_week_days: int = Field(ge=1)
     chart_month_days: int = Field(ge=1)
     snapshot_refresh_seconds: float = Field(gt=0)
+    snapshot_full_refresh_seconds: float = Field(gt=0)
     recent_days: int = Field(ge=1)
     chart_detail_items: int = Field(ge=1)
     chart_period_items: int = Field(ge=1)

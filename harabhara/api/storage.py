@@ -31,8 +31,10 @@ class AlreadyExistsError(Exception):
 class Storage(Protocol):
     # suggestions: created by the loader, then only the state moves
     def get_suggestion(self, suggestion_id: str) -> Suggestion | None: ...
-    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
-        """All suggestions, or only those created on or after ``since``."""
+    def list_suggestions(
+        self, since: date | None = None, state: SuggestionState | None = None
+    ) -> list[Suggestion]:
+        """All suggestions, or only those created on or after ``since`` and in ``state``."""
         ...
 
     def create_suggestion(self, suggestion: Suggestion) -> None:
@@ -149,9 +151,13 @@ class InMemoryStorage:
     def get_suggestion(self, suggestion_id: str) -> Suggestion | None:
         return self._suggestions.get(suggestion_id)
 
-    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+    def list_suggestions(
+        self, since: date | None = None, state: SuggestionState | None = None
+    ) -> list[Suggestion]:
         return [
-            s for s in self._suggestions.values() if since is None or s.created_at.date() >= since
+            s
+            for s in self._suggestions.values()
+            if (since is None or s.created_at.date() >= since) and state in (None, s.state)
         ]
 
     def create_suggestion(self, suggestion: Suggestion) -> None:

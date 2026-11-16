@@ -37,6 +37,7 @@ def build_app() -> FastAPI:
         FirestoreStorage.from_project(settings.firestore_project),
         retention_days=pipeline.history_days_back,
         refresh_seconds=pipeline.snapshot_refresh_seconds,
+        full_refresh_seconds=pipeline.snapshot_full_refresh_seconds,
     )
     storage.warm()  # load before the first request, so nobody waits for it
     return create_app(
