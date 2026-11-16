@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api, ApiError } from "../api/client";
-import type { LoginResponse, OrgChart } from "../api/types";
+import type { LoginResponse } from "../api/types";
 import { Icon } from "../components/Icons";
 import { MAX_PIN_LENGTH, PIN_DOTS_SHOWN } from "../config";
 import { t, type StringKey } from "../i18n/strings";
@@ -46,7 +46,7 @@ export function Login({
   return (
     <section className="login" aria-label={t("login.title")}>
       <div className="login-wrap">
-        <OrgTree />
+        <OrgPicture />
         <div className="login-pin">
           <Icon name="lock" size={64} />
           <h2>{t("login.title")}</h2>
@@ -97,53 +97,16 @@ export function Login({
   );
 }
 
-/** Who looks after which stores. Names only: no PINs and nothing to tap. */
-function OrgTree() {
-  const [chart, setChart] = useState<OrgChart | null>(null);
-  useEffect(() => {
-    api.orgChart().then(setChart, () => setChart(null));
-  }, []);
-  if (!chart || chart.areas.length === 0) return null;
+/** Who looks after which stores: a picture, with the same facts in its description. No PINs, nothing to tap. */
+function OrgPicture() {
   return (
-    <div className="org" data-testid="org-tree">
-      <h3>{t("org.title")}</h3>
-      <div className="org-node org-top">
-        <Icon name="box" size={28} />
-        <span>
-          <b>{t("role.dc_lead")}</b>
-          <small>{t("org.dc")}</small>
-        </span>
-      </div>
-      <ul className="org-areas">
-        {chart.areas.map((area) => (
-          <li key={area.area_id}>
-            <div className="org-node">
-              <Icon name="chart" size={28} />
-              <span>
-                <b>{`${t("role.area_manager")}: ${area.name}`}</b>
-                <small>{`${area.stores.length} ${area.stores.length === 1 ? t("org.store") : t("org.stores")}`}</small>
-              </span>
-            </div>
-            <ul className="org-stores">
-              {area.stores.map((s) => (
-                <li key={s.store_id}>
-                  <Icon name="store" size={20} />
-                  <span>
-                    {s.place ? `${s.store_id} · ${s.place}` : s.store_id}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
-      <div className="org-node org-side">
-        <Icon name="tractor" size={28} />
-        <span>
-          <b>{t("role.farmer_coordinator")}</b>
-          <small>{t("org.farmer")}</small>
-        </span>
-      </div>
+    <div className="org org-picture" data-testid="org-tree">
+      <img
+        src="/org-chart.webp"
+        alt={t("org.alt")}
+        className="org-img"
+        draggable={false}
+      />
     </div>
   );
 }
