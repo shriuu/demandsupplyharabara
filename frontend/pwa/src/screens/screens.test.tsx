@@ -322,11 +322,13 @@ describe("an area manager with their own area", () => {
 });
 
 describe("dc lead", () => {
-  it("shows unavailable prices without a number and keeps trimming as a suggestion only", async () => {
+  it("shows no mandi price text, keeps trimming as a suggestion only, and has a record button", async () => {
     await openRole("DC buying lead");
-    expect(await screen.findByText("Price unavailable")).toBeInTheDocument();
-    expect(screen.getAllByText("Buy less on the spot market").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Mock price feed/).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Buy less on the spot market")).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Mandi price/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No price for this product/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/price feed/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Record what was bought/ }).length).toBeGreaterThan(0);
   });
 
   it("lists each product once, with everything about it in one row", async () => {
@@ -336,7 +338,7 @@ describe("dc lead", () => {
     const tomato = rows.filter((r) => r.getAttribute("data-sku") === "TOMATO");
     expect(tomato).toHaveLength(1);
     const row = within(tomato[0]);
-    for (const label of ["Stores ordered", "To buy tomorrow", "Mandi price", "Buy less on the spot market", "Bought today"]) {
+    for (const label of ["Stores ordered", "To buy tomorrow", "Buy less on the spot market", "Bought today"]) {
       expect(row.getByText(label)).toBeInTheDocument();
     }
   });

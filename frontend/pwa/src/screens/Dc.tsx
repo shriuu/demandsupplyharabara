@@ -131,40 +131,11 @@ function SendTo({ product }: { product: DcOrders["products"][number] }) {
   );
 }
 
-const lightOf = (q: PriceQuote) => (q.status === "ok" ? "green" : q.status === "stale" ? "amber" : "red");
-
-/** The mandi price for one product, in a line: never a number for an unavailable price (guardrails 11, 12). */
-function PriceBlock({ quote }: { quote: PriceQuote | undefined }) {
-  if (!quote) return <p className="small">{t("dc.noPrice")}</p>;
-  return (
-    <>
-      <TrafficLight light={lightOf(quote)} />
-      {quote.status === "unavailable" || quote.modal_inr == null ? (
-        <p className="price-unavailable">{t("price.unavailable")}</p>
-      ) : (
-        <>
-          <p className="price">
-            <Icon name="coin" size={22} /> {t("price.modal", { n: quote.modal_inr })}
-          </p>
-          {quote.min_inr != null && quote.max_inr != null && <p className="small">{t("price.band", { min: quote.min_inr, max: quote.max_inr })}</p>}
-        </>
-      )}
-      {quote.status === "stale" && (
-        <p className="small">
-          <Icon name="clock" size={16} /> {t("price.stale")}
-        </p>
-      )}
-      <p className="small source">{t("price.source", { source: quote.source })}</p>
-    </>
-  );
-}
-
 /** Everything about one product in one row: ordered, tomorrow's total, price, spot advice, what was bought. */
 function ProductRow({
   sku,
   order,
   total,
-  quote,
   trim,
   bought,
   saved,
@@ -174,7 +145,6 @@ function ProductRow({
   sku: string;
   order: DcOrders["products"][number] | undefined;
   total: DcTotals["totals"][number] | undefined;
-  quote: PriceQuote | undefined;
   trim: DcTotals["trimming"][number] | undefined;
   bought: DcOrders["bought"];
   saved: boolean;
@@ -212,10 +182,6 @@ function ProductRow({
         {total ? <RangeBar range={total.demand} max={max} unit={unit} /> : <p className="small">{t("dc.noOrder")}</p>}
       </div>
       <div className="dc-block">
-        <p className="dc-label">{t("dc.blockPrice")}</p>
-        <PriceBlock quote={quote} />
-      </div>
-      <div className="dc-block">
         <p className="dc-label">{t("dc.blockTrim")}</p>
         {trim ? (
           <>
@@ -235,7 +201,7 @@ function ProductRow({
             {t("dc.boughtRow", { units: Math.round(b.units), unit, where: where(b.market) })}
           </p>
         ))}
-        <button className="btn btn-plain" onClick={onRecord}>
+        <button className={`btn ${saved ? "btn-plain" : "btn-yes"}`} onClick={onRecord}>
           <Icon name={saved ? "tick" : "plus"} size={22} /> {saved ? t("dc.saved") : t("dc.record")}
         </button>
       </div>
@@ -271,7 +237,6 @@ function FarmerShareCard() {
 export function DcScreen() {
   const orders = useLoad(() => api.dcOrders(), []);
   const totals = useLoad(() => api.dcTotals(), []);
-  const prices = useLoad(() => api.prices(), []);
   const [openSku, setOpenSku] = useState<string | null>(null);
   const [saved, setSaved] = useState<string[]>([]);
 
@@ -301,7 +266,6 @@ export function DcScreen() {
   };
   skus.sort((a, b) => ordered(b) - ordered(a));
   const max = Math.max(1, ...tt.totals.map((r) => r.demand.high));
-  const quotes = prices.state.status === "ready" ? prices.state.data : [];
   return (
     <div className="stack">
       <FarmerShareCard />
@@ -321,11 +285,6 @@ export function DcScreen() {
           <Icon name="clock" /> {t("app.stale")}
         </p>
       )}
-      {prices.state.status === "ready" && !quotes.length && (
-        <p className="notice" role="status">
-          <Icon name="alert" /> {t("dc.noPrices")}
-        </p>
-      )}
       <p className="small">{t("dc.trimNote")}</p>
       {skus.length === 0 ? (
         <Empty />
@@ -337,7 +296,6 @@ export function DcScreen() {
               sku={sku}
               order={o.products.find((p) => p.sku_id === sku)}
               total={tt.totals.find((r) => r.sku_id === sku)}
-              quote={quotes.find((q) => q.sku_id === sku)}
               trim={tt.trimming.find((x) => x.sku_id === sku)}
               bought={o.bought.filter((b) => b.sku_id === sku)}
               saved={saved.includes(sku)}
