@@ -316,6 +316,21 @@ p { margin: 4px 0; }
 .area-tabs { display: flex; gap: 8px; }
 .area-tabs .nav-tile, .trend-toggle .nav-tile { flex: 1 1 0; }
 
+/* Sign-in fits the screen: no page scroll; the long hierarchy scrolls inside its own card */
+main:has(> .login) { padding-bottom: 0; }
+.login { height: calc(100dvh - 82px); min-height: 0; box-sizing: border-box; padding: 12px; justify-content: center; overflow: hidden; }
+.login-wrap { flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 16px; height: 100%; max-width: 860px; }
+.login-wrap .org { flex: 1 1 0; min-width: 0; max-width: none; margin: 0; overflow-y: auto; }
+.login-pin { flex: 0 0 min(340px, 46%); justify-content: center; gap: 4px; padding: 10px; }
+.login-pin h2 { margin: 0; }
+.pad { gap: 8px; max-width: 320px; margin-top: 4px; }
+.pad-key, .pad-key.btn-no, .pad-key.btn-yes { min-height: clamp(46px, 9dvh, 80px); font-size: clamp(1.4rem, 3.4dvh, 2rem); }
+@media (max-width: 700px) {
+  .login-wrap { flex-direction: column; }
+  .login-pin { order: -1; flex: 1 1 auto; max-width: none; }
+  .login-wrap .org { flex: 0 1 30%; }
+}
+
 /* One table for a past day: orders and closing together, one row per product */
 .day-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 .day-table th, .day-table td { padding: 6px 4px; border-bottom: 1px solid #dfe3d6; text-align: right; vertical-align: middle; }
