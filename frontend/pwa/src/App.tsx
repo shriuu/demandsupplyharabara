@@ -121,7 +121,8 @@ export function App() {
         {role === "dc_lead" && <DcScreen />}
         {role === "farmer_coordinator" && <FarmerScreen />}
       </main>
-      {role && <ChatPanel role={role} focusId={focusId} />}
+      {/* Ask explains stored suggestions; the DC lead and farmer coordinator have none, so no button */}
+      {(role === "store_manager" || role === "area_manager") && <ChatPanel role={role} focusId={focusId} />}
     </ChatFocus.Provider>
   );
 }
