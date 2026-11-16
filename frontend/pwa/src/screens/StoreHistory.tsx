@@ -11,6 +11,72 @@ import { productName, t, unitOf } from "../i18n/strings";
 export const pct = (v: number | null) =>
   v === null ? "-" : `${Math.round(v)}%`;
 
+/** One row per product: what was ordered, sold, thrown away and left. Labels are said once, on top. */
+function DayTable({ day }: { day: DayHistory }) {
+  const skus = [
+    ...new Set([...day.orders.map((o) => o.sku_id), ...day.closing.map((c) => c.sku_id)]),
+  ];
+  const order = (sku: string) => day.orders.find((o) => o.sku_id === sku);
+  const close = (sku: string) => day.closing.find((c) => c.sku_id === sku);
+  const dash = <span className="small">–</span>;
+  return (
+    <table className="day-table" data-testid="day-table">
+      <thead>
+        <tr>
+          <th scope="col">{t("hist.col.product")}</th>
+          <th scope="col">{t("hist.col.ordered")}</th>
+          <th scope="col">{t("hist.col.sold")}</th>
+          <th scope="col">{t("hist.col.thrown")}</th>
+          <th scope="col">{t("hist.col.left")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {skus.map((sku) => {
+          const o = order(sku);
+          const c = close(sku);
+          const changed = o && o.final_units !== null && Math.round(o.final_units) !== Math.round(o.suggested_units);
+          return (
+            <tr key={sku} className={c?.sold_out ? "day-out" : undefined}>
+              <th scope="row">
+                <ProductIcon skuId={sku} size={28} /> {productName(sku)}{" "}
+                <span className="small">{unitOf(sku)}</span>
+              </th>
+              <td>
+                {!o ? (
+                  dash
+                ) : o.final_units !== null ? (
+                  <>
+                    <strong>{Math.round(o.final_units)}</strong>
+                    {changed && <span className="small"> {t("hist.suggested", { s: Math.round(o.suggested_units) })}</span>}
+                  </>
+                ) : (
+                  <>
+                    {t(`hist.state.${o.state}` as never)}
+                    <span className="small"> {t("hist.suggested", { s: Math.round(o.suggested_units) })}</span>
+                  </>
+                )}
+              </td>
+              <td>{c ? Math.round(c.units_sold) : dash}</td>
+              <td className={c && c.units_wasted > 0 ? "day-thrown" : undefined}>{c ? Math.round(c.units_wasted) : dash}</td>
+              <td>
+                {c && c.sold_out ? (
+                  <span className="day-ranout">
+                    <Icon name="alert" size={16} /> {t("hist.ranOut")}
+                  </span>
+                ) : c && c.units_left != null ? (
+                  Math.round(c.units_left)
+                ) : (
+                  dash
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 export function DayCard({
   day,
   defaultOpen = false,
@@ -54,47 +120,7 @@ export function DayCard({
             })
           : t("hist.notClosed")}
       </p>
-      {open && (
-        <>
-          <ul className="plain-list">
-            {day.orders.map((o) => (
-              <li key={`o-${o.sku_id}`} className="decided-row">
-                <span>
-                  <ProductIcon skuId={o.sku_id} size={32} />{" "}
-                  {productName(o.sku_id)}
-                </span>
-                <span>
-                  {o.final_units !== null
-                    ? t("hist.ordered", {
-                        n: Math.round(o.final_units),
-                        unit: unitOf(o.sku_id),
-                      })
-                    : t(`hist.state.${o.state}` as never)}{" "}
-                  <span className="small">
-                    ({t("hist.suggested", { s: Math.round(o.suggested_units) })}
-                    )
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <ul className="plain-list">
-            {day.closing.map((c) => (
-              <li key={`c-${c.sku_id}`} className="decided-row">
-                <span>{productName(c.sku_id)}</span>
-                <span>
-                  {t("hist.soldWasted", {
-                    sold: Math.round(c.units_sold),
-                    wasted: Math.round(c.units_wasted),
-                  })}
-                  {c.units_left != null ? ` · ${t("hist.left", { n: Math.round(c.units_left) })}` : ""}
-                  {c.sold_out ? ` · ${t("hist.ranOut")}` : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      {open && <DayTable day={day} />}
     </li>
   );
 }
