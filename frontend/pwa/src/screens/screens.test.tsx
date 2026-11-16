@@ -46,15 +46,15 @@ async function openRole(name: string) {
 }
 
 describe("sign-in", () => {
-  it("shows which stores report to which area manager, with no PINs and nothing to tap", async () => {
+  it("shows the who-looks-after-what picture, with its facts in words, no PINs and nothing to tap", async () => {
     render(<App />);
     const tree = await screen.findByTestId("org-tree");
-    expect(within(tree).getByText("DC buying lead")).toBeInTheDocument();
-    expect(within(tree).getByText("Area manager: North")).toBeInTheDocument();
-    expect(within(tree).getByText("S06 · Malleshwaram")).toBeInTheDocument();
-    expect(within(tree).getByText("Farmer group")).toBeInTheDocument();
+    const picture = within(tree).getByRole("img");
+    expect(picture).toHaveAttribute("src", "/org-chart.webp");
+    expect(picture.getAttribute("alt")).toMatch(/DC buying lead/);
+    expect(picture.getAttribute("alt")).toMatch(/North with three/);
     expect(within(tree).queryByRole("button")).toBeNull();
-    expect(tree.textContent).not.toMatch(/\d{4}/);
+    expect(picture.getAttribute("alt")).not.toMatch(/\d{4}/);
   });
 
   it("a wrong PIN shows a message and stays on the pad", async () => {

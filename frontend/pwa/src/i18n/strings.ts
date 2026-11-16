@@ -327,6 +327,7 @@ export const en = {
   "login.tooMany": "Too many tries. Wait a minute.",
   "login.off": "Sign-in is not ready. Carry on the usual way.",
   "org.title": "Who looks after what",
+  "org.alt": "Who looks after what. The DC buying lead sees every area and what each store ordered. Three area managers: South and Central with six stores, North with three, East with three. The farmer group sees expected volumes.",
   "org.store": "store",
   "org.stores": "stores",
   "org.farmer": "Farmer groups: sees expected volumes",

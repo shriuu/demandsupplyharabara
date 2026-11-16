@@ -341,3 +341,7 @@ main:has(> .login) { padding-bottom: 0; }
 .day-thrown { color: var(--amber); font-weight: 800; }
 .day-ranout { color: var(--red); font-weight: 800; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
 .day-out { background: #fff5f5; }
+
+/* The who-looks-after-what picture on the sign-in page */
+.login .org-picture { padding: 0; background: transparent; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.org-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgba(27, 94, 32, 0.12); }
