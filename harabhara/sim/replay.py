@@ -147,6 +147,7 @@ def replay(
                         "sold": out.sold,
                         "lost": out.lost_sales,
                         "binned": out.binned,
+                        "left": sum(lot_[0] for lot_ in state[(s, sku)]),
                         "revenue": (out.sold - out.sold_last_day) * price
                         + out.sold_last_day * markdown_price,
                         "cost": give * cost,

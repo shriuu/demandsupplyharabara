@@ -79,20 +79,21 @@ function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: b
   );
 }
 
-function Queue({ killed }: { killed: boolean }) {
+function Queue({ killed, store }: { killed: boolean; store?: string }) {
   const [all, setAll] = useState(false);
   const { state, reload } = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), String(killed));
   useChatFocus(state.status === "ready" ? (state.data[0]?.id ?? null) : null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
-  if (!state.data.length) return <Empty />;
-  const sorted = groupSteps(state.data).sort(biggestGroupFirst);
+  const rows = store ? state.data.filter((s) => s.store_id === store) : state.data;
+  if (!rows.length) return store ? <p className="notice">{t("area.noneHere")}</p> : <Empty />;
+  const sorted = groupSteps(rows).sort(biggestGroupFirst);
   const shown = all ? sorted : sorted.slice(0, SHORT_LIST);
   return (
     <>
       <ul className="tiles-2">
         {shown.map((g) => (
-          <ApprovalCard key={g.key} group={g} showStore onDone={reload} />
+          <ApprovalCard key={g.key} group={g} showStore={!store} onDone={reload} />
         ))}
       </ul>
       {!all && sorted.length > SHORT_LIST && (
@@ -139,30 +140,58 @@ function KillSwitch({ killed, onChange }: { killed: boolean; onChange: (killed: 
   );
 }
 
+function StoreView({ store, killed, onBack }: { store: string; killed: boolean; onBack: () => void }) {
+  const [tab, setTab] = useState<"decisions" | "performance">("decisions");
+  return (
+    <div className="stack">
+      <button className="btn btn-plain" onClick={onBack}>
+        <Icon name="back" size={24} /> {t("area.back")}
+      </button>
+      <h2>
+        <Icon name="store" /> {storeLabel(store)}
+      </h2>
+      <CallStore storeId={store} />
+      <div className="area-tabs" role="group">
+        {(["decisions", "performance"] as const).map((k) => (
+          <button
+            key={k}
+            className={`btn nav-tile ${tab === k ? "nav-on" : ""}`}
+            aria-pressed={tab === k}
+            onClick={() => setTab(k)}
+          >
+            <Icon name={k === "decisions" ? "tick" : "chart"} size={24} /> {t(`area.tab.${k}`)}
+          </button>
+        ))}
+      </div>
+      {tab === "decisions" ? <Queue killed={killed} store={store} /> : <Trend scope={store} onPick={() => undefined} />}
+    </div>
+  );
+}
+
 export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKilledChange: (killed: boolean) => void }) {
-  const [scope, setScope] = useState("chain");
+  const [store, setStore] = useState<string | null>(null);
   const session = loadSession();
   const limited = !!session?.area_id; // an area manager sees only their own stores
   const allLabel = session?.area_name ?? t("area.chain");
+  if (store) {
+    return <StoreView store={store} killed={killed} onBack={() => setStore(null)} />;
+  }
+  const pick = (scope: string) => {
+    if (scope !== "chain") {
+      setStore(scope);
+      window.scrollTo({ top: 0 });
+    }
+  };
   return (
     <div className="stack">
       <h2>
-        <Icon name="tick" /> {t("area.todo")}
-      </h2>
-      <p className="small">{t("area.todoNote")}</p>
-      <Queue killed={killed} />
-      <h2>
         <Icon name="store" /> {t("area.stores")}
       </h2>
-      <StoreCards scope={scope} onPick={setScope} allLabel={allLabel} />
-      <Trend
-        scope={scope}
-        onPick={(store) => {
-          setScope(store);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-      />
-      {scope !== "chain" && <CallStore storeId={scope} />}
+      <StoreCards scope="chain" onPick={pick} allLabel={allLabel} />
+      <h2>
+        <Icon name="tick" /> {t("area.waitingAll")}
+      </h2>
+      <Queue killed={killed} />
       {!limited && <KillSwitch killed={killed} onChange={onKilledChange} />}
     </div>
   );

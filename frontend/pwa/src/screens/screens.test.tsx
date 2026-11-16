@@ -228,18 +228,31 @@ describe("store manager closing", () => {
   });
 });
 
+async function openStorePerformance(): Promise<ReturnType<typeof userEvent.setup>> {
+  const user = await openRole("Area manager");
+  const cards = within(await screen.findByTestId("store-cards"));
+  await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
+  await user.click(await screen.findByRole("button", { name: /Performance/ }));
+  return user;
+}
+
 describe("area manager", () => {
-  it("puts the approvals first, then the stores, then the numbers", async () => {
-    await openRole("Area manager");
-    const decide = await screen.findByText("Decide these");
+  it("starts with the stores; a store opens to its decisions, then its performance", async () => {
+    const user = await openRole("Area manager");
     const stores = await screen.findByText("My stores");
-    const numbers = await screen.findByTestId("trend");
-    expect(decide.compareDocumentPosition(stores) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(stores.compareDocumentPosition(numbers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const waiting = await screen.findByText("Waiting decisions in all stores");
+    expect(stores.compareDocumentPosition(waiting) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const cards = within(await screen.findByTestId("store-cards"));
+    await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
+    expect(await screen.findByRole("button", { name: /Decisions/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Performance/ }));
+    expect(await screen.findByTestId("trend")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /All stores/ }));
+    expect(await screen.findByTestId("store-cards")).toBeInTheDocument();
   });
 
   it("shows thrown away and ran out as bars against their targets, and no farmer share", async () => {
-    await openRole("Area manager");
+    await openStorePerformance();
     const trend = await screen.findByTestId("trend");
     const bars = await within(trend).findAllByTestId("measure");
     expect(bars).toHaveLength(2);
@@ -262,19 +275,19 @@ describe("area manager", () => {
 
   it("a store with a phone number gets a call button; one without says so and shows none", async () => {
     const user = await openRole("Area manager");
-    const cards = within(await screen.findByTestId("store-cards"));
+    let cards = within(await screen.findByTestId("store-cards"));
     await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
     const call = await screen.findByRole("link", { name: /Call Test manager/ });
     expect(call).toHaveAttribute("href", "tel:+919000000001");
+    await user.click(screen.getByRole("button", { name: /All stores/ }));
+    cards = within(await screen.findByTestId("store-cards"));
     await user.click(cards.getByRole("button", { name: /Indiranagar/ }));
     expect(await screen.findByText(/No phone number is set/)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Call/ })).not.toBeInTheDocument();
   });
 
   it("picking a store shows that store's numbers against all stores", async () => {
-    const user = await openRole("Area manager");
-    const cards = within(await screen.findByTestId("store-cards"));
-    await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
+    await openStorePerformance();
     const trend = await screen.findByTestId("trend");
     expect(await within(trend).findByRole("heading", { name: /S01/ })).toBeInTheDocument();
     expect((await within(trend).findAllByText(/All stores \d/)).length).toBe(2);
@@ -541,13 +554,12 @@ describe("one week of history", () => {
   });
 
   it("an area manager has a weekly and a monthly graph with waste and empty shelves together", async () => {
-    const user = await openRole("Area manager");
+    const user = await openStorePerformance();
     const trend = await screen.findByTestId("trend");
     expect(await within(trend).findByRole("group", { name: /Thrown away and ran out by day/ })).toBeInTheDocument();
     // hovering a day says what happened that day and where; the latest day is shown to start with
     const detail = within(trend).getByTestId("trend-detail");
     expect(within(detail).getByText(/Most thrown away/)).toBeInTheDocument();
-    expect(within(detail).getByText(/Stores to look at/)).toBeInTheDocument();
     const days = within(trend).getAllByRole("button", { name: /Thrown away/ });
     await user.hover(days[0]);
     expect(within(trend).getByTestId("trend-detail")).toBeInTheDocument();
