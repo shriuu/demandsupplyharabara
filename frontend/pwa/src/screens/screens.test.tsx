@@ -57,6 +57,11 @@ describe("sign-in", () => {
     expect(tree.textContent).not.toMatch(/\d{4}/);
   });
 
+  it("the header names the store for a store manager", async () => {
+    await openRole("Store manager");
+    expect(await screen.findByTestId("brand-place")).toHaveTextContent(/Jayanagar/);
+  });
+
   it("a wrong PIN shows a message and stays on the pad", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -313,7 +318,7 @@ describe("area manager", () => {
 describe("an area manager with their own area", () => {
   it("is named by area, sees only their stores and cannot stop everything", async () => {
     await openRole("North area manager");
-    expect(await screen.findByText(/Area manager · North/)).toBeInTheDocument();
+    expect(await screen.findByTestId("brand-place")).toHaveTextContent("North");
     const cards = within(await screen.findByTestId("store-cards"));
     expect(cards.getByRole("button", { name: /North/ })).toBeInTheDocument();
     expect(cards.queryByRole("button", { name: /All stores together/ })).not.toBeInTheDocument();

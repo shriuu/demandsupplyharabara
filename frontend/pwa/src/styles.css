@@ -23,6 +23,8 @@ p { margin: 4px 0; }
 .grow { flex: 1; }
 
 .topbar { position: sticky; top: 0; z-index: 5; background: var(--green); color: #fff; padding: 8px 12px; }
+.brand-text { display: inline-flex; flex-direction: column; line-height: 1.15; }
+.brand-text small { font-size: 0.9rem; font-weight: 600; opacity: 0.95; }
 .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.2rem; min-height: 48px; }
 .topbar .btn-plain { color: #fff; }
 .topbar-row { display: flex; justify-content: space-between; align-items: center; }
