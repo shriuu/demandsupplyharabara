@@ -330,3 +330,14 @@ main:has(> .login) { padding-bottom: 0; }
   .login-pin { order: -1; flex: 1 1 auto; max-width: none; }
   .login-wrap .org { flex: 0 1 30%; }
 }
+
+/* One table for a past day: orders and closing together, one row per product */
+.day-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.day-table th, .day-table td { padding: 6px 4px; border-bottom: 1px solid #dfe3d6; text-align: right; vertical-align: middle; }
+.day-table thead th { font-size: 0.8rem; color: #4a5a44; font-weight: 800; }
+.day-table th:first-child, .day-table td:first-child { text-align: left; }
+.day-table tbody th { font-weight: 700; }
+.day-table .small { white-space: nowrap; }
+.day-thrown { color: var(--amber); font-weight: 800; }
+.day-ranout { color: var(--red); font-weight: 800; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.day-out { background: #fff5f5; }
