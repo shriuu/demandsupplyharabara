@@ -8,7 +8,7 @@ from hypothesis import strategies as st
 
 from harabhara.contracts import Range
 from harabhara.settings import load_config
-from harabhara.state.projection import Lot, project, roll_forward
+from harabhara.state.projection import Lot, _range, project, roll_forward
 
 lots = st.builds(
     Lot,
@@ -131,3 +131,11 @@ def test_a_risk_only_in_the_tail_still_counts_in_the_expected_value() -> None:
     tail = Range(low=0, likely=0, high=60)  # runs out only if demand is high
     assert tail.likely == 0
     assert expected_value(tail) == pytest.approx(18.0)
+
+
+def test_rounding_dust_below_zero_is_cleaned_but_a_real_negative_still_fails() -> None:
+    """Found when a daily run crashed on -3.6e-15 for a stock quantity that is really zero."""
+    cleaned = _range(-3.552713678800501e-15, 0.0, 4.0)
+    assert (cleaned.low, cleaned.likely, cleaned.high) == (0.0, 0.0, 4.0)
+    with pytest.raises(ValueError, match="greater than or equal to 0"):
+        _range(-0.5, 1.0, 2.0)  # a genuine negative quantity is a bug, and stays loud
