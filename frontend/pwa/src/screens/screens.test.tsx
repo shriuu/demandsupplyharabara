@@ -240,8 +240,9 @@ describe("area manager", () => {
   it("starts with the stores; a store opens to its decisions, then its performance", async () => {
     const user = await openRole("Area manager");
     const stores = await screen.findByText("My stores");
-    const waiting = await screen.findByText("Waiting decisions in all stores");
-    expect(stores.compareDocumentPosition(waiting) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stores).toBeInTheDocument();
+    // the waiting decisions are inside each store, not repeated on the first page
+    expect(screen.queryByText("Waiting decisions in all stores")).not.toBeInTheDocument();
     const cards = within(await screen.findByTestId("store-cards"));
     await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
     expect(await screen.findByRole("button", { name: /Decisions/ })).toBeInTheDocument();
