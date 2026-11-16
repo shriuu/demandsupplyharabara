@@ -4400,6 +4400,16 @@
             }
           },
           {
+            "in": "query",
+            "name": "recent",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Recent",
+              "type": "boolean"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

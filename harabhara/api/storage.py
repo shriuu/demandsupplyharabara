@@ -31,7 +31,10 @@ class AlreadyExistsError(Exception):
 class Storage(Protocol):
     # suggestions: created by the loader, then only the state moves
     def get_suggestion(self, suggestion_id: str) -> Suggestion | None: ...
-    def list_suggestions(self) -> list[Suggestion]: ...
+    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+        """All suggestions, or only those created on or after ``since``."""
+        ...
+
     def create_suggestion(self, suggestion: Suggestion) -> None:
         """Raises AlreadyExistsError; a loaded or decided suggestion is never overwritten."""
         ...
@@ -45,6 +48,10 @@ class Storage(Protocol):
     # approvals and audit: create-only
     def create_approval(self, approval: Approval) -> None: ...
     def get_approval(self, suggestion_id: str) -> Approval | None: ...
+    def list_approvals(self, since: date | None = None) -> list[Approval]:
+        """Approvals made on or after ``since`` (all if None)."""
+        ...
+
     def append_audit(self, event: AuditEvent) -> None:
         """Raises AlreadyExistsError for a repeated id (makes retries safe)."""
         ...
@@ -142,8 +149,10 @@ class InMemoryStorage:
     def get_suggestion(self, suggestion_id: str) -> Suggestion | None:
         return self._suggestions.get(suggestion_id)
 
-    def list_suggestions(self) -> list[Suggestion]:
-        return list(self._suggestions.values())
+    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+        return [
+            s for s in self._suggestions.values() if since is None or s.created_at.date() >= since
+        ]
 
     def create_suggestion(self, suggestion: Suggestion) -> None:
         with self._lock:
@@ -169,6 +178,9 @@ class InMemoryStorage:
 
     def get_approval(self, suggestion_id: str) -> Approval | None:
         return self._approvals.get(suggestion_id)
+
+    def list_approvals(self, since: date | None = None) -> list[Approval]:
+        return [a for a in self._approvals.values() if since is None or a.at.date() >= since]
 
     def append_audit(self, event: AuditEvent) -> None:
         with self._lock:

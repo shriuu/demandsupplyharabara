@@ -115,6 +115,7 @@ def create_app(
             (config or load_config()).modeling.pipeline.history_days_back,
             (config or load_config()).modeling.pipeline.chart_week_days,
             (config or load_config()).modeling.pipeline.chart_month_days,
+            (config or load_config()).modeling.pipeline.recent_days,
         ),
         TalkLimits.from_config((config or load_config()).modeling.pipeline),
         (config or load_config()).rules.ordering.order_deadline_enforced,
@@ -199,8 +200,9 @@ def create_app(
         store_id: str | None = None,
         kind: str | None = None,
         state: SuggestionState | None = None,
+        recent: bool = False,
     ) -> list[Suggestion]:
-        return _mark(service.list_suggestions(user, role, store_id, kind, state), response)
+        return _mark(service.list_suggestions(user, role, store_id, kind, state, recent), response)
 
     @router.get("/suggestions/{suggestion_id}")
     def suggestion(suggestion_id: str, user: CurrentUser) -> Suggestion:

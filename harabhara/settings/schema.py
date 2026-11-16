@@ -277,6 +277,8 @@ class PipelineParams(_Strict):
     history_days_back: int = Field(ge=1)
     chart_week_days: int = Field(ge=1)
     chart_month_days: int = Field(ge=1)
+    snapshot_refresh_seconds: float = Field(gt=0)
+    recent_days: int = Field(ge=1)
     chart_detail_items: int = Field(ge=1)
     chart_period_items: int = Field(ge=1)
     talk_waste_min_pct: float = Field(ge=0)

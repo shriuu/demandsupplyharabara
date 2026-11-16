@@ -74,8 +74,8 @@ export const api = {
   },
   orgChart: () => request<OrgChart>("/auth/org"),
   logout: () => clearSession(),
-  suggestions: (params: { role?: Role; store_id?: string; kind?: string; state?: string }) =>
-    request<Suggestion[]>(`/suggestions${query(params)}`),
+  suggestions: (params: { role?: Role; store_id?: string; kind?: string; state?: string; recent?: boolean }) =>
+    request<Suggestion[]>(`/suggestions${query({ ...params, recent: params.recent ? "true" : undefined })}`),
   decide: (
     role: Role,
     suggestionId: string,

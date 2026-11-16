@@ -2276,6 +2276,7 @@ export interface operations {
                 store_id?: string | null;
                 kind?: string | null;
                 state?: ("proposed" | "approved" | "edited" | "rejected" | "expired" | "done") | null;
+                recent?: boolean;
             };
             header?: {
                 authorization?: string | null;

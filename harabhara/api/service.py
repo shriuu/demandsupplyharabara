@@ -96,6 +96,7 @@ class Horizons:
     history_days_back: int  # how far back the calendar may go
     chart_week_days: int
     chart_month_days: int
+    recent_days: int  # screens that only need the latest orders ask for this many days
 
 
 class Service:
@@ -126,6 +127,7 @@ class Service:
                 pipe.history_days_back,
                 pipe.chart_week_days,
                 pipe.chart_month_days,
+                pipe.recent_days,
             )
         self.horizons = horizons
         self.talk = talk or TalkLimits.from_config(load_config().modeling.pipeline)
@@ -219,16 +221,20 @@ class Service:
         store_id: str | None,
         kind: str | None,
         state: SuggestionState | None,
+        recent: bool = False,
     ) -> Served[Suggestion]:
+        """``recent``: the last few days (config) and anything still waiting, whatever its age."""
         if user.role == "store_manager" and store_id not in (None, user.store_id):
             raise ApiError(403, "a store manager sees only their own store")
         self._expire_quietly()
         served = fallback.attempt(self.storage.list_suggestions)
         killed = self._killed()
+        first = self.now().date() - timedelta(days=self.horizons.recent_days - 1)
         rows = [
             s
             for s in served.items
             if self._visible(user, s)
+            and (not recent or s.state == "proposed" or aware(s.created_at).date() >= first)
             and not (killed and s.state == "proposed")  # kill switch: show less
             and role in (None, s.approver_role)
             and store_id in (None, s.store_id)

@@ -39,7 +39,7 @@ export function ChatPanel({ role, focusId }: { role: Role; focusId: string | nul
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
-  const list = useLoad(() => api.suggestions({ role }), [role]);
+  const list = useLoad(() => api.suggestions({ role, recent: true }), [role]);
   const id = focusId ?? picked;
 
   async function send() {
