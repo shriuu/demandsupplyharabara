@@ -107,9 +107,9 @@ p { margin: 4px 0; }
 .chat-a { background: #f1f8e9; padding: 8px 12px; border-radius: 12px; }
 .chat-form { display: flex; gap: 8px; }
 
-.login { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--green-dark); min-height: 80vh; padding: 16px 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><g fill='none' stroke='%232f7d32' stroke-opacity='0.18' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='32' cy='44' r='14'/><path d='M32 30c-2-8 4-12 10-12'/><path d='M104 28c10 0 18 8 14 20-10 6-22-2-14-20z'/><path d='M96 52l-14 22'/><path d='M40 112c14-8 30 0 28 14-12 8-30 0-28-14z'/><path d='M120 116l-8 24M126 110l8 28M118 120l22-6'/></g></svg>"); background-size: 160px 160px; border-radius: 24px; }
+.login { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--green-dark); min-height: calc(100vh - 80px); padding: 24px 16px; background: linear-gradient(rgba(20, 30, 15, 0.25), rgba(20, 30, 15, 0.25)), url("/login-bg.svg") center bottom / cover no-repeat fixed; border-radius: 20px; }
 .login-pin { background: #fff; border: 2px solid var(--line); border-radius: 24px; padding: 20px 16px; box-shadow: 0 4px 14px rgba(27, 94, 32, 0.12); }
-.login .org { background: rgba(255, 255, 255, 0.92); border-radius: 20px; padding: 14px; }
+.login .org { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 14px; }
 .pin-dots { display: flex; gap: 12px; min-height: 28px; }
 .dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--green-dark); }
 .dot-on { background: var(--green-dark); }
