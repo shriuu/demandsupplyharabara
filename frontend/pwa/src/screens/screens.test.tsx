@@ -331,6 +331,12 @@ describe("dc lead", () => {
     expect(screen.getAllByRole("button", { name: /Record what was bought/ }).length).toBeGreaterThan(0);
   });
 
+  it("has no Ask button, because there is nothing for it to explain", async () => {
+    await openRole("DC buying lead");
+    await screen.findByText("Each product");
+    expect(screen.queryByRole("button", { name: "Ask" })).not.toBeInTheDocument();
+  });
+
   it("lists each product once, with everything about it in one row", async () => {
     await openRole("DC buying lead");
     await screen.findByText("Each product");
