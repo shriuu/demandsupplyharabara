@@ -82,7 +82,9 @@ function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: b
 function Queue({ killed, store }: { killed: boolean; store?: string }) {
   const [all, setAll] = useState(false);
   const { state, reload } = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), String(killed));
-  useChatFocus(state.status === "ready" ? (state.data[0]?.id ?? null) : null);
+  // the question in the Ask panel is about the first card in front of the person, in this store only
+  const first = state.status === "ready" ? state.data.find((x) => !store || x.store_id === store) : undefined;
+  useChatFocus(first?.id ?? null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
   const rows = store ? state.data.filter((s) => s.store_id === store) : state.data;
@@ -188,10 +190,6 @@ export function AreaScreen({ killed, onKilledChange }: { killed: boolean; onKill
         <Icon name="store" /> {t("area.stores")}
       </h2>
       <StoreCards scope="chain" onPick={pick} allLabel={allLabel} />
-      <h2>
-        <Icon name="tick" /> {t("area.waitingAll")}
-      </h2>
-      <Queue killed={killed} />
       {!limited && <KillSwitch killed={killed} onChange={onKilledChange} />}
     </div>
   );

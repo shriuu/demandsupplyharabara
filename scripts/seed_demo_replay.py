@@ -1,4 +1,4 @@
-"""Demo only. Replaces the closing counts of the south_central stores with the REPLAY result.
+"""Demo only. Replaces the closing counts of every store with the REPLAY result.
 
 The replay re-runs real days as if our suggestions had been followed (same supply, our split,
 spot buying trimmed, the chosen service floor). Counts written here are SIMULATED, not recorded,
@@ -36,7 +36,6 @@ WORK = Path("work")
 SALES, EXTERNAL = WORK / "PS-10_store_sales_daily.xlsx", WORK / "PS-10_external_factors.xlsx"
 PROC = WORK / "PS-10_procurement_and_inventory.xlsx"
 SEED = "demo-replay"
-AREA = ["S01", "S02", "S03", "S04", "S07", "D02"]
 WORKERS = 16
 
 
@@ -103,9 +102,9 @@ def main() -> None:
     args = ap.parse_args()
     cfg = load_config()
     res = run_replay()
-    res = res[res["in_season"] & res["store_id"].isin(AREA)]
+    res = res[res["in_season"]]  # every store
     res["date"] = pd.to_datetime(res["date"]).dt.date
-    for name, grp in [("S01", res[res.store_id == "S01"]), ("south_central", res)]:
+    for name, grp in [("S01", res[res.store_id == "S01"]), ("all stores", res)]:
         w = grp.binned.sum() / (grp.sold.sum() + grp.binned.sum())
         print(f"{name}: thrown away {w:.1%}, ran out {(grp.lost > 0).mean():.1%} (replay)")
     tz = ZoneInfo(cfg.schedule.timezone)
@@ -133,6 +132,18 @@ def main() -> None:
         with ThreadPoolExecutor(WORKERS) as pool:
             list(pool.map(storage.put_outcome, records))
         print("written")
+        from scripts.seed_demo_jayanagar import _decide
+
+        tally: dict[str, int] = {}
+        mine = [
+            x
+            for x in storage.list_suggestions(since=today - timedelta(days=args.days))
+            if x.payload.kind == "order"
+        ]
+        with ThreadPoolExecutor(WORKERS) as pool:
+            for what in pool.map(lambda x: _decide(storage, x, tz, True), mine):
+                tally[what] = tally.get(what, 0) + 1
+        print("order decisions, all stores:", tally)
     else:
         print("DRY RUN: nothing written")
 

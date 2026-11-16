@@ -240,8 +240,9 @@ describe("area manager", () => {
   it("starts with the stores; a store opens to its decisions, then its performance", async () => {
     const user = await openRole("Area manager");
     const stores = await screen.findByText("My stores");
-    const waiting = await screen.findByText("Waiting decisions in all stores");
-    expect(stores.compareDocumentPosition(waiting) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stores).toBeInTheDocument();
+    // the waiting decisions are inside each store, not repeated on the first page
+    expect(screen.queryByText("Waiting decisions in all stores")).not.toBeInTheDocument();
     const cards = within(await screen.findByTestId("store-cards"));
     await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
     expect(await screen.findByRole("button", { name: /Decisions/ })).toBeInTheDocument();
@@ -321,11 +322,13 @@ describe("an area manager with their own area", () => {
 });
 
 describe("dc lead", () => {
-  it("shows unavailable prices without a number and keeps trimming as a suggestion only", async () => {
+  it("shows no mandi price text, keeps trimming as a suggestion only, and has a record button", async () => {
     await openRole("DC buying lead");
-    expect(await screen.findByText("Price unavailable")).toBeInTheDocument();
-    expect(screen.getAllByText("Buy less on the spot market").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Mock price feed/).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Buy less on the spot market")).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Mandi price/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No price for this product/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/price feed/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Record what was bought/ }).length).toBeGreaterThan(0);
   });
 
   it("lists each product once, with everything about it in one row", async () => {
@@ -335,7 +338,7 @@ describe("dc lead", () => {
     const tomato = rows.filter((r) => r.getAttribute("data-sku") === "TOMATO");
     expect(tomato).toHaveLength(1);
     const row = within(tomato[0]);
-    for (const label of ["Stores ordered", "To buy tomorrow", "Mandi price", "Buy less on the spot market", "Bought today"]) {
+    for (const label of ["Stores ordered", "To buy tomorrow", "Buy less on the spot market", "Bought today"]) {
       expect(row.getByText(label)).toBeInTheDocument();
     }
   });
