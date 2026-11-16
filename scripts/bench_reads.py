@@ -18,7 +18,10 @@ from harabhara.api.settings import ApiSettings, User
 from harabhara.api.snapshot import SnapshotStorage
 from harabhara.settings import load_config
 
-PINS = {"1111": User("bench-store", "store_manager", "S01"), "3333": User("bench-area", "area_manager")}
+PINS = {
+    "1111": User("bench-store", "store_manager", "S01"),
+    "3333": User("bench-area", "area_manager"),
+}
 CALLS = [
     ("1111", "evening orders", "/suggestions?role=store_manager&store_id=S01&kind=order"),
     ("1111", "morning alerts", "/suggestions?role=store_manager&store_id=S01&state=proposed"),
@@ -36,7 +39,10 @@ def run(label: str, storage) -> dict[str, tuple[float, float]]:  # type: ignore[
     settings = ApiSettings(signing_key="bench", pins=PINS)
     client = TestClient(create_app(storage, settings))
     tokens = {
-        pin: {"Authorization": "Bearer " + client.post("/api/v1/auth/login", json={"pin": pin}).json()["token"]}
+        pin: {
+            "Authorization": "Bearer "
+            + client.post("/api/v1/auth/login", json={"pin": pin}).json()["token"]
+        }
         for pin in PINS
     }
     out: dict[str, tuple[float, float]] = {}
