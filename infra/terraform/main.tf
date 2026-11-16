@@ -153,8 +153,12 @@ resource "google_cloud_run_v2_service" "app" {
     service_account = google_service_account.runtime.email
 
     scaling {
-      min_instance_count = 0 # scale to zero: no idle cost
-      max_instance_count = 3
+      # One instance, always running. The server keeps recent suggestions and counts in memory
+      # (harabhara/api/snapshot.py), so screens answer in about a tenth of a second, and a decision
+      # made on one instance would not show on another. Costs about $13 a month idle (1 vCPU, 1 GiB).
+      # Set min_instance_count = 0 to scale to zero again: no idle cost, but a slow first visit.
+      min_instance_count = 1
+      max_instance_count = 1
     }
 
     containers {
@@ -163,9 +167,10 @@ resource "google_cloud_run_v2_service" "app" {
       resources {
         limits = {
           cpu    = "1"
-          memory = "512Mi"
+          memory = "1Gi"
         }
-        cpu_idle = true
+        cpu_idle          = true # CPU only while a request is being handled
+        startup_cpu_boost = true # extra CPU while the server starts and loads its snapshot
       }
 
       env {

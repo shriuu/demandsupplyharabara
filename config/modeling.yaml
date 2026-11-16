@@ -101,6 +101,11 @@ pipeline:
   history_days_back: 92
   chart_week_days: 7
   chart_month_days: 30
+  # Speed. The server keeps recent suggestions and recorded counts in memory and checks the database
+  # for changes this often (seconds). Changes made through the app show at once.
+  snapshot_refresh_seconds: 60
+  # Screens that only need the latest orders ask for this many days (tonight's, last night's, the one before).
+  recent_days: 3
   # What the area manager's graph points out. ASSUMED thresholds; the playbook gives none.
   chart_detail_items: 3        # products and stores named for one day
   chart_period_items: 5        # products named for a whole week or month

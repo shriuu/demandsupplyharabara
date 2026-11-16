@@ -21,7 +21,7 @@ const TOP_TILES = 3;
 
 export function StoreEvening({ storeId }: { storeId: string }) {
   const { state, reload } = useLoad(
-    () => api.suggestions({ role: "store_manager", store_id: storeId, kind: "order" }),
+    () => api.suggestions({ role: "store_manager", store_id: storeId, kind: "order", recent: true }),
     [storeId],
   );
   const [openId, setOpenId] = useState<string | null>(null);

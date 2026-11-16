@@ -29,7 +29,7 @@ function toClose(orders: Suggestion[]): Suggestion[] {
 export function StoreClosing({ storeId }: { storeId: string }) {
   const { state, reload } = useLoad(
     async () => {
-      const orders = await api.suggestions({ role: "store_manager", store_id: storeId, kind: "order" });
+      const orders = await api.suggestions({ role: "store_manager", store_id: storeId, kind: "order", recent: true });
       return toClose(orders);
     },
     [storeId],

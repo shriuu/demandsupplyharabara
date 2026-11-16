@@ -95,8 +95,12 @@ class FirestoreStorage:
         snap = self._col(SUGGESTIONS).document(_id(suggestion_id)).get()
         return Suggestion.model_validate(snap.to_dict()) if snap.exists else None
 
-    def list_suggestions(self) -> list[Suggestion]:
-        return self._stream(SUGGESTIONS, Suggestion)
+    def list_suggestions(self, since: date | None = None) -> list[Suggestion]:
+        if since is None:
+            return self._stream(SUGGESTIONS, Suggestion)
+        # created_at is stored as an ISO string, so one range on that single field needs no index
+        query = self._col(SUGGESTIONS).where("created_at", ">=", since.isoformat())
+        return [Suggestion.model_validate(doc.to_dict()) for doc in query.stream()]
 
     def create_suggestion(self, suggestion: Suggestion) -> None:
         self._create(SUGGESTIONS, suggestion.id, suggestion)
@@ -124,6 +128,12 @@ class FirestoreStorage:
     def get_approval(self, suggestion_id: str) -> Approval | None:
         snap = self._col(APPROVALS).document(_id(suggestion_id)).get()
         return Approval.model_validate(snap.to_dict()) if snap.exists else None
+
+    def list_approvals(self, since: date | None = None) -> list[Approval]:
+        query: Any = self._col(APPROVALS)
+        if since is not None:
+            query = query.where("at", ">=", since.isoformat())
+        return [Approval.model_validate(doc.to_dict()) for doc in query.stream()]
 
     def append_audit(self, event: AuditEvent) -> None:
         self._create(AUDIT, event.id, event)

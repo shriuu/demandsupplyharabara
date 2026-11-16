@@ -295,3 +295,31 @@ def test_with_no_purchases_the_farmer_share_says_not_known_and_why(env: Env) -> 
     body = env.client.get(f"{V1}/farmer-share", headers=env.login("4444")).json()
     assert body["share"] is None
     assert "not known" in body["definition"]
+
+
+# ---- recent: screens that only need the latest orders --------------------------------------
+
+
+def test_recent_keeps_the_last_few_days_and_anything_still_waiting(env: Env) -> None:
+    def order(sid: str, days_ago: int, state: str = "approved"):  # type: ignore[no-untyped-def]
+        s = make_suggestion(sid, "S1").model_copy(
+            update={"created_at": NOW - timedelta(days=days_ago)}
+        )
+        return s.model_copy(update={"state": state})
+
+    for sid, ago, state in [
+        ("today", 0, "proposed"),
+        ("old-done", 9, "approved"),
+        ("old-wait", 9, "proposed"),
+        ("two-days", 2, "approved"),
+    ]:
+        env.storage.create_suggestion(order(sid, ago, state))
+    h = env.login("1111")
+    everything = env.client.get(f"{V1}/suggestions?kind=order", headers=h).json()
+    recent = env.client.get(f"{V1}/suggestions?kind=order&recent=true", headers=h).json()
+    assert {s["id"] for s in everything} == {"today", "old-done", "old-wait", "two-days"}
+    assert {s["id"] for s in recent} == {
+        "today",
+        "old-wait",
+        "two-days",
+    }  # config: 3 days; waiting stays
