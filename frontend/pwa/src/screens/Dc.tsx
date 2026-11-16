@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import type { DcOrders, PriceQuote } from "../api/types";
+import type { DcOrders, DcTotals, PriceQuote } from "../api/types";
 import { Counter } from "../components/Counter";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
@@ -41,49 +41,6 @@ export function PriceCard({ quote }: { quote: PriceQuote }) {
         <p className="small source">{t("price.source", { source: quote.source })}</p>
       </div>
     </li>
-  );
-}
-
-/** The DC lead notes what was really bought, split by where it came from. A record only. */
-function Purchases({ skus, markets }: { skus: string[]; markets: string[] }) {
-  const [openSku, setOpenSku] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string[]>([]);
-  if (!skus.length) return null;
-  return (
-    <>
-      <h2>
-        <Icon name="tick" /> {t("dc.bought")}
-      </h2>
-      <p className="small">{t("dc.boughtNote")}</p>
-      {openSku ? (
-        <PurchaseCard
-          key={openSku}
-          sku={openSku}
-          markets={markets}
-          onBack={() => setOpenSku(null)}
-          onSaved={() => {
-            setSaved((s) => [...s, openSku]);
-            setOpenSku(null);
-          }}
-        />
-      ) : (
-        <ul className="tiles">
-          {skus.map((sku) => (
-            <li key={sku}>
-              <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpenSku(sku)}>
-                <ProductIcon skuId={sku} size={56} />
-                <span className="tile-name">{productName(sku)}</span>
-                {saved.includes(sku) && (
-                  <span className="tile-amount">
-                    <Icon name="tick" size={18} /> {t("dc.saved")}
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
   );
 }
 
@@ -174,53 +131,140 @@ function SendTo({ product }: { product: DcOrders["products"][number] }) {
   );
 }
 
-/** What the stores have ordered so far, added up per product, and what has been bought. */
-function OrdersSoFar({ orders }: { orders: DcOrders }) {
-  if (!orders.products.length) return <p className="notice" role="status">{t("dc.orderedNone")}</p>;
-  const totalStores = (p: DcOrders["products"][number]) => p.stores_decided + p.stores_waiting + p.stores_rejected;
-  const where = (market: string | null) => market ?? t("dc.fromFpo");
+const lightOf = (q: PriceQuote) => (q.status === "ok" ? "green" : q.status === "stale" ? "amber" : "red");
+
+/** The mandi price for one product, in a line: never a number for an unavailable price (guardrails 11, 12). */
+function PriceBlock({ quote }: { quote: PriceQuote | undefined }) {
+  if (!quote) return <p className="small">{t("dc.noPrice")}</p>;
   return (
     <>
-      <p className={`notice ${orders.all_decided ? "notice-ok" : ""}`} role="status">
-        <Icon name={orders.all_decided ? "tick" : "clock"} size={28} /> {orders.all_decided ? t("dc.orderedAll") : t("dc.orderedSome")}
-      </p>
-      <ul className="tiles-2 dc-grid">
-        {[...orders.products]
-          .sort((a, b) => b.confirmed_units + b.waiting_units - (a.confirmed_units + a.waiting_units))
-          .map((p) => (
-            <li key={p.sku_id} className="card total-card">
-              <ProductIcon skuId={p.sku_id} size={64} />
-              <div className="grow">
-                <h3>{productName(p.sku_id)}</h3>
-                <p>
-                  <strong className="big-number">{Math.round(p.confirmed_units)}</strong> {unitOf(p.sku_id)}
-                </p>
-                <p className="small">
-                  <TrafficLight light={p.stores_waiting === 0 ? "green" : "amber"} />{" "}
-                  {t("dc.orderedStores", { done: p.stores_decided + p.stores_rejected, total: totalStores(p) })}
-                </p>
-                {p.waiting_units > 0 && (
-                  <p className="small">{t("dc.orderedWaiting", { n: Math.round(p.waiting_units), unit: unitOf(p.sku_id) })}</p>
-                )}
-                <SendTo product={p} />
-              </div>
-            </li>
-          ))}
-      </ul>
-      {orders.bought.length > 0 && (
+      <TrafficLight light={lightOf(quote)} />
+      {quote.status === "unavailable" || quote.modal_inr == null ? (
+        <p className="price-unavailable">{t("price.unavailable")}</p>
+      ) : (
         <>
-          <h3>{t("dc.boughtSoFar")}</h3>
-          <ul className="plain-list">
-            {orders.bought.map((b) => (
-              <li key={`${b.sku_id}-${b.source}-${b.market ?? ""}`} className="decided-row">
-                <strong>{productName(b.sku_id)}</strong>
-                <span>{t("dc.boughtRow", { units: Math.round(b.units), unit: unitOf(b.sku_id), where: where(b.market) })}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="price">
+            <Icon name="coin" size={22} /> {t("price.modal", { n: quote.modal_inr })}
+          </p>
+          {quote.min_inr != null && quote.max_inr != null && <p className="small">{t("price.band", { min: quote.min_inr, max: quote.max_inr })}</p>}
         </>
       )}
+      {quote.status === "stale" && (
+        <p className="small">
+          <Icon name="clock" size={16} /> {t("price.stale")}
+        </p>
+      )}
+      <p className="small source">{t("price.source", { source: quote.source })}</p>
     </>
+  );
+}
+
+/** Everything about one product in one row: ordered, tomorrow's total, price, spot advice, what was bought. */
+function ProductRow({
+  sku,
+  order,
+  total,
+  quote,
+  trim,
+  bought,
+  saved,
+  max,
+  onRecord,
+}: {
+  sku: string;
+  order: DcOrders["products"][number] | undefined;
+  total: DcTotals["totals"][number] | undefined;
+  quote: PriceQuote | undefined;
+  trim: DcTotals["trimming"][number] | undefined;
+  bought: DcOrders["bought"];
+  saved: boolean;
+  max: number;
+  onRecord: () => void;
+}) {
+  const unit = unitOf(sku);
+  const stores = order ? order.stores_decided + order.stores_waiting + order.stores_rejected : 0;
+  const where = (market: string | null) => market ?? t("dc.fromFpo");
+  return (
+    <li className="card dc-row" data-sku={sku}>
+      <div className="dc-product">
+        <ProductIcon skuId={sku} size={56} />
+        <h3>{productName(sku)}</h3>
+      </div>
+      <div className="dc-block">
+        <p className="dc-label">{t("dc.blockOrdered")}</p>
+        {order ? (
+          <>
+            <p>
+              <strong className="big-number">{Math.round(order.confirmed_units)}</strong> {unit}
+            </p>
+            <p className="small">
+              <TrafficLight light={order.stores_waiting === 0 ? "green" : "amber"} />{" "}
+              {t("dc.orderedStores", { done: order.stores_decided + order.stores_rejected, total: stores })}
+            </p>
+            {order.waiting_units > 0 && <p className="small">{t("dc.orderedWaiting", { n: Math.round(order.waiting_units), unit })}</p>}
+          </>
+        ) : (
+          <p className="small">{t("dc.noOrder")}</p>
+        )}
+      </div>
+      <div className="dc-block">
+        <p className="dc-label">{t("dc.blockForecast")}</p>
+        {total ? <RangeBar range={total.demand} max={max} unit={unit} /> : <p className="small">{t("dc.noOrder")}</p>}
+      </div>
+      <div className="dc-block">
+        <p className="dc-label">{t("dc.blockPrice")}</p>
+        <PriceBlock quote={quote} />
+      </div>
+      <div className="dc-block">
+        <p className="dc-label">{t("dc.blockTrim")}</p>
+        {trim ? (
+          <>
+            <p>
+              <Icon name="minus" size={20} /> {t("dc.trimUnits", { n: Math.round(trim.spot_units_to_trim), unit })}
+            </p>
+            <p className="small">{trim.reason}</p>
+          </>
+        ) : (
+          <p className="small">{t("dc.noTrim")}</p>
+        )}
+      </div>
+      <div className="dc-block">
+        <p className="dc-label">{t("dc.blockBought")}</p>
+        {bought.map((b) => (
+          <p key={`${b.source}-${b.market ?? ""}`} className="small">
+            {t("dc.boughtRow", { units: Math.round(b.units), unit, where: where(b.market) })}
+          </p>
+        ))}
+        <button className="btn btn-plain" onClick={onRecord}>
+          <Icon name={saved ? "tick" : "plus"} size={22} /> {saved ? t("dc.saved") : t("dc.record")}
+        </button>
+      </div>
+      {order && order.stores.length > 0 && (
+        <div className="dc-send">
+          <SendTo product={order} />
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** The DC buying lead's own measure: how much of what was bought came from farmer groups. */
+function FarmerShareCard() {
+  const { state } = useLoad(() => api.farmerShare(), []);
+  if (state.status !== "ready") return null;
+  const share = state.data.share === null ? null : state.data.share * 100;
+  return (
+    <section className="card" aria-label={t("dc.farmerShare")} data-testid="farmer-share">
+      <div className="measure-head">
+        <Icon name="tractor" size={26} />
+        <span className="measure-name">{t("dc.farmerShare")}</span>
+        <strong className="measure-value">{share === null ? "–" : `${Math.round(share * 10) / 10}%`}</strong>
+      </div>
+      <div className="measure-track" role="img" aria-label={`${t("dc.farmerShare")} ${share === null ? t("score.unknown") : `${Math.round(share)}%`}`}>
+        {share !== null && <div className="measure-fill" style={{ width: `${share}%` }} />}
+      </div>
+      <p className="small">{state.data.definition}</p>
+    </section>
   );
 }
 
@@ -228,95 +272,81 @@ export function DcScreen() {
   const orders = useLoad(() => api.dcOrders(), []);
   const totals = useLoad(() => api.dcTotals(), []);
   const prices = useLoad(() => api.prices(), []);
+  const [openSku, setOpenSku] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string[]>([]);
+
+  if (orders.state.status === "loading" || totals.state.status === "loading") return <Loading />;
+  if (orders.state.status === "error") return <LoadError onRetry={orders.reload} />;
+  if (totals.state.status === "error") return <LoadError onRetry={totals.reload} />;
+  const o = orders.state.data;
+  const tt = totals.state.data;
+  if (openSku) {
+    return (
+      <PurchaseCard
+        key={openSku}
+        sku={openSku}
+        markets={o.markets}
+        onBack={() => setOpenSku(null)}
+        onSaved={() => {
+          setSaved((x) => [...x, openSku]);
+          setOpenSku(null);
+        }}
+      />
+    );
+  }
+  const skus = [...new Set([...o.products.map((p) => p.sku_id), ...tt.totals.map((r) => r.sku_id)])];
+  const ordered = (sku: string) => {
+    const p = o.products.find((x) => x.sku_id === sku);
+    return p ? p.confirmed_units + p.waiting_units : 0;
+  };
+  skus.sort((a, b) => ordered(b) - ordered(a));
+  const max = Math.max(1, ...tt.totals.map((r) => r.demand.high));
+  const quotes = prices.state.status === "ready" ? prices.state.data : [];
   return (
     <div className="stack">
+      <FarmerShareCard />
       <h2>
-        <Icon name="tick" /> {t("dc.ordered")}
+        <Icon name="box" /> {t("dc.products")}
       </h2>
-      <p className="small">{t("dc.orderedNote")}</p>
-      {orders.state.status === "loading" && <Loading />}
-      {orders.state.status === "error" && <LoadError onRetry={orders.reload} />}
-      {orders.state.status === "ready" && <OrdersSoFar orders={orders.state.data} />}
-
-      <h2>
-        <Icon name="box" /> {t("dc.totals")}
-      </h2>
-      {totals.state.status === "ready" && (
-        <p className="small">
-          <Icon name="calendar" size={18} /> {t("dc.forDay", { date: totals.state.data.on })} · {t("dc.totalsNote")}
+      <p className="small">
+        {t("dc.orderedNote")} <Icon name="calendar" size={16} /> {t("dc.forDay", { date: tt.on })} · {t("dc.totalsNote")}
+      </p>
+      {o.products.length > 0 && (
+        <p className={`notice ${o.all_decided ? "notice-ok" : ""}`} role="status">
+          <Icon name={o.all_decided ? "tick" : "clock"} size={28} /> {o.all_decided ? t("dc.orderedAll") : t("dc.orderedSome")}
         </p>
       )}
-      {totals.state.status === "ready" && totals.state.data.stale && (
+      {tt.stale && (
         <p className="notice notice-error" role="status">
           <Icon name="clock" /> {t("app.stale")}
         </p>
       )}
-      {totals.state.status === "loading" && <Loading />}
-      {totals.state.status === "error" && <LoadError onRetry={totals.reload} />}
-      {totals.state.status === "ready" &&
-        (() => {
-          const max = Math.max(1, ...totals.state.data.totals.map((r) => r.demand.high));
-          return (
-            <ul className="tiles-2 dc-grid">
-              {[...totals.state.data.totals].sort((a, b) => b.demand.likely - a.demand.likely).map((row) => (
-                <li key={row.sku_id} className="card total-card">
-                  <ProductIcon skuId={row.sku_id} size={64} />
-                  <div className="grow">
-                    <h3>{productName(row.sku_id)}</h3>
-                    <RangeBar range={row.demand} max={max} unit={unitOf(row.sku_id)} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          );
-        })()}
-
-      {totals.state.status === "ready" && <Purchases
-          skus={totals.state.data.totals.map((r) => r.sku_id)}
-          markets={orders.state.status === "ready" ? orders.state.data.markets : []}
-        />}
-
-      <h2>
-        <Icon name="coin" /> {t("dc.prices")}
-      </h2>
-      {prices.state.status === "loading" && <Loading />}
-      {prices.state.status === "error" && <LoadError onRetry={prices.reload} />}
-      {prices.state.status === "ready" && !prices.state.data.length && (
+      {prices.state.status === "ready" && !quotes.length && (
         <p className="notice" role="status">
           <Icon name="alert" /> {t("dc.noPrices")}
         </p>
       )}
-      {prices.state.status === "ready" && (
-        <ul className="tiles-2 dc-grid">
-          {prices.state.data.map((q) => (
-            <PriceCard key={`${q.sku_id}-${q.market}`} quote={q} />
+      <p className="small">{t("dc.trimNote")}</p>
+      {skus.length === 0 ? (
+        <Empty />
+      ) : (
+        <ul className="dc-rows">
+          {skus.map((sku) => (
+            <ProductRow
+              key={sku}
+              sku={sku}
+              order={o.products.find((p) => p.sku_id === sku)}
+              total={tt.totals.find((r) => r.sku_id === sku)}
+              quote={quotes.find((q) => q.sku_id === sku)}
+              trim={tt.trimming.find((x) => x.sku_id === sku)}
+              bought={o.bought.filter((b) => b.sku_id === sku)}
+              saved={saved.includes(sku)}
+              max={max}
+              onRecord={() => setOpenSku(sku)}
+            />
           ))}
         </ul>
       )}
-
-      <h2>
-        <Icon name="tractor" /> {t("dc.trim")}
-      </h2>
-      <p className="small">{t("dc.trimNote")}</p>
-      {totals.state.status === "ready" &&
-        (totals.state.data.trimming.length ? (
-          <ul className="tiles-2 dc-grid">
-            {totals.state.data.trimming.map((tr) => (
-              <li key={tr.sku_id} className="card total-card">
-                <ProductIcon skuId={tr.sku_id} size={64} />
-                <div>
-                  <h3>{productName(tr.sku_id)}</h3>
-                  <p>
-                    <Icon name="minus" size={22} /> {t("dc.trimUnits", { n: Math.round(tr.spot_units_to_trim), unit: unitOf(tr.sku_id) })}
-                  </p>
-                  <p className="small">{tr.reason}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty />
-        ))}
     </div>
   );
 }

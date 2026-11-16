@@ -48,3 +48,12 @@
   marked as replaced, so old orders do not pile up). Orders that had already expired stay expired.
 - Open point: the screens still say "ran out of time" for an order that was replaced unanswered;
   that wording may want changing while the timeout is off.
+
+## Screen cleanup: one list of products, one list of stores, bars instead of dials (16 Nov 2026)
+- **Farmer share is shown to the DC buying lead only** (owner decision). It is off the area manager and store manager screens, graphs and APIs; the DC lead has it as a number and a bar, with how it is worked out. This changes guardrail 4 in CLAUDE.md: waste and empty shelves are always shown together on every screen; reports and replays still give all three.
+- **Semi ring dials replaced by bars.** Each measure is a number, a bar, a plain word (on target, near target, above target) and two markers: the brief's target (config/metrics.yaml, served by `GET /api/v1/targets`) and all stores. Lower is better for both, so every bar reads the same way. A small value is no longer an almost empty ring.
+- **Same words everywhere:** "Thrown away" and "Ran out".
+- **Area manager:** approvals first; one store list (worst first, with thrown away and ran out, a light against all stores and a week strip); one numbers panel for the picked store. Removed: the data pack scoreboard, "What stores recorded", "What stores decided" and the store tiles at the top. About 8,500 pixels became about 2,600.
+- **DC buying lead:** one row for each product holding what stores ordered, tomorrow's total, the mandi price, spot advice and what was bought, instead of the same product list five times.
+- **Store manager:** four tabs. Surplus moved into Morning; History moved into My numbers; the "thrown away most" lists were removed because the product tiles show the same.
+- **Phones:** four tabs fit, the Ask button is a small round button, and the "your job" line is shorter.

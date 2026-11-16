@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { PriceCard } from "../screens/Dc";
-import { Scoreboard } from "../screens/Area";
+import { Measure } from "./Measure";
 import { Crates } from "./Crates";
 import { TrafficLight } from "./Status";
 import { ReasonBadge } from "./ReasonBadge";
@@ -58,22 +58,28 @@ describe("PriceCard", () => {
   });
 });
 
-describe("Scoreboard", () => {
-  const card = {
-    scope: "All",
-    period_start: "2026-10-01",
-    period_end: "2026-10-31",
-    waste_pct: 5,
-    stockout_pct: 2,
-    farmer_share: null,
-    farmer_share_definition: null,
-  };
-  it("always shows waste, empty shelves and farmer share together, even when one is unknown", () => {
-    render(<Scoreboard card={card} />);
-    expect(screen.getByLabelText("Wasted")).toBeInTheDocument();
-    expect(screen.getByLabelText("Empty shelves")).toBeInTheDocument();
-    expect(screen.getByLabelText("Farmer share")).toBeInTheDocument();
-    expect(screen.getByText("Not known")).toBeInTheDocument();
+describe("Measure", () => {
+  it("shows the number, the target and how this compares, in a word as well as a bar", () => {
+    render(<Measure label="score.waste" icon="bag" value={8.1} target={5.5} allStores={7.7} />);
+    expect(screen.getByText("8.1%")).toBeInTheDocument();
+    expect(screen.getByText("Above target")).toBeInTheDocument();
+    expect(screen.getByText("Target 5.5%")).toBeInTheDocument();
+    expect(screen.getByText("All stores 7.7%")).toBeInTheDocument();
+  });
+
+  it("says on target when it is, and near target between the target and today's level", () => {
+    const { rerender } = render(<Measure label="score.stockout" icon="box" value={6} target={7} nearLimit={9.1} />);
+    expect(screen.getByText("On target")).toBeInTheDocument();
+    rerender(<Measure label="score.stockout" icon="box" value={8} target={7} nearLimit={9.1} />);
+    expect(screen.getByText("Near target")).toBeInTheDocument();
+    rerender(<Measure label="score.stockout" icon="box" value={12} target={7} nearLimit={9.1} />);
+    expect(screen.getByText("Above target")).toBeInTheDocument();
+  });
+
+  it("never shows zero for an unknown value", () => {
+    render(<Measure label="score.waste" icon="bag" value={null} target={5.5} />);
+    expect(screen.getByText("No counts yet")).toBeInTheDocument();
+    expect(screen.queryByText("0%")).toBeNull();
   });
 });
 

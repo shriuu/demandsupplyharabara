@@ -82,10 +82,6 @@ p { margin: 4px 0; }
 .notice-error { background: #ffebee; color: var(--red); font-weight: 700; flex-wrap: wrap; }
 .notice-ok { justify-content: center; font-size: 1.3rem; font-weight: 700; }
 
-.gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.gauge { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.gauge-value { font-size: 1.2rem; }
-.gauge-label { font-size: 0.8rem; font-weight: 700; }
 .kill { margin-top: 16px; }
 
 .total-card, .price-card { display: flex; gap: 12px; align-items: center; list-style: none; }
@@ -254,3 +250,58 @@ p { margin: 4px 0; }
 .key-box.bar-left { background: var(--green); }
 .key-box.bar-wasted { background: var(--amber); }
 .key-box.trend-out-dot { background: var(--red); }
+
+/* A measure: a number, a bar, a target mark, and all stores for comparison. Lower is better. */
+.measures { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 640px) { .measures { grid-template-columns: 1fr 1fr; gap: 24px; } }
+.measure-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.measure-name { font-weight: 700; }
+.measure-value { font-size: 1.7rem; line-height: 1; }
+.measure-state { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: 0.9rem; }
+.state-on { color: var(--green-dark); }
+.state-near { color: var(--amber); }
+.state-above { color: var(--red); }
+.state-unknown { color: #4a5a44; }
+.measure-track { position: relative; height: 20px; margin: 10px 0 6px; background: #e8f0dc; border-radius: 10px; }
+.measure-fill { height: 100%; border-radius: 10px; background: var(--ink); opacity: 0.78; }
+.measure-mark { position: absolute; top: -5px; bottom: -5px; width: 0; }
+.mark-target { border-left: 3px solid var(--green-dark); }
+.mark-all { border-left: 3px dotted var(--ink); }
+.measure-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; }
+.key { display: inline-block; height: 14px; vertical-align: -2px; margin-right: 2px; }
+.key-target { border-left: 3px solid var(--green-dark); }
+.key-all { border-left: 3px dotted var(--ink); }
+
+/* The one way to pick a store */
+.store-card { width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; display: block; }
+.store-card[aria-pressed="true"] { border-color: var(--green-dark); background: #eef7ea; }
+.store-card h3 { margin: 0 0 4px; }
+
+/* DC buying lead: one row for each product, everything about it in one place */
+.dc-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; align-items: start; }
+.dc-product { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+.dc-product h3 { margin: 0; }
+.dc-send { grid-column: 1 / -1; }
+.dc-label { margin: 0 0 2px; font-size: 0.8rem; font-weight: 800; color: #4a5a44; text-transform: none; }
+.dc-block p { margin: 2px 0; }
+@media (min-width: 700px) {
+  .dc-row { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 10px 14px; border-radius: 14px; }
+}
+@media (min-width: 1100px) {
+  .dc-row { grid-template-columns: 190px repeat(5, minmax(0, 1fr)); }
+  .dc-product { grid-column: auto; }
+  .dc-product svg { width: 44px; height: 44px; flex: 0 0 44px; }
+}
+.dc-row .light { padding: 1px 8px; font-size: 0.85rem; }
+.dc-row .btn { min-height: 44px; padding: 4px 10px; font-size: 0.95rem; }
+
+.measure[data-kind="on"] .measure-fill { background: var(--green); opacity: 1; }
+.measure[data-kind="near"] .measure-fill { background: var(--amber); opacity: 1; }
+.measure[data-kind="above"] .measure-fill { background: var(--red); opacity: 0.9; }
+
+/* Phones: the Ask button is a small round button, so it never covers the title */
+@media (max-width: 520px) {
+  .chat-fab { right: 64px; top: 10px; min-height: 44px; min-width: 44px; padding: 6px 10px; }
+  .chat-fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}

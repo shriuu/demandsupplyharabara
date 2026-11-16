@@ -651,6 +651,38 @@
         "title": "FarmerDayRow",
         "type": "object"
       },
+      "FarmerShare": {
+        "additionalProperties": false,
+        "description": "Share of what the DC bought that came from farmer groups. For the DC buying lead.",
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "definition": {
+            "title": "Definition",
+            "type": "string"
+          },
+          "share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share"
+          }
+        },
+        "required": [
+          "share",
+          "definition",
+          "days"
+        ],
+        "title": "FarmerShare",
+        "type": "object"
+      },
       "FarmerVolumeForecast": {
         "additionalProperties": false,
         "properties": {
@@ -824,28 +856,6 @@
             "title": "End",
             "type": "string"
           },
-          "farmer_share": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Farmer Share"
-          },
-          "farmer_share_definition": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Farmer Share Definition"
-          },
           "period": {
             "enum": [
               "week",
@@ -941,8 +951,6 @@
           "waste_pct",
           "stockout_pct",
           "days_with_closing",
-          "farmer_share",
-          "farmer_share_definition",
           "talk",
           "period_top_waste",
           "period_ran_out",
@@ -2751,6 +2759,31 @@
         "title": "TalkPoint",
         "type": "object"
       },
+      "Targets": {
+        "additionalProperties": false,
+        "description": "What good looks like (the brief's targets, from config/metrics.yaml), for the bars.",
+        "properties": {
+          "stockout_pct_hard_max": {
+            "title": "Stockout Pct Hard Max",
+            "type": "number"
+          },
+          "stockout_pct_ideal": {
+            "title": "Stockout Pct Ideal",
+            "type": "number"
+          },
+          "waste_pct_max": {
+            "title": "Waste Pct Max",
+            "type": "number"
+          }
+        },
+        "required": [
+          "waste_pct_max",
+          "stockout_pct_ideal",
+          "stockout_pct_hard_max"
+        ],
+        "title": "Targets",
+        "type": "object"
+      },
       "TransferPayload": {
         "additionalProperties": false,
         "properties": {
@@ -2862,12 +2895,7 @@
       "WeekHistory": {
         "additionalProperties": false,
         "properties": {
-          "end": {
-            "format": "date",
-            "title": "End",
-            "type": "string"
-          },
-          "farmer_share": {
+          "chain_stockout_pct": {
             "anyOf": [
               {
                 "type": "number"
@@ -2876,18 +2904,23 @@
                 "type": "null"
               }
             ],
-            "title": "Farmer Share"
+            "title": "Chain Stockout Pct"
           },
-          "farmer_share_definition": {
+          "chain_waste_pct": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Farmer Share Definition"
+            "title": "Chain Waste Pct"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
           },
           "stale": {
             "title": "Stale",
@@ -2914,8 +2947,8 @@
           "start",
           "end",
           "stores",
-          "farmer_share",
-          "farmer_share_definition",
+          "chain_waste_pct",
+          "chain_stockout_pct",
           "waste_basis",
           "stale"
         ],
@@ -3322,6 +3355,52 @@
           }
         },
         "summary": "Dc Totals"
+      }
+    },
+    "/api/v1/farmer-share": {
+      "get": {
+        "operationId": "farmer_share_api_v1_farmer_share_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmerShare"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Farmer Share"
       }
     },
     "/api/v1/farmers/day": {
@@ -4484,6 +4563,52 @@
           }
         },
         "summary": "Decision"
+      }
+    },
+    "/api/v1/targets": {
+      "get": {
+        "operationId": "targets_api_v1_targets_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Targets"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Targets"
       }
     }
   }

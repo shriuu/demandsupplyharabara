@@ -74,7 +74,7 @@ describe("sign-in", () => {
 
   it("goes to the screen for the role the server returns, and sends the token", async () => {
     await openRole("DC buying lead");
-    expect(await screen.findByText("Totals to buy")).toBeInTheDocument();
+    expect(await screen.findByText("Each product")).toBeInTheDocument();
   });
 
   it("an ended sign-in goes back to the PIN pad", async () => {
@@ -229,36 +229,55 @@ describe("store manager closing", () => {
 });
 
 describe("area manager", () => {
-  it("shows the scoreboard with all three measures beside the queue", async () => {
+  it("puts the approvals first, then the stores, then the numbers", async () => {
     await openRole("Area manager");
-    expect(await screen.findByLabelText("Wasted")).toBeInTheDocument();
-    expect(screen.getByLabelText("Empty shelves")).toBeInTheDocument();
-    expect(screen.getByLabelText("Farmer share")).toBeInTheDocument();
+    const decide = await screen.findByText("Decide these");
+    const stores = await screen.findByText("My stores");
+    const numbers = await screen.findByTestId("trend");
+    expect(decide.compareDocumentPosition(stores) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stores.compareDocumentPosition(numbers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows thrown away and ran out as bars against their targets, and no farmer share", async () => {
+    await openRole("Area manager");
+    const trend = await screen.findByTestId("trend");
+    const bars = await within(trend).findAllByTestId("measure");
+    expect(bars).toHaveLength(2);
+    expect(within(trend).getAllByText("Thrown away").length).toBeGreaterThan(0);
+    expect(within(trend).getAllByText("Ran out").length).toBeGreaterThan(0);
+    expect(await within(trend).findAllByText(/Target \d/)).toHaveLength(2);
+    // farmer share is the DC buying lead's measure, so it is nowhere on this screen
+    expect(screen.queryByText(/Farmer share/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Farmer.group share/i)).not.toBeInTheDocument();
+  });
+
+  it("there is one way to pick a store, and no second scoreboard or decided list", async () => {
+    await openRole("Area manager");
+    const cards = await screen.findByTestId("store-cards");
+    expect(within(cards).getAllByRole("button").length).toBe(3); // all stores together, and two stores
+    expect(screen.queryByText("What stores decided")).not.toBeInTheDocument();
+    expect(screen.queryByText("What stores recorded")).not.toBeInTheDocument();
+    expect(screen.queryByText("Scoreboard")).not.toBeInTheDocument();
   });
 
   it("a store with a phone number gets a call button; one without says so and shows none", async () => {
     const user = await openRole("Area manager");
-    const nav = within(await screen.findByRole("navigation"));
-    await user.click(nav.getByRole("button", { name: /Jayanagar/ }));
+    const cards = within(await screen.findByTestId("store-cards"));
+    await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
     const call = await screen.findByRole("link", { name: /Call Test manager/ });
     expect(call).toHaveAttribute("href", "tel:+919000000001");
-    await user.click(nav.getByRole("button", { name: /Indiranagar/ }));
+    await user.click(cards.getByRole("button", { name: /Indiranagar/ }));
     expect(await screen.findByText(/No phone number is set/)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Call/ })).not.toBeInTheDocument();
   });
 
-  it("shows what the stores have already decided", async () => {
+  it("picking a store shows that store's numbers against all stores", async () => {
     const user = await openRole("Area manager");
-    expect(await screen.findByText("What stores decided")).toBeInTheDocument();
-    // a store's row is a button: tapping it opens that store, with what is waiting by type
-    await user.click(await screen.findByRole("button", { name: /Jayanagar.*waiting/ }));
-    expect(await screen.findByText(/^Waiting: .*orders/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Call Test manager/ })).toBeInTheDocument();
-  });
-
-  it("says when nothing has been recorded yet, instead of showing zeros", async () => {
-    await openRole("Area manager");
-    expect(await screen.findByText("Nothing recorded for this yet.")).toBeInTheDocument();
+    const cards = within(await screen.findByTestId("store-cards"));
+    await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
+    const trend = await screen.findByTestId("trend");
+    expect(await within(trend).findByRole("heading", { name: /S01/ })).toBeInTheDocument();
+    expect((await within(trend).findAllByText(/All stores \d/)).length).toBe(2);
   });
 
   it("the kill switch needs a second step, and can be switched off again", async () => {
@@ -281,10 +300,9 @@ describe("an area manager with their own area", () => {
   it("is named by area, sees only their stores and cannot stop everything", async () => {
     await openRole("North area manager");
     expect(await screen.findByText(/Area manager · North/)).toBeInTheDocument();
-    const nav = within(await screen.findByRole("navigation"));
-    expect(nav.getByRole("button", { name: /North/ })).toBeInTheDocument();
-    expect(nav.queryByRole("button", { name: /All stores together/ })).not.toBeInTheDocument();
-    expect(await screen.findByText("Pick a store above to see its scoreboard.")).toBeInTheDocument();
+    const cards = within(await screen.findByTestId("store-cards"));
+    expect(cards.getByRole("button", { name: /North/ })).toBeInTheDocument();
+    expect(cards.queryByRole("button", { name: /All stores together/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Stop all suggestions/ })).not.toBeInTheDocument();
   });
 });
@@ -293,17 +311,37 @@ describe("dc lead", () => {
   it("shows unavailable prices without a number and keeps trimming as a suggestion only", async () => {
     await openRole("DC buying lead");
     expect(await screen.findByText("Price unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Buy less on the spot market")).toBeInTheDocument();
+    expect(screen.getAllByText("Buy less on the spot market").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Mock price feed/).length).toBeGreaterThan(0);
+  });
+
+  it("lists each product once, with everything about it in one row", async () => {
+    await openRole("DC buying lead");
+    await screen.findByText("Each product");
+    const rows = await screen.findAllByRole("listitem");
+    const tomato = rows.filter((r) => r.getAttribute("data-sku") === "TOMATO");
+    expect(tomato).toHaveLength(1);
+    const row = within(tomato[0]);
+    for (const label of ["Stores ordered", "To buy tomorrow", "Mandi price", "Buy less on the spot market", "Bought today"]) {
+      expect(row.getByText(label)).toBeInTheDocument();
+    }
+  });
+
+  it("shows the farmer share, the DC buying lead's own measure, with how it is worked out", async () => {
+    await openRole("DC buying lead");
+    const card = await screen.findByTestId("farmer-share");
+    expect(within(card).getByText("Bought from farmer groups")).toBeInTheDocument();
+    expect(within(card).getByText("62%")).toBeInTheDocument();
+    expect(within(card).getByText(/farmer groups \(mock\)/)).toBeInTheDocument();
   });
 });
 
 describe("dc lead purchases", () => {
   it("records what came from farmer groups and from the mandi, as a record only", async () => {
     const user = await openRole("DC buying lead");
-    expect(await screen.findByText("What you bought today")).toBeInTheDocument();
-    const tile = (await screen.findAllByRole("button", { name: /Tomato/ })).at(-1) as HTMLElement;
-    await user.click(tile);
+    await screen.findByText("Each product");
+    const row = (await screen.findAllByRole("listitem")).find((r) => r.getAttribute("data-sku") === "TOMATO") as HTMLElement;
+    await user.click(within(row).getByRole("button", { name: /Record what was bought/ }));
     for (let i = 0; i < 2; i++) await user.click(screen.getByRole("button", { name: "From K.R. Market: More" }));
     await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(mock.outcomes).toHaveLength(3));
@@ -318,14 +356,13 @@ describe("dc lead purchases", () => {
 describe("dc lead sees what the stores ordered", () => {
   it("adds up the stores' decided orders and says who is still deciding", async () => {
     await openRole("DC buying lead");
-    expect(await screen.findByText("What the stores ordered")).toBeInTheDocument();
     expect(await screen.findByText(/Some stores are still deciding/)).toBeInTheDocument();
     expect(screen.getAllByText(/of \d+ stores decided/).length).toBeGreaterThan(0);
   });
 
   it("shows, per product, how much goes to each area and store", async () => {
     await openRole("DC buying lead");
-    await screen.findByText("What the stores ordered");
+    await screen.findByText("Each product");
     expect((await screen.findAllByText("Send to which area and store")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/South and central|North|East/).length).toBeGreaterThan(0);
   });
@@ -353,17 +390,29 @@ describe("chat panel", () => {
 });
 
 describe("store manager: my numbers", () => {
-  it("shows thrown away, ran out and farmer share together, beside all stores", async () => {
+  it("shows thrown away and ran out together against their targets and all stores, and no farmer share", async () => {
     const user = await openRole("Store manager");
     await user.click(await screen.findByRole("button", { name: /My numbers/ }));
     const box = await screen.findByTestId("my-numbers");
-    expect(within(box).getByText("Wasted")).toBeInTheDocument();
-    expect(within(box).getByText("Empty shelves")).toBeInTheDocument();
-    expect(within(box).getByText("Farmer share")).toBeInTheDocument();
-    expect(within(box).getByTestId("vs-all")).toHaveTextContent("All stores together: wasted 6% · empty shelves 9%");
-    expect(await within(box).findByText("Thrown away most")).toBeInTheDocument();
-    expect(within(box).getByText(/Tomato · 120/)).toBeInTheDocument();
+    expect(await within(box).findAllByTestId("measure")).toHaveLength(2);
+    expect(within(box).getAllByText("Thrown away").length).toBeGreaterThan(0);
+    expect(within(box).getAllByText("Ran out").length).toBeGreaterThan(0);
+    expect(await within(box).findByText("All stores 6%")).toBeInTheDocument();
+    expect(within(box).getByText("All stores 9%")).toBeInTheDocument();
+    expect(within(box).queryByText(/Farmer share/i)).not.toBeInTheDocument();
     expect(within(box).queryByText(/What to talk about/)).not.toBeInTheDocument(); // for the area manager
+    expect(within(box).queryByText("Thrown away most")).not.toBeInTheDocument(); // the product tiles say it
+  });
+
+  it("has four tabs, with surplus inside Morning and the calendar inside My numbers", async () => {
+    const user = await openRole("Store manager");
+    const nav = within(await screen.findByRole("navigation"));
+    expect(nav.getAllByRole("button").map((b) => b.textContent?.trim())).toEqual(["Tonight's orders", "Morning", "Closing", "My numbers"]);
+    await user.click(nav.getByRole("button", { name: "Morning" }));
+    expect(await screen.findByText("Discounts and moves")).toBeInTheDocument();
+    expect(screen.getByText("Surplus pickups")).toBeInTheDocument();
+    await user.click(nav.getByRole("button", { name: "My numbers" }));
+    expect(await screen.findByTestId("calendar-pick")).toBeInTheDocument();
   });
 
   it("has a dashboard for each product, with what was left on the shelf and what was thrown away", async () => {
@@ -474,8 +523,8 @@ describe("tonight's orders are not last night's", () => {
 describe("one week of history", () => {
   it("a store manager picks a day on the calendar and sees orders and closing together", async () => {
     const user = await openRole("Store manager");
-    await user.click(await screen.findByRole("button", { name: /History/ }));
-    expect(await screen.findByText("Your history")).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /My numbers/ }));
+    expect(await screen.findByText("Any past day")).toBeInTheDocument();
     expect(await screen.findByTestId("calendar-pick")).toBeInTheDocument();
     expect(await screen.findByText(/Thrown away 8% · ran out/)).toBeInTheDocument();
     // the day before and the day after are one tap away; the last day cannot go later
@@ -495,7 +544,6 @@ describe("one week of history", () => {
     const user = await openRole("Area manager");
     const trend = await screen.findByTestId("trend");
     expect(await within(trend).findByRole("group", { name: /Thrown away and ran out by day/ })).toBeInTheDocument();
-    expect(within(trend).getByText(/Farmer-group share, whole chain: 62%/)).toBeInTheDocument();
     // hovering a day says what happened that day and where; the latest day is shown to start with
     const detail = within(trend).getByTestId("trend-detail");
     expect(within(detail).getByText(/Most thrown away/)).toBeInTheDocument();
@@ -513,11 +561,13 @@ describe("one week of history", () => {
     expect(chart.querySelectorAll("circle").length).toBeGreaterThan(7);
   });
 
-  it("an area manager sees each store's week with thrown away and ran out side by side", async () => {
+  it("an area manager sees each store with thrown away and ran out side by side, against all stores", async () => {
     await openRole("Area manager");
-    expect(await screen.findByText("Last 7 days, store by store")).toBeInTheDocument();
-    expect(screen.getAllByText(/Thrown away 8%/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Ran out 25%/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Farmer-group share: not known/)).toBeInTheDocument();
+    const cards = within(await screen.findByTestId("store-cards"));
+    expect(await cards.findAllByText(/Thrown away 8%/)).not.toHaveLength(0);
+    expect(cards.getAllByText(/Ran out 25%/).length).toBeGreaterThan(0);
+    const all = cards.getByRole("button", { name: /All stores together/ });
+    expect(all).toHaveTextContent("Thrown away 6%");
+    expect(all).toHaveTextContent("Ran out 9%");
   });
 });
