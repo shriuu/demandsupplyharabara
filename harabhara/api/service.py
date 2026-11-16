@@ -23,6 +23,7 @@ from harabhara.api.schemas import (
     DcTotals,
     FarmerDay,
     FarmerDayRow,
+    FarmerShare,
     HealthResponse,
     HistorySeries,
     KillSwitchResponse,
@@ -60,7 +61,7 @@ from harabhara.contracts import (
 from harabhara.settings import load_config
 from harabhara.settings.areas import Area
 from harabhara.settings.contacts import StoreContact
-from harabhara.sim.recorded import scorecards_from_outcomes
+from harabhara.sim.recorded import FARMER_DEFINITION, NO_PURCHASES, scorecards_from_outcomes
 from harabhara.workflow import audit, fallback
 from harabhara.workflow.approvals import DecisionError, due_for_expiry, may_decide, next_state
 from harabhara.workflow.deadlines import LOCAL_TZ, aware
@@ -538,6 +539,29 @@ class Service:
 
         return fallback.attempt(rows)
 
+    def farmer_share(self, user: User) -> FarmerShare:
+        """The DC buying lead's measure: how much of what was bought came from farmer groups."""
+        self.require_role(user, "dc_lead")
+        today, days = self.now().date(), self.scorecard_days
+
+        def build() -> FarmerShare:
+            start = today - timedelta(days=days - 1)
+            bought = {"farmer_group": 0.0, "spot": 0.0}
+            for r in self.storage.list_outcomes("purchase", None, None, since=start):
+                if start <= r.on <= today and r.source and r.units_bought is not None:
+                    bought[r.source] += r.units_bought
+            total = sum(bought.values())
+            if total > 0:
+                return FarmerShare(
+                    share=bought["farmer_group"] / total, definition=FARMER_DEFINITION, days=days
+                )
+            return FarmerShare(share=None, definition=NO_PURCHASES, days=days)
+
+        served = fallback.attempt(lambda: [build()])
+        if not served.items:
+            raise ApiError(503, "farmer share is not available right now")
+        return served.items[0]
+
     def _store_day(
         self,
         store: str,
@@ -664,15 +688,25 @@ class Service:
                         orders_expired=sum(d.orders_expired for d in rows),
                     )
                 )
-            chain = [c for c in scorecards_from_outcomes(records, today, 7) if c.scope == "chain"]
+            everyone_closed = [
+                r
+                for r in self.storage.list_outcomes("closing", None, None, since=days[0])
+                if days[0] <= r.on <= days[-1]
+            ]
+            a_sold = sum(r.units_sold or 0.0 for r in everyone_closed)
+            a_wasted = sum(r.units_wasted or 0.0 for r in everyone_closed)
             return WeekHistory(
                 start=days[0],
                 end=days[-1],
                 stores=out,
-                farmer_share=chain[0].farmer_share if chain else None,
-                farmer_share_definition=(
-                    chain[0].farmer_share_definition if chain else "No closing counts recorded."
-                ),
+                chain_waste_pct=round(100 * a_wasted / (a_sold + a_wasted), 1)
+                if a_sold + a_wasted > 0
+                else None,
+                chain_stockout_pct=round(
+                    100 * sum(1 for r in everyone_closed if r.sold_out) / len(everyone_closed), 1
+                )
+                if everyone_closed
+                else None,
                 waste_basis="thrown away over sold plus thrown away, from stores' own counts",
                 stale=False,
             )
@@ -800,9 +834,6 @@ class Service:
                 )
             w_sold = sum(r.units_sold or 0.0 for r in closings)
             w_wasted = sum(r.units_wasted or 0.0 for r in closings)
-            chain = [
-                c for c in scorecards_from_outcomes(records, today, length) if c.scope == "chain"
-            ]
             return HistorySeries(
                 period=period,
                 start=days[0],
@@ -818,10 +849,6 @@ class Service:
                 if closings
                 else None,
                 days_with_closing=len({r.on for r in closings}),
-                farmer_share=chain[0].farmer_share if chain else None,
-                farmer_share_definition=(
-                    chain[0].farmer_share_definition if chain else "No closing counts recorded."
-                ),
                 # what to raise with a store manager is for their area manager, not for them
                 talk=[]
                 if user.role == "store_manager"

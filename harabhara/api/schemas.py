@@ -189,8 +189,8 @@ class WeekHistory(_Body):
     start: date
     end: date
     stores: list[StoreWeek]
-    farmer_share: float | None  # chain-wide only: purchases are not recorded per store
-    farmer_share_definition: str | None
+    chain_waste_pct: float | None  # all stores together, so each store can be compared
+    chain_stockout_pct: float | None
     waste_basis: str
     stale: bool
 
@@ -291,8 +291,6 @@ class HistorySeries(_Body):
     waste_pct: float | None
     stockout_pct: float | None
     days_with_closing: int
-    farmer_share: float | None
-    farmer_share_definition: str | None
     talk: list[TalkPoint]
     period_top_waste: list[SkuAmount]  # thrown away most over the whole period
     period_ran_out: list[SkuCount]  # ran out most often (``stores`` = number of counts)
@@ -346,3 +344,19 @@ class ProductHistory(_Body):
     store_id: str
     products: list[ProductSeries]
     stale: bool = False
+
+
+class Targets(_Body):
+    """What good looks like (the brief's targets, from config/metrics.yaml), for the bars."""
+
+    waste_pct_max: float
+    stockout_pct_ideal: float
+    stockout_pct_hard_max: float
+
+
+class FarmerShare(_Body):
+    """Share of what the DC bought that came from farmer groups. For the DC buying lead."""
+
+    share: float | None  # 0 to 1; None when no purchases are recorded
+    definition: str
+    days: int  # the window it covers

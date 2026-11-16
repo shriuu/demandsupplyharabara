@@ -209,6 +209,10 @@ export function createMockApi() {
       ];
       return need("area_manager") ?? json(rows);
     }
+    if (method === "GET" && path === "/targets") return json({ waste_pct_max: 5.5, stockout_pct_ideal: 7, stockout_pct_hard_max: 9.1 });
+    if (method === "GET" && path === "/farmer-share") {
+      return need("dc_lead") ?? json({ share: 0.62, definition: "Share of purchased volume that came from farmer groups (mock).", days: 28 });
+    }
     if (method === "GET" && path === "/scorecard/recorded") return need("area_manager") ?? json([]);
     if (method === "GET" && path === "/scorecard") {
       return need("area_manager") ?? json(user.area_id ? scorecards.filter((c) => c.scope !== "chain") : scorecards);

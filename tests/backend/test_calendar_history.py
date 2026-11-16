@@ -144,7 +144,7 @@ def test_the_weekly_and_monthly_series_have_the_configured_length_and_keep_gaps(
     assert (point["waste_pct"], point["stockout_pct"]) == (20.0, 100.0)  # together, always
     assert week["points"][0]["waste_pct"] is None  # a day nobody closed is a gap, not zero
     assert week["days_with_closing"] == 1
-    assert week["farmer_share"] == 0.3
+    assert "farmer_share" not in week  # shown to the DC buying lead only
 
 
 def test_a_series_can_be_asked_for_one_store_by_an_area_manager(env: Env) -> None:
@@ -260,3 +260,38 @@ def test_a_shelf_count_can_be_recorded_with_the_closing_and_only_with_a_closing(
         "units_bought": 10, "source": "spot", "units_left": 3,
     }  # fmt: skip
     assert env.client.post(f"{V1}/outcomes", json=bad, headers=env.login("4444")).status_code == 422
+
+
+# ---- targets for the bars, and the DC buying lead's farmer share -----------------------------
+
+
+def test_every_signed_in_person_can_read_the_targets_from_config(env: Env) -> None:
+    for pin in ("1111", "3333", "4444", "5555"):
+        r = env.client.get(f"{V1}/targets", headers=env.login(pin))
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body == {
+            "waste_pct_max": 5.5,
+            "stockout_pct_ideal": 7.0,
+            "stockout_pct_hard_max": 9.1,
+        }
+    assert env.client.get(f"{V1}/targets").status_code == 401
+
+
+def test_only_the_dc_buying_lead_gets_the_farmer_share(env: Env) -> None:
+    day = TODAY - timedelta(days=1)
+    env.storage.put_outcome(bought(day, "tomato", 30, "farmer_group"))
+    env.storage.put_outcome(bought(day, "tomato", 70, "spot"))
+    r = env.client.get(f"{V1}/farmer-share", headers=env.login("4444"))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["share"] == 0.3
+    assert body["definition"]
+    for pin in ("1111", "3333", "5555"):
+        assert env.client.get(f"{V1}/farmer-share", headers=env.login(pin)).status_code == 403
+
+
+def test_with_no_purchases_the_farmer_share_says_not_known_and_why(env: Env) -> None:
+    body = env.client.get(f"{V1}/farmer-share", headers=env.login("4444")).json()
+    assert body["share"] is None
+    assert "not known" in body["definition"]

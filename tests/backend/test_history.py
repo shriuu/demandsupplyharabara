@@ -62,9 +62,11 @@ def test_an_area_manager_gets_store_summaries_without_the_lines(env: Env) -> Non
     env.storage.create_suggestion(make_suggestion("o1", "S1"))
     close(env, "1111", "S1", "tomato", 90, 10, False)
     body = history(env, "3333").json()
-    assert body[
-        "farmer_share_definition"
-    ]  # farmer share is always explained, never silently absent
+    assert (
+        "farmer_share" not in body
+    )  # farmer share is the DC buying lead's measure, not shown here
+    assert body["chain_waste_pct"] == 10.0  # all stores together, so each store can be compared
+    assert body["chain_stockout_pct"] == 0.0
     store = next(s for s in body["stores"] if s["store_id"] == "S1")
     assert store["waste_pct"] == 10.0
     assert store["stockout_pct"] == 0.0

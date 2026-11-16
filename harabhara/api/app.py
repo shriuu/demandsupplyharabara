@@ -24,6 +24,7 @@ from harabhara.api.schemas import (
     DcOrders,
     DcTotals,
     FarmerDay,
+    FarmerShare,
     HealthResponse,
     HistorySeries,
     KillSwitchRequest,
@@ -35,6 +36,7 @@ from harabhara.api.schemas import (
     OrgStore,
     OutcomeInput,
     ProductHistory,
+    Targets,
     WeekHistory,
 )
 from harabhara.api.service import ApiError, Horizons, Service
@@ -250,6 +252,19 @@ def create_app(
     @router.get("/dc/orders")
     def dc_orders(user: CurrentUser) -> DcOrders:
         return service.dc_orders(user)
+
+    @router.get("/targets")
+    def targets(_user: CurrentUser) -> Targets:
+        t = (config or load_config()).metrics.targets
+        return Targets(
+            waste_pct_max=float(t["wastage_pct_max"]),
+            stockout_pct_ideal=float(t["stockout_pct_ideal"]),
+            stockout_pct_hard_max=float(t["stockout_pct_max_hard"]),
+        )
+
+    @router.get("/farmer-share")
+    def farmer_share(user: CurrentUser) -> FarmerShare:
+        return service.farmer_share(user)
 
     @router.get("/history/day")
     def history_day(user: CurrentUser, on: Annotated[date, Query(alias="date")]) -> DayView:

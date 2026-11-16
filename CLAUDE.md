@@ -31,7 +31,7 @@ profit = margin on what sells at full price + recovered value from discount and 
   3. Raise the order range where a lost sale costs more than a wasted unit (the cost ratio decides, per product).
   4. Early sell-out alerts that propose a transfer from a store with surplus.
   5. Keep fast-selling products in stock on the days our forecast says they spike (weekend, festival eve, heat), not on every day.
-- Always report **waste, empty shelves and farmer share together**. A change ships only if empty shelves and farmer share did not get worse.
+- Always report **waste and empty shelves together** on every screen. Farmer share is the DC buying lead's measure and is shown on that screen (owner decision, 16 Nov 2026). In every result report, replay and handover, waste, empty shelves and farmer share are still reported together. A change ships only if empty shelves and farmer share did not get worse.
 
 ## 4. Scope
 
@@ -61,7 +61,7 @@ These live in the **rules engine** as filters that run after the recommender and
 1. **A person approves every order, discount and transfer.** Every edit and its reason is recorded. The system never sends an order, applies a price or moves stock on its own.
 2. **Never recommend paying farmer groups below their contract floor**, and never suggest timing purchases to push risk onto them. Better forecasts must cut waste, not shift it upstream.
 3. **Never reduce a farmer-group volume that is already confirmed.** When stock is long, trim spot (mandi) buying first, and only as a suggestion to the DC buying lead.
-4. **Report waste and empty shelves together, always.** Never show a waste improvement without the empty-shelf result beside it, plus farmer share.
+4. **Report waste and empty shelves together, always.** Never show a waste improvement without the empty-shelf result beside it. Farmer share is shown to the DC buying lead, not on the store or area screens (owner decision, 16 Nov 2026); results, replays and reports still give all three.
 5. **Never route grade C produce to full-price shelves.** It goes to B2B buyers or processing, as the playbook says.
 6. **Never suggest selling past the last sellable day.** If the shelf-life model says longer than the playbook rule, the rule wins; show both.
 7. **Respect discount, transfer and surplus rules from the playbook** (steps, timing, floors, approvals, distance, van cost, product restrictions, notice periods). All values come from `config/rules.yaml`.
@@ -147,8 +147,8 @@ These live in the **rules engine** as filters that run after the recommender and
 
 **Who sees what**
 - Store manager: tonight's orders, morning alerts, surplus plan to confirm.
-- DC buying lead: totals, ranges, price warnings, spot-first trimming view.
-- Area manager: approvals queue, store comparison of waste, empty shelves and farmer share.
+- DC buying lead: one row per product (what stores ordered, tomorrow's total with range, price, spot-first trimming advice, what was bought) and the farmer share.
+- Area manager: approvals queue first, then a store comparison of waste and empty shelves.
 - Farmer-group coordinator: expected volumes per product, labelled as an estimate, not a commitment.
 
 ## 10. Training the models (be specific, no peeking at the future)
@@ -208,8 +208,8 @@ Design for a person who may not read, may not be comfortable with numbers, and i
 - **Store manager (evening):** product photo, crates to order, small band for less or more, a rain, festival or clock icon explaining why, tick, cross, plus and minus, mic for a reason.
 - **Store manager (morning):** a short list of red and amber items: leftover (discount, move or buyer) and shortage (transfer). Each is one tap to accept.
 - **Surplus plan:** buyer's logo or photo, what they take, pickup time shown as a clock icon, one tap to confirm.
-- **DC buying lead:** total per product with range, price warnings with an icon, spot-first trimming view.
-- **Area manager:** queue of approvals as cards with tick and cross; a small scoreboard of waste, empty shelves and farmer share shown as three gauges.
+- **DC buying lead:** the farmer share at the top (a number and a bar), then one row per product: what stores ordered, tomorrow's total with range, price with an icon, spot-first trimming advice, and what was bought.
+- **Area manager:** queue of approvals as cards with tick and cross; approvals come first, then waste and empty shelves as two bars, each with the target and all stores marked (no dials).
 - **Farmer-group coordinator:** pictorial sheet of expected volumes per product, labelled "estimate"; deliverable by message, voice or printable page.
 
 ## 12. Backend

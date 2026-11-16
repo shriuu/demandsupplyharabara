@@ -143,6 +143,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/farmer-share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Farmer Share */
+        get: operations["farmer_share_api_v1_farmer_share_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/farmers/day": {
         parameters: {
             query?: never;
@@ -416,6 +433,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Targets */
+        get: operations["targets_api_v1_targets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -680,6 +714,18 @@ export interface components {
             /** Sku Id */
             sku_id: string;
         };
+        /**
+         * FarmerShare
+         * @description Share of what the DC bought that came from farmer groups. For the DC buying lead.
+         */
+        FarmerShare: {
+            /** Days */
+            days: number;
+            /** Definition */
+            definition: string;
+            /** Share */
+            share: number | null;
+        };
         /** FarmerVolumeForecast */
         FarmerVolumeForecast: {
             /** Fpo Id */
@@ -756,10 +802,6 @@ export interface components {
              * Format: date
              */
             end: string;
-            /** Farmer Share */
-            farmer_share: number | null;
-            /** Farmer Share Definition */
-            farmer_share_definition: string | null;
             /**
              * Period
              * @enum {string}
@@ -1404,6 +1446,18 @@ export interface components {
             /** Value2 */
             value2?: number | null;
         };
+        /**
+         * Targets
+         * @description What good looks like (the brief's targets, from config/metrics.yaml), for the bars.
+         */
+        Targets: {
+            /** Stockout Pct Hard Max */
+            stockout_pct_hard_max: number;
+            /** Stockout Pct Ideal */
+            stockout_pct_ideal: number;
+            /** Waste Pct Max */
+            waste_pct_max: number;
+        };
         /** TransferPayload */
         TransferPayload: {
             /** From Store */
@@ -1449,15 +1503,15 @@ export interface components {
         };
         /** WeekHistory */
         WeekHistory: {
+            /** Chain Stockout Pct */
+            chain_stockout_pct: number | null;
+            /** Chain Waste Pct */
+            chain_waste_pct: number | null;
             /**
              * End
              * Format: date
              */
             end: string;
-            /** Farmer Share */
-            farmer_share: number | null;
-            /** Farmer Share Definition */
-            farmer_share_definition: string | null;
             /** Stale */
             stale: boolean;
             /**
@@ -1717,6 +1771,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DcTotals"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    farmer_share_api_v1_farmer_share_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FarmerShare"];
                 };
             };
             /** @description Validation Error */
@@ -2277,6 +2362,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Suggestion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    targets_api_v1_targets_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Targets"];
                 };
             };
             /** @description Validation Error */

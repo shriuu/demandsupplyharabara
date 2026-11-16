@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import { Gauge } from "../components/Gauge";
 import { Icon } from "../components/Icons";
+import { ThrownAwayAndRanOut } from "../components/Measure";
 import { Loading, LoadError } from "../components/Status";
-import { productName, t, unitOf } from "../i18n/strings";
-import { pct } from "./StoreHistory";
+import { t } from "../i18n/strings";
 import { ProductDashboard } from "./ProductDashboard";
-import { Chart, DayDetail, Names } from "./Trend";
+import { StoreHistory } from "./StoreHistory";
+import { Chart, DayDetail } from "./Trend";
 
 /**
  * The store manager's own numbers: thrown away and ran out together (never one without the other),
- * the farmer-group share for all stores, how all stores did, and which products are behind it.
+ * each against its target and against all stores; the days on a graph; one tile for each product;
+ * and a calendar to open any past day.
  */
 export function MyNumbers() {
   const [period, setPeriod] = useState<"week" | "month">("week");
@@ -36,50 +37,28 @@ export function MyNumbers() {
       {state.status === "error" && <LoadError onRetry={reload} />}
       {data && (
         <>
-          <section className="card scoreboard">
-            <div className="gauges">
-              <Gauge label="score.waste" icon="bag" value={data.waste_pct} goodWhen="low" />
-              <Gauge label="score.stockout" icon="box" value={data.stockout_pct} goodWhen="low" />
-              <Gauge label="score.farmer" icon="tractor" value={data.farmer_share === null ? null : data.farmer_share * 100} goodWhen="high" />
-            </div>
-            <p className="small" data-testid="vs-all">
-              {t("numbers.vsAll", { waste: pct(data.chain_waste_pct), out: pct(data.chain_stockout_pct) })}
-            </p>
-            <p className="small">{t("numbers.note")}</p>
+          <section className="card stack">
+            <ThrownAwayAndRanOut waste={data.waste_pct} out={data.stockout_pct} allWaste={data.chain_waste_pct} allOut={data.chain_stockout_pct} />
+            <p className="small">{t("measure.days", { n: data.days_with_closing })}</p>
           </section>
           {data.days_with_closing === 0 ? (
             <p className="notice">
               <Icon name="clock" size={20} /> {t("numbers.noCounts")}
             </p>
           ) : (
-            <>
-              <section className="card stack">
-                <Chart data={data} active={shown} onActive={(index) => setPicked({ key: period, index })} />
-                <p className="trend-legend">
-                  <span className="trend-key trend-key-waste" /> {t("trend.waste")} <span className="trend-key trend-key-out" /> {t("trend.out")}
-                </p>
-                <p className="small">{t("numbers.pickDay")}</p>
-                <DayDetail p={data.points[shown]} onPick={() => {}} />
-              </section>
-              <ProductDashboard period={period} />
-              <section className="card stack">
-                {data.period_top_waste.length > 0 && (
-                  <>
-                    <h3>{t("numbers.wasteWhere")}</h3>
-                    <Names kind="waste" rows={data.period_top_waste.map((w) => ({ sku_id: w.sku_id, label: `${productName(w.sku_id)} · ${Math.round(w.units)} ${unitOf(w.sku_id)}` }))} />
-                  </>
-                )}
-                {data.period_ran_out.length > 0 && (
-                  <>
-                    <h3>{t("numbers.outWhere")}</h3>
-                    <Names kind="out" rows={data.period_ran_out.map((r) => ({ sku_id: r.sku_id, label: `${productName(r.sku_id)} · ${t("numbers.times", { n: r.stores })}` }))} />
-                  </>
-                )}
-              </section>
-            </>
+            <section className="card stack">
+              <Chart data={data} active={shown} onActive={(index) => setPicked({ key: period, index })} />
+              <p className="trend-legend">
+                <span className="trend-key trend-key-waste" /> {t("trend.waste")} <span className="trend-key trend-key-out" /> {t("trend.out")}
+              </p>
+              <p className="small">{t("numbers.pickDay")}</p>
+              <DayDetail p={data.points[shown]} onPick={() => {}} />
+            </section>
           )}
+          {data.days_with_closing > 0 && <ProductDashboard period={period} />}
         </>
       )}
+      <StoreHistory />
     </section>
   );
 }

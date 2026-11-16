@@ -230,8 +230,8 @@ export function weekHistory(storeIds: string[], detail: boolean): WeekHistory {
   return {
     start: day(6),
     end: day(0),
-    farmer_share: null,
-    farmer_share_definition: "No purchases recorded this week.",
+    chain_waste_pct: 6,
+    chain_stockout_pct: 9,
     waste_basis: "thrown away over sold plus thrown away, from stores' own counts",
     stale: false,
     stores: storeIds.map((store_id) => ({
@@ -310,8 +310,6 @@ export function historySeries(period: "week" | "month", today: string, storeId?:
     waste_pct: 8,
     stockout_pct: 12,
     days_with_closing: points.filter((p) => p.waste_pct !== null).length,
-    farmer_share: 0.62,
-    farmer_share_definition: "Share of purchased volume that came from farmer groups.",
     period_top_waste: [{ sku_id: "P01", units: 120 }, { sku_id: "P02", units: 64 }],
     period_ran_out: [{ sku_id: "P03", stores: 9 }],
     chain_waste_pct: 6,

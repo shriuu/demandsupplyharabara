@@ -12,7 +12,6 @@ import { Login } from "./screens/Login";
 import { StoreClosing } from "./screens/StoreClosing";
 import { StoreEvening } from "./screens/StoreEvening";
 import { MyNumbers } from "./screens/MyNumbers";
-import { StoreHistory } from "./screens/StoreHistory";
 import { StoreMorning } from "./screens/StoreMorning";
 import { StoreSurplus } from "./screens/StoreSurplus";
 import { t, type StringKey } from "./i18n/strings";
@@ -24,14 +23,12 @@ const roleIcons: Record<Role, IconName> = {
   farmer_coordinator: "tractor",
 };
 
-type StoreTab = "evening" | "morning" | "surplus" | "closing" | "numbers" | "history";
+type StoreTab = "evening" | "morning" | "closing" | "numbers";
 const storeTabs: { tab: StoreTab; icon: IconName; label: StringKey }[] = [
   { tab: "evening", icon: "moon", label: "tab.evening" },
   { tab: "morning", icon: "sun", label: "tab.morning" },
-  { tab: "surplus", icon: "bag", label: "tab.surplus" },
   { tab: "closing", icon: "tick", label: "tab.closing" },
   { tab: "numbers", icon: "chart", label: "tab.numbers" },
-  { tab: "history", icon: "calendar", label: "tab.history" },
 ];
 
 export function App() {
@@ -104,11 +101,20 @@ export function App() {
               ))}
             </nav>
             {tab === "evening" && <StoreEvening storeId={storeId} />}
-            {tab === "morning" && <StoreMorning storeId={storeId} />}
-            {tab === "surplus" && <StoreSurplus storeId={storeId} />}
+            {tab === "morning" && (
+              <div className="stack">
+                <h2>
+                  <Icon name="sun" /> {t("morning.alerts")}
+                </h2>
+                <StoreMorning storeId={storeId} />
+                <h2>
+                  <Icon name="bag" /> {t("morning.surplus")}
+                </h2>
+                <StoreSurplus storeId={storeId} />
+              </div>
+            )}
             {tab === "closing" && <StoreClosing storeId={storeId} />}
             {tab === "numbers" && <MyNumbers />}
-            {tab === "history" && <StoreHistory />}
           </>
         )}
         {role === "area_manager" && <AreaScreen killed={killed} onKilledChange={setKilled} />}

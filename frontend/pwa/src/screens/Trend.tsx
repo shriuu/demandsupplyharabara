@@ -4,6 +4,7 @@ import { useLoad } from "../api/useApi";
 import type { HistorySeries, SeriesPoint, TalkPoint } from "../api/types";
 import { Icon, type IconName } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
+import { ThrownAwayAndRanOut } from "../components/Measure";
 import { Loading, LoadError } from "../components/Status";
 import {
   productName,
@@ -441,9 +442,14 @@ export function Trend({
       {state.status === "error" && <LoadError onRetry={reload} />}
       {data && (
         <>
-          <p>
-            <strong>{data.scope_name}</strong>
-          </p>
+          <h3>{storeLabel(data.scope_name)}</h3>
+          <ThrownAwayAndRanOut
+            waste={data.waste_pct}
+            out={data.stockout_pct}
+            allWaste={data.scope === "chain" ? null : data.chain_waste_pct}
+            allOut={data.scope === "chain" ? null : data.chain_stockout_pct}
+          />
+          <p className="small">{t("measure.days", { n: data.days_with_closing })}</p>
           {data.days_with_closing === 0 ? (
             <p className="notice">{t("trend.noData")}</p>
           ) : (
@@ -459,22 +465,10 @@ export function Trend({
                 {t("trend.out")}
               </p>
               <p className="small">{t("trend.hint")}</p>
-              <p className="small">
-                {t("trend.summary", {
-                  waste: pct(data.waste_pct),
-                  out: pct(data.stockout_pct),
-                  n: data.days_with_closing,
-                })}
-              </p>
               <DayDetail p={data.points[shown]} onPick={onPick} />
               <TalkList talk={data.talk} onPick={onPick} />
             </>
           )}
-          <p className="small">
-            {data.farmer_share !== null
-              ? t("trend.farmer", { share: pct(data.farmer_share * 100) })
-              : t("trend.farmerUnknown")}
-          </p>
         </>
       )}
     </section>
