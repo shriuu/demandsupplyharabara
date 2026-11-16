@@ -1,3 +1,4 @@
+# ruff: noqa
 """Draws the sign-in wallpaper: an illustrated vegetable market stall. Original artwork, no photo.
 
 python3 docs/images/make_login_bg.py frontend/pwa/public/login-bg.svg
