@@ -427,3 +427,10 @@ main:has(> .login) { padding-bottom: 0; }
 }
 .lang-named { min-width: 0; padding: 0 12px; font-size: 1rem; }
 @media (max-width: 520px) { .lang-named { padding: 0 7px; font-size: 0.85rem; } }
+.login-pin { align-self: center; padding: 18px 14px; }
+@media (max-width: 700px) { .login-pin { align-self: stretch; } }
+@media (max-width: 520px) {
+  .topbar-row:has(.lang-named) { flex-wrap: wrap; gap: 6px; }
+  .lang-switch:has(.lang-named) { width: 100%; margin: 0; justify-content: space-between; }
+  .lang-named { flex: 1 1 auto; }
+}
