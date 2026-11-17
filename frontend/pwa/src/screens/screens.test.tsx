@@ -217,6 +217,20 @@ describe("store manager closing", () => {
     expect(mock.outcomes[0]).toMatchObject({ units_left: 4, sold_out: false });
   });
 
+  it("asks about running out only when nothing is left, and about waste only when tapped", async () => {
+    const user = await openRole("Store manager");
+    await openProduct(user, "Tomato");
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click(await screen.findByRole("button", { name: /Closing/ }));
+    await openProduct(user, "Tomato");
+    expect(screen.getByText("Ran out before closing?")).toBeInTheDocument(); // left is zero
+    expect(screen.queryByRole("textbox", { name: "Thrown away" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Left on the shelf: More" }));
+    expect(screen.queryByText("Ran out before closing?")).not.toBeInTheDocument(); // something is left
+    await user.click(screen.getByRole("button", { name: /Anything thrown away/ }));
+    expect(screen.getByRole("textbox", { name: "Thrown away" })).toBeInTheDocument();
+  });
+
   it("big counts are typed in whole numbers, not tapped one at a time", async () => {
     const user = await openRole("Store manager");
     await openProduct(user, "Tomato");
@@ -447,8 +461,10 @@ describe("store manager: my numbers", () => {
     await user.click(await screen.findByRole("button", { name: /My numbers/ }));
     const tiles = await screen.findByTestId("product-tiles");
     expect(within(tiles).getAllByRole("button").length).toBe(3);
-    expect(within(tiles).getAllByText(/left each day/)).toHaveLength(2); // two count the shelf
-    expect(within(tiles).getByText("Shelf stock not counted")).toBeInTheDocument(); // one that does not: not zero
+    for (const tile of within(tiles).getAllByRole("button")) {
+      // no sentences: icons for what happened (thrown away, ran out) or a tick, each with a spoken label
+      expect(within(tile).getAllByRole("img", { name: /Thrown away|Ran out|Nothing thrown away/ }).length).toBeGreaterThan(0);
+    }
     await user.click(within(tiles).getAllByRole("button")[0]);
     const detail = await screen.findByTestId("product-detail");
     expect(within(detail).getByRole("img", { name: /Left on the shelf and thrown away by day/ })).toBeInTheDocument();

@@ -1,5 +1,9 @@
-// Every user-visible word lives here so translations can be added later (deferred for this
-// release). Components call t("key"); nothing else holds display text.
+// Every user-visible word lives here. Components call t("key"); nothing else holds display text.
+// English is written here; Kannada, Hindi, Tamil and Telugu are in ./locales. A key missing from a
+// language falls back to English, so a screen is never blank.
+import { getLang } from "./lang";
+import { locales } from "./locales";
+
 export const en = {
   "app.name": "HaraBhara Fresh",
   "app.loading": "Loading",
@@ -83,6 +87,7 @@ export const en = {
   "numbers.tileWaste": "{n} {unit} thrown away",
   "numbers.tileLeft": "About {n} {unit} left each day",
   "numbers.tileNoLeft": "Shelf stock not counted",
+  "numbers.keyFine": "Nothing thrown away, never ran out",
   "numbers.tileRan": "Ran out {n} days",
   "numbers.back": "All products",
   "numbers.d.day": "Day",
@@ -159,6 +164,7 @@ export const en = {
   "closing.sold": "Sold",
   "closing.left": "Left on the shelf",
   "closing.wasted": "Thrown away",
+  "closing.wastedAsk": "Anything thrown away?",
   "closing.ranOut": "Ran out before closing?",
   "closing.yes": "Yes, it ran out",
   "closing.no": "No",
@@ -234,6 +240,7 @@ export const en = {
   "alert.transfer": "Move to another store",
   "alert.transferDetail": "{units} to {store}, van leaves {time}",
   "alert.earlier": "Starts before the last day",
+  "alert.lastDay": "Last sellable day",
   "surplus.title": "Surplus buyers",
   "surplus.buyer": "Buyer {id}",
   "surplus.grade": "Grade {grade}",
@@ -345,7 +352,7 @@ export const en = {
 export type StringKey = keyof typeof en;
 
 export function t(key: StringKey, vars?: Record<string, string | number>): string {
-  let text: string = en[key];
+  let text: string = locales[getLang()]?.strings[key] ?? en[key];
   if (vars) for (const [name, value] of Object.entries(vars)) text = text.replace(`{${name}}`, String(value));
   return text;
 }
@@ -385,7 +392,8 @@ export const productNames: Record<string, string> = {
 };
 
 export function productName(skuId: string): string {
-  return productNames[skuId.toUpperCase()] ?? skuId;
+  const id = skuId.toUpperCase();
+  return locales[getLang()]?.products[id] ?? productNames[id] ?? skuId;
 }
 
 /** Name with its id beside it ("Tomato · P01"), for sheets that people cross-check against ids. */
@@ -403,7 +411,10 @@ export const productUnits: Record<string, string> = {
 };
 
 export function unitOf(skuId: string): string {
-  return productUnits[skuId.toUpperCase()] ?? "";
+  const id = skuId.toUpperCase();
+  const english = productUnits[id];
+  if (!english) return "";
+  return locales[getLang()]?.units[english] ?? english;
 }
 
 /** Where each store is, so a manager reads a place and not a code. */

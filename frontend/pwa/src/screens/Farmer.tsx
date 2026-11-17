@@ -100,25 +100,27 @@ export function FarmerScreen() {
       <p className="small">
         {t("farmer.what")} {t("farmer.threeDays")}
       </p>
-      <div className="tiles-2">
+      <ul className="alert-rows">
         {ordered.map(([sku, rows]) => (
-          <section key={sku} className="card">
-            <div className="total-card farmer-head">
-              <ProductIcon skuId={sku} size={64} />
+          <li key={sku} className="alert-row farmer-row">
+            <ProductIcon skuId={sku} size={56} />
+            <div className="alert-main">
               <h3>{productLabel(sku)}</h3>
               <span className="badge">{t("farmer.estimate")}</span>
             </div>
-            {rows.map((r) => (
-              <div key={r.on} className="day-row">
-                <span className="day">
-                  <Icon name="calendar" size={20} /> {dayLabel(r.on)}
-                </span>
-                <RangeBar range={r.volume} max={max} unit={unitOf(sku)} />
-              </div>
-            ))}
-          </section>
+            <div className="farmer-days">
+              {rows.map((r) => (
+                <div key={r.on} className="day-row">
+                  <span className="day">
+                    <Icon name="calendar" size={20} /> {dayLabel(r.on)}
+                  </span>
+                  <RangeBar range={r.volume} max={max} unit={unitOf(sku)} />
+                </div>
+              ))}
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
       <FarmerHistory />
     </div>
   );

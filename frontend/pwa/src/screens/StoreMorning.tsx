@@ -5,6 +5,7 @@ import type { MarkdownPayload, Role, Suggestion, TransferPayload } from "../api/
 import { TickCross } from "../components/Buttons";
 import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
+import { WhyLine } from "../components/WhyLine";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError, TrafficLight, type Light } from "../components/Status";
 import { productName, t } from "../i18n/strings";
@@ -33,40 +34,32 @@ export function AlertCard({ group, role, onDone }: { group: Group; role: Role; o
     }
   }
   return (
-    <li className="card alert-card">
+    <li className={`alert-row alert-row-${lightFor(first)}`} data-testid="alert-row">
       <TrafficLight light={lightFor(first)} />
-      <div className="alert-body">
-        <ProductIcon skuId={first.sku_id} size={72} />
-        <div>
-          <h3>{productName(first.sku_id)}</h3>
-          {first.payload.kind === "markdown" && (
-            <p>
-              <Icon name="tag" size={22} /> <strong>{t("alert.markdown")}</strong>
-            </p>
-          )}
+      <ProductIcon skuId={first.sku_id} size={56} />
+      <div className="alert-main">
+        <h3>{productName(first.sku_id)}</h3>
+        <div className="alert-chips">
           {group.items.map((s) => {
             const p = s.payload as MarkdownPayload | TransferPayload;
             return !("to_store" in p) ? (
-              <p key={s.id} className="step">
-                {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
-              </p>
+              <span key={s.id} className="chip">
+                <Icon name="tag" size={18} /> {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
+              </span>
             ) : (
-              <p key={s.id}>
-                <Icon name="van" size={22} /> {t("alert.transfer")} ·{" "}
+              <span key={s.id} className="chip">
+                <Icon name="van" size={18} />{" "}
                 {t("alert.transferDetail", { units: p.units, store: p.to_store, time: p.leave_by })}
-              </p>
+              </span>
             );
           })}
-          {first.payload.kind === "markdown" && first.payload.earlier_than_last_day && (
-            <p className="small">
-              <Icon name="clock" size={18} /> {t("alert.earlier")}
-            </p>
-          )}
-          <p className="small">{first.reason}</p>
+          <WhyLine suggestion={first} />
         </div>
       </div>
-      {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />
+      <div className="alert-actions">
+        <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />
+      </div>
+      {failed && <p className="notice notice-error alert-fail" role="alert">{t("app.error")}</p>}
     </li>
   );
 }
@@ -82,7 +75,7 @@ export function StoreMorning({ storeId }: { storeId: string }) {
   const list = alerts(state.data);
   if (!list.length) return <Empty />;
   return (
-    <ul className="tiles-2">
+    <ul className="alert-rows">
       {list.map((g) => (
         <AlertCard key={g.key} group={g} role="store_manager" onDone={reload} />
       ))}

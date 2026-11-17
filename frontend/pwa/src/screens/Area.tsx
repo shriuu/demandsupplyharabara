@@ -6,6 +6,7 @@ import type { MarkdownPayload, Suggestion, TransferPayload } from "../api/types"
 import { Confirm, TickCross } from "../components/Buttons";
 import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
+import { WhyLine } from "../components/WhyLine";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
@@ -53,28 +54,31 @@ function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: b
     }
   }
   return (
-    <li className="card alert-card">
-      <div className="alert-body">
-        <ProductIcon skuId={first.sku_id} size={72} />
-        <div>
-          <h3>{showStore ? `${productName(first.sku_id)} · ${storeLabel(first.store_id)}` : productName(first.sku_id)}</h3>
+    <li className="alert-row" data-testid="approval-row">
+      <ProductIcon skuId={first.sku_id} size={56} />
+      <div className="alert-main">
+        <h3>{showStore ? `${productName(first.sku_id)} · ${storeLabel(first.store_id)}` : productName(first.sku_id)}</h3>
+        <div className="alert-chips">
           {group.items.map((s) => {
             const p = s.payload as MarkdownPayload | TransferPayload;
             return !("to_store" in p) ? (
-              <p key={s.id}>
-                <Icon name="tag" size={22} /> {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
-              </p>
+              <span key={s.id} className="chip">
+                <Icon name="tag" size={18} /> {t("alert.markdownDetail", { pct: p.step_pct, start: p.start })}
+              </span>
             ) : (
-              <p key={s.id}>
-                <Icon name="van" size={22} /> {t("alert.transferDetail", { units: `${Math.round(p.units)} ${unitOf(s.sku_id)}`, store: storeLabel(p.to_store), time: p.leave_by })}
-              </p>
+              <span key={s.id} className="chip">
+                <Icon name="van" size={18} />{" "}
+                {t("alert.transferDetail", { units: `${Math.round(p.units)} ${unitOf(s.sku_id)}`, store: storeLabel(p.to_store), time: p.leave_by })}
+              </span>
             );
           })}
-          <p className="small">{first.reason}</p>
+          <WhyLine suggestion={first} />
         </div>
       </div>
-      {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />
+      <div className="alert-actions">
+        <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />
+      </div>
+      {failed && <p className="notice notice-error alert-fail" role="alert">{t("app.error")}</p>}
     </li>
   );
 }
@@ -93,7 +97,7 @@ function Queue({ killed, store }: { killed: boolean; store?: string }) {
   const shown = all ? sorted : sorted.slice(0, SHORT_LIST);
   return (
     <>
-      <ul className="tiles-2">
+      <ul className="alert-rows">
         {shown.map((g) => (
           <ApprovalCard key={g.key} group={g} showStore={!store} onDone={reload} />
         ))}

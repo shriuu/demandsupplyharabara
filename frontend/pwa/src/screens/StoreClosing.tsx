@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import type { OrderPayload, Suggestion } from "../api/types";
+import type { Suggestion } from "../api/types";
 import { Counter } from "../components/Counter";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
@@ -61,13 +61,15 @@ export function StoreClosing({ storeId }: { storeId: string }) {
   return (
     <>
       <p className="small">{t("closing.tap")}</p>
-      <ul className="tiles">
+      <ul className="alert-rows">
         {queue.map((s) => (
           <li key={s.id}>
-            <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpenId(s.id)}>
-              <ProductIcon skuId={s.sku_id} size={72} />
-              <span className="tile-name">{productName(s.sku_id)}</span>
-              <span className="tile-amount">{t("order.units", { n: Math.round((s.payload as OrderPayload).recommended_units), unit: unitOf(s.sku_id) })}</span>
+            <button className="alert-row product-row" onClick={() => setOpenId(s.id)}>
+              <ProductIcon skuId={s.sku_id} size={48} />
+              <span className="alert-main">
+                <span className="row-name">{productName(s.sku_id)}</span>
+              </span>
+              <span className="row-go"><Icon name="back" size={28} /></span>
             </button>
           </li>
         ))}
@@ -81,6 +83,7 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
   const [wasted, setWasted] = useState(0);
   const [left, setLeft] = useState(0);
   const [ranOut, setRanOut] = useState(false);
+  const [askWaste, setAskWaste] = useState(false);
   const [failed, setFailed] = useState(false);
   const unit = unitOf(suggestion.sku_id);
 
@@ -94,8 +97,8 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
         sku_id: suggestion.sku_id,
         units_sold: sold,
         units_wasted: wasted,
-        sold_out: ranOut,
-        units_left: ranOut ? 0 : left, // nothing is left if it ran out
+        sold_out: left === 0 && ranOut, // it can only have run out if nothing is left
+        units_left: left,
         suggestion_id: suggestion.id,
       });
       onDone();
@@ -111,20 +114,27 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
         <h2>{productName(suggestion.sku_id)}</h2>
       </div>
       <Counter label={t("closing.sold")} value={sold} step={1} unit={unit} onChange={setSold} />
-      <Counter label={t("closing.wasted")} value={wasted} step={1} unit={unit} onChange={setWasted} />
-      <Counter label={t("closing.left")} value={ranOut ? 0 : left} step={1} unit={unit} onChange={setLeft} />
-      <p className="counter-label">{t("closing.ranOut")}</p>
-      <div className="tickcross">
-        <button className={`btn btn-yes ${ranOut ? "" : "btn-dim"}`} aria-pressed={ranOut} onClick={() => {
-            setRanOut(true);
-            setLeft(0);
-          }}>
-          <Icon name="tick" size={36} /> {t("closing.yes")}
+      <Counter label={t("closing.left")} value={left} step={1} unit={unit} onChange={setLeft} />
+      {askWaste || wasted > 0 ? (
+        <Counter label={t("closing.wasted")} value={wasted} step={1} unit={unit} onChange={setWasted} />
+      ) : (
+        <button className="btn btn-plain" onClick={() => setAskWaste(true)}>
+          <Icon name="bin" size={32} /> {t("closing.wastedAsk")}
         </button>
-        <button className={`btn btn-no ${ranOut ? "btn-dim" : ""}`} aria-pressed={!ranOut} onClick={() => setRanOut(false)}>
-          <Icon name="cross" size={36} /> {t("closing.no")}
-        </button>
-      </div>
+      )}
+      {left === 0 && (
+        <>
+          <p className="counter-label">{t("closing.ranOut")}</p>
+          <div className="tickcross">
+            <button className={`btn btn-yes ${ranOut ? "" : "btn-dim"}`} aria-pressed={ranOut} onClick={() => setRanOut(true)}>
+              <Icon name="tick" size={36} /> {t("closing.yes")}
+            </button>
+            <button className={`btn btn-no ${ranOut ? "btn-dim" : ""}`} aria-pressed={!ranOut} onClick={() => setRanOut(false)}>
+              <Icon name="cross" size={36} /> {t("closing.no")}
+            </button>
+          </div>
+        </>
+      )}
       <p className="small">{t("closing.note")}</p>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
       <button className="btn btn-yes" style={{ width: "100%" }} onClick={() => void save()}>

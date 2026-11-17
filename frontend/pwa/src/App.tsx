@@ -5,6 +5,8 @@ import type { LoginResponse, Role } from "./api/types";
 import { ChatPanel } from "./components/ChatPanel";
 import { ChatFocus } from "./components/chatContext";
 import { Icon, type IconName } from "./components/Icons";
+import { LanguageSwitch } from "./components/LanguageSwitch";
+import { useLang } from "./i18n/lang";
 import { AreaScreen } from "./screens/Area";
 import { DcScreen } from "./screens/Dc";
 import { FarmerScreen } from "./screens/Farmer";
@@ -55,11 +57,12 @@ export function App() {
     setExpired(false);
   };
   const setFocus = useCallback((id: string | null) => setFocusId(id), []);
+  const lang = useLang(); // a new language rebuilds the screens; the sign-in is kept here
   const role = session?.role ?? null;
   const storeId = session?.store_id ?? null;
 
   return (
-    <ChatFocus.Provider value={setFocus}>
+    <ChatFocus.Provider key={lang} value={setFocus}>
       <header className="topbar">
         {role ? (
           <div className="topbar-row">
@@ -74,14 +77,18 @@ export function App() {
                 ) : null}
               </span>
             </span>
+            <LanguageSwitch clearOfAsk={role === "store_manager" || role === "area_manager"} />
             <button className="btn btn-plain" onClick={signOut} aria-label={t("app.logout")}>
               <Icon name="logout" size={32} />
             </button>
           </div>
         ) : (
-          <span className="brand">
-            <Icon name="home" /> {t("app.name")}
-          </span>
+          <div className="topbar-row">
+            <span className="brand">
+              <Icon name="home" /> {t("app.name")}
+            </span>
+            <LanguageSwitch />
+          </div>
         )}
       </header>
       {role && <p className="notice job">{t(`job.${role}`)}</p>}
