@@ -117,7 +117,7 @@ function standing(p: ProductSeries, tg: Targets | null): { waste: Standing; ran:
 
 /** One light per product: red if either measure is above target, amber if near, green if both are on target. */
 function Light({ state }: { state: Standing }) {
-  const mark = state === "on" ? "tick" : state === "near" ? "alert" : state === "above" ? "cross" : "hourglass";
+  const mark = state === "on" ? "tick" : state === "near" ? "alert" : state === "above" ? "stop" : "hourglass";
   return (
     <span className={`mark mark-${state} mark-big`} role="img" aria-label={t(`measure.${state}` as StringKey)} title={t(`measure.${state}` as StringKey)}>
       <Icon name={mark} size={34} />
