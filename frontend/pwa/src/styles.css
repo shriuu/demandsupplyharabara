@@ -402,3 +402,4 @@ main:has(> .login) { padding-bottom: 0; }
 .marks { display: inline-flex; gap: 8px; }
 .alert-rows-2 .product-row .marks { grid-column: auto; justify-content: flex-end; }
 .row-go { display: inline-flex; transform: scaleX(-1); }
+.alert-row:not(.alert-row-red):not(.alert-row-amber):not(.product-row):not(.surplus-row) { grid-template-columns: auto minmax(0, 1fr) auto; }
