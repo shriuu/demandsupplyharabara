@@ -32,46 +32,51 @@ export function SurplusCard({ suggestion, onDone }: { suggestion: Suggestion; on
     }
   }
   return (
-    <li className="card surplus-card">
-      <div className="alert-body">
-        <span className="buyer-logo" aria-label={t("surplus.buyer", { id: p.buyer_id })}>
-          {p.buyer_id.slice(0, 2)}
-        </span>
-        <ProductIcon skuId={suggestion.sku_id} size={72} />
-        <div>
-          <h3>
-            {t("surplus.give", { units: Math.round(p.units), unit: unitOf(suggestion.sku_id), product: productName(suggestion.sku_id) })}
-          </h3>
-          <p>
-            <Icon name="bag" size={22} /> {t("surplus.to", { buyer: p.buyer_name ?? p.buyer_id })}
-          </p>
-          <p>
-            <Icon name="home" size={22} /> {t("surplus.from", { store: storeLabel(suggestion.store_id) })}
-          </p>
-          <p>
-            <Icon name="clock" size={22} />{" "}
+    <li className="alert-row surplus-row" data-testid="surplus-row">
+      <span className="buyer-logo" aria-label={t("surplus.buyer", { id: p.buyer_id })}>
+        {p.buyer_id.slice(0, 2)}
+      </span>
+      <ProductIcon skuId={suggestion.sku_id} size={56} />
+      <div className="alert-main">
+        <h3>
+          {t("surplus.give", { units: Math.round(p.units), unit: unitOf(suggestion.sku_id), product: productName(suggestion.sku_id) })}
+        </h3>
+        <div className="alert-chips">
+          <span className="chip">
+            <Icon name="bag" size={18} /> {p.buyer_name ?? p.buyer_id}
+          </span>
+          <span className="chip">
+            <Icon name="clock" size={18} />{" "}
             {p.pickup_date
               ? t("surplus.pickupDay", { day: pickupDay(p.pickup_date), window: p.pickup_window })
               : t("surplus.pickup", { window: p.pickup_window })}
-          </p>
-          <p>
-            <Icon name="coin" size={22} />{" "}
+          </span>
+          <span className="chip">
+            <Icon name="coin" size={18} />{" "}
             {free ? t("surplus.free") : t("surplus.youGet", { inr: Math.round(p.expected_recovery_inr) })}
-          </p>
-          {p.price_share_of_retail != null && !free && (
-            <p className="small">{t("surplus.share", { pct: Math.round(p.price_share_of_retail * 100) })}</p>
-          )}
-          {p.profit_vs_cost_inr != null && (
-            <p className="small">
-              {p.profit_vs_cost_inr < 0
-                ? t("surplus.vsCostBelow", { n: Math.round(-p.profit_vs_cost_inr) })
-                : t("surplus.vsCostAbove", { n: Math.round(p.profit_vs_cost_inr) })}
-            </p>
-          )}
+          </span>
         </div>
+        {(p.price_share_of_retail != null || p.profit_vs_cost_inr != null) && (
+          <details className="dc-why">
+            <summary>{t("dc.why")}</summary>
+            <p className="small">{t("surplus.from", { store: storeLabel(suggestion.store_id) })}</p>
+            {p.price_share_of_retail != null && !free && (
+              <p className="small">{t("surplus.share", { pct: Math.round(p.price_share_of_retail * 100) })}</p>
+            )}
+            {p.profit_vs_cost_inr != null && (
+              <p className="small">
+                {p.profit_vs_cost_inr < 0
+                  ? t("surplus.vsCostBelow", { n: Math.round(-p.profit_vs_cost_inr) })
+                  : t("surplus.vsCostAbove", { n: Math.round(p.profit_vs_cost_inr) })}
+              </p>
+            )}
+          </details>
+        )}
       </div>
-      {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} />
+      <div className="alert-actions">
+        <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} />
+      </div>
+      {failed && <p className="notice notice-error alert-fail" role="alert">{t("app.error")}</p>}
     </li>
   );
 }
@@ -86,7 +91,7 @@ export function StoreSurplus({ storeId }: { storeId: string }) {
   if (state.status === "error") return <LoadError onRetry={reload} />;
   if (!state.data.length) return <p className="notice" role="status">{t("surplus.none")}</p>;
   return (
-    <ul className="stack">
+    <ul className="alert-rows">
       {state.data.map((s) => (
         <SurplusCard key={s.id} suggestion={s} onDone={reload} />
       ))}

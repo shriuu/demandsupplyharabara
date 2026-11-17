@@ -367,3 +367,6 @@ main:has(> .login) { padding-bottom: 0; }
   .alert-row .light { grid-column: 1 / -1; flex-direction: row; justify-self: start; min-width: 0; }
   .alert-actions .btn { width: 56px; flex-basis: 56px; }
 }
+.surplus-row { grid-template-columns: auto auto minmax(0, 1fr) auto; border-left-color: var(--green); }
+.surplus-row .buyer-logo { width: 48px; height: 48px; font-size: 1rem; }
+@media (max-width: 520px) { .surplus-row { grid-template-columns: auto minmax(0, 1fr) auto; } .surplus-row .buyer-logo { display: none; } }
