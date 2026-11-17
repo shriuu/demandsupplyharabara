@@ -115,30 +115,25 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
     <section className="stack" aria-label={t("numbers.products")} data-testid="product-tiles">
       <h3>{t("numbers.products")}</h3>
       <p className="small">{t("numbers.productsHint")}</p>
-      <p className="tile-key small">
-        <span className="stat"><Icon name="bin" size={18} /> {t("numbers.keyWaste")}</span>
-        <span className="stat"><Icon name="crate" size={18} /> {t("numbers.keyLeft")}</span>
-        <span className="stat ran-out"><Icon name="stop" size={18} /> {t("numbers.keyRan")}</span>
-      </p>
       <ul className="tiles">
         {products.map((p) => (
           <li key={p.sku_id}>
             <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpen(p.sku_id)}>
               <ProductIcon skuId={p.sku_id} size={56} />
               <span className="tile-name">{productName(p.sku_id)}</span>
-              <span className="tile-stats">
-                <span className="stat" title={t("numbers.tileWaste", { n: Math.round(p.units_wasted), unit: unitOf(p.sku_id) })}>
-                  <Icon name="bin" size={20} /> {Math.round(p.units_wasted)}
+              <span className="tile-lines">
+                <span className="stat">
+                  <Icon name="bin" size={20} /> {t("numbers.tWaste", { n: Math.round(p.units_wasted) })}
                 </span>
-                <span
-                  className="stat"
-                  title={p.average_left === null ? t("numbers.tileNoLeft") : t("numbers.tileLeft", { n: Math.round(p.average_left), unit: unitOf(p.sku_id) })}
-                >
-                  <Icon name="crate" size={20} /> {p.average_left === null ? "–" : Math.round(p.average_left)}
-                </span>
-                <span className={`stat${p.days_ran_out > 0 ? " ran-out" : ""}`} title={t("numbers.tileRan", { n: p.days_ran_out })}>
-                  <Icon name="stop" size={20} /> {p.days_ran_out}
-                </span>
+                {p.days_ran_out > 0 ? (
+                  <span className="stat ran-out">
+                    <Icon name="stop" size={20} /> {t("numbers.tileRan", { n: p.days_ran_out })}
+                  </span>
+                ) : (
+                  <span className="stat">
+                    <Icon name="tick" size={20} /> {t("numbers.tNever")}
+                  </span>
+                )}
               </span>
             </button>
           </li>

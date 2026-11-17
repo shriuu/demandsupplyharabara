@@ -374,3 +374,6 @@ main:has(> .login) { padding-bottom: 0; }
 .stat { display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-size: 1rem; color: #4a5a44; }
 .tile-key { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; }
 .tile-key .stat { font-size: 0.85rem; }
+.tile-lines { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tile-lines .stat { font-size: 0.9rem; }
+.tile-lines .stat { font-size: 0.8rem; white-space: nowrap; gap: 4px; }

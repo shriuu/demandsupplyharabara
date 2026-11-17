@@ -447,8 +447,10 @@ describe("store manager: my numbers", () => {
     await user.click(await screen.findByRole("button", { name: /My numbers/ }));
     const tiles = await screen.findByTestId("product-tiles");
     expect(within(tiles).getAllByRole("button").length).toBe(3);
-    expect(within(tiles).getAllByTitle(/left each day/)).toHaveLength(2); // two count the shelf
-    expect(within(tiles).getByTitle("Shelf stock not counted")).toBeInTheDocument(); // one that does not: not zero
+    for (const tile of within(tiles).getAllByRole("button")) {
+      expect(within(tile).getByText(/\d+ thrown away/)).toBeInTheDocument(); // words beside every number, no key to decode
+      expect(within(tile).getByText(/Ran out \d+ days|Never ran out/)).toBeInTheDocument();
+    }
     await user.click(within(tiles).getAllByRole("button")[0]);
     const detail = await screen.findByTestId("product-detail");
     expect(within(detail).getByRole("img", { name: /Left on the shelf and thrown away by day/ })).toBeInTheDocument();
