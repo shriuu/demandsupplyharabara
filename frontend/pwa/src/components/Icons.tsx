@@ -4,10 +4,11 @@ import type { ReactNode } from "react";
 export type IconName =
   | "tick" | "cross" | "plus" | "minus" | "cloud-rain" | "sun" | "lamp" | "clock" | "calendar"
   | "alert" | "triangle" | "tag" | "van" | "bag" | "crate" | "chat" | "mic-off" | "stop"
-  | "home" | "moon" | "box" | "tractor" | "store" | "chart" | "coin" | "back" | "send" | "hourglass" | "rule" | "lock" | "logout" | "phone";
+  | "home" | "moon" | "box" | "tractor" | "store" | "chart" | "coin" | "back" | "send" | "hourglass" | "rule" | "lock" | "logout" | "phone" | "bin";
 
 const paths: Record<IconName, ReactNode> = {
   tick: <path d="M4 13l5 5L20 6" />,
+  bin: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5" />,
   cross: <path d="M5 5l14 14M19 5L5 19" />,
   plus: <path d="M12 4v16M4 12h16" />,
   minus: <path d="M4 12h16" />,

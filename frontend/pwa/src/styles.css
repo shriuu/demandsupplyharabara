@@ -370,3 +370,7 @@ main:has(> .login) { padding-bottom: 0; }
 .surplus-row { grid-template-columns: auto auto minmax(0, 1fr) auto; border-left-color: var(--green); }
 .surplus-row .buyer-logo { width: 48px; height: 48px; font-size: 1rem; }
 @media (max-width: 520px) { .surplus-row { grid-template-columns: auto minmax(0, 1fr) auto; } .surplus-row .buyer-logo { display: none; } }
+.tile-stats { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.stat { display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-size: 1rem; color: #4a5a44; }
+.tile-key { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; }
+.tile-key .stat { font-size: 0.85rem; }
