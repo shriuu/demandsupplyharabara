@@ -377,3 +377,8 @@ main:has(> .login) { padding-bottom: 0; }
 .tile-lines { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .tile-lines .stat { font-size: 0.9rem; }
 .tile-lines .stat { font-size: 0.8rem; white-space: nowrap; gap: 4px; }
+.product-row { width: 100%; grid-template-columns: auto minmax(0, 1fr) auto; text-align: left; cursor: pointer; font: inherit; border-left-color: var(--green); }
+.product-row .alert-chips { margin: 0; justify-content: flex-end; }
+.row-name { font-weight: 800; font-size: 1.1rem; }
+.chip-red { color: var(--red); border-color: var(--red); background: #ffebee; }
+@media (max-width: 520px) { .product-row { grid-template-columns: auto minmax(0, 1fr); } .product-row .alert-chips { grid-column: 1 / -1; justify-content: flex-start; } }

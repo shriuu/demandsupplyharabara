@@ -115,23 +115,25 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
     <section className="stack" aria-label={t("numbers.products")} data-testid="product-tiles">
       <h3>{t("numbers.products")}</h3>
       <p className="small">{t("numbers.productsHint")}</p>
-      <ul className="tiles">
+      <ul className="alert-rows">
         {products.map((p) => (
           <li key={p.sku_id}>
-            <button className="btn tile" style={{ width: "100%" }} onClick={() => setOpen(p.sku_id)}>
-              <ProductIcon skuId={p.sku_id} size={56} />
-              <span className="tile-name">{productName(p.sku_id)}</span>
-              <span className="tile-lines">
-                <span className="stat">
-                  <Icon name="bin" size={20} /> {t("numbers.tWaste", { n: Math.round(p.units_wasted) })}
+            <button className="alert-row product-row" onClick={() => setOpen(p.sku_id)}>
+              <ProductIcon skuId={p.sku_id} size={48} />
+              <span className="alert-main">
+                <span className="row-name">{productName(p.sku_id)}</span>
+              </span>
+              <span className="alert-chips">
+                <span className="chip">
+                  <Icon name="bin" size={18} /> {t("numbers.tWaste", { n: Math.round(p.units_wasted) })}
                 </span>
                 {p.days_ran_out > 0 ? (
-                  <span className="stat ran-out">
-                    <Icon name="stop" size={20} /> {t("numbers.tileRan", { n: p.days_ran_out })}
+                  <span className="chip chip-red">
+                    <Icon name="stop" size={18} /> {t("numbers.tileRan", { n: p.days_ran_out })}
                   </span>
                 ) : (
-                  <span className="stat">
-                    <Icon name="tick" size={20} /> {t("numbers.tNever")}
+                  <span className="chip">
+                    <Icon name="tick" size={18} /> {t("numbers.tNever")}
                   </span>
                 )}
               </span>
