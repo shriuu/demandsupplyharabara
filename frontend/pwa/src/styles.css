@@ -412,3 +412,11 @@ main:has(> .login) { padding-bottom: 0; }
 .farmer-row { grid-template-columns: auto minmax(0, 1fr); }
 .farmer-row .farmer-days { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 .farmer-row .alert-main { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* Language switch: script samples, not words. */
+.lang-switch { display: inline-flex; gap: 6px; margin-left: auto; margin-right: 8px; }
+.lang-btn { min-width: 40px; min-height: 40px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.6); background: transparent; color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+.lang-btn.lang-on { background: #fff; color: var(--green-dark); }
+.topbar-row { display: flex; align-items: center; }
+.lang-clear-ask { margin-right: 210px; }
+@media (max-width: 520px) { .lang-clear-ask { margin-right: 110px; } .lang-btn { min-width: 34px; min-height: 36px; } .lang-switch { gap: 4px; } }
