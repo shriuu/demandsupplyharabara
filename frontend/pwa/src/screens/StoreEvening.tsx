@@ -81,20 +81,24 @@ export function StoreEvening({ storeId }: { storeId: string }) {
       <p className="small">
         {t("order.tap")} · {t("order.left", { n: queue.length })}
       </p>
-      <ul className="tiles">
+      <ul className="alert-rows">
         {queue.map((s, i) => {
           const units = (s.payload as OrderPayload).recommended_units;
           return (
             <li key={s.id}>
               <button
-                className={`btn tile ${i < TOP_TILES ? "tile-top" : ""}`}
-                style={{ width: "100%" }}
+                className={`alert-row product-row order-row ${i < TOP_TILES ? "tile-top" : ""}`}
                 onClick={() => setOpenId(s.id)}
               >
                 <span className="tile-rank">{i + 1}</span>
-                <ProductIcon skuId={s.sku_id} size={72} />
-                <span className="tile-name">{productName(s.sku_id)}</span>
-                <span className="tile-amount">{t("order.units", { n: Math.round(units), unit: unitOf(s.sku_id) })}</span>
+                <ProductIcon skuId={s.sku_id} size={48} />
+                <span className="alert-main">
+                  <span className="row-name">{productName(s.sku_id)}</span>
+                </span>
+                <span className="chip">{t("order.units", { n: Math.round(units), unit: unitOf(s.sku_id) })}</span>
+                <span className="row-go">
+                  <Icon name="back" size={28} />
+                </span>
               </button>
             </li>
           );

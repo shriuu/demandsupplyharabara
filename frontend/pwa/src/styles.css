@@ -403,3 +403,12 @@ main:has(> .login) { padding-bottom: 0; }
 .alert-rows-2 .product-row .marks { grid-column: auto; justify-content: flex-end; }
 .row-go { display: inline-flex; transform: scaleX(-1); }
 .alert-row:not(.alert-row-red):not(.alert-row-amber):not(.product-row):not(.surplus-row) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.order-row { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+.order-row .tile-rank { position: static; }
+.farmer-row { grid-template-columns: auto minmax(120px, 1fr) minmax(0, 3fr); align-items: start; }
+.farmer-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.farmer-days .day-row { grid-template-columns: 1fr; gap: 2px; }
+@media (max-width: 520px) { .farmer-row { grid-template-columns: auto minmax(0, 1fr); } .farmer-days { grid-column: 1 / -1; } .order-row { grid-template-columns: auto auto minmax(0, 1fr) auto; } .order-row .row-go { display: none; } }
+.farmer-row { grid-template-columns: auto minmax(0, 1fr); }
+.farmer-row .farmer-days { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.farmer-row .alert-main { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
