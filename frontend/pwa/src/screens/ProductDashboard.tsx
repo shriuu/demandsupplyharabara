@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import type { ProductSeries } from "../api/types";
+import type { ProductSeries, Targets } from "../api/types";
 import { Icon } from "../components/Icons";
+import { useTargets } from "../components/Measure";
 import { ProductIcon } from "../components/ProductIcon";
 import { Loading, LoadError } from "../components/Status";
 import { productName, t, unitOf } from "../i18n/strings";
@@ -101,27 +102,28 @@ function Detail({ p, onBack }: { p: ProductSeries; onBack: () => void }) {
   );
 }
 
-/** Over the chosen period: did it run out, was any thrown away. Icons only; a green tick when neither happened. */
-function Happened({ p }: { p: ProductSeries }) {
-  const ran = p.days_ran_out > 0;
-  const wasted = p.units_wasted > 0;
+/**
+ * Over the last week, which problem is bigger for this product: running out or throwing away?
+ * Each is measured against its own target so they can be compared, and only the bigger one is shown.
+ * A tick when neither happened. Icons only.
+ */
+export function bigger(p: ProductSeries, tg: Targets | null): "ran" | "wasted" | "none" {
+  const ranRate = p.days_counted > 0 ? (p.days_ran_out / p.days_counted) * 100 : 0;
+  const waste = p.units_wasted > 0 ? (p.waste_pct ?? 0) : 0;
+  if (ranRate <= 0 && waste <= 0) return "none";
+  const ran = ranRate / (tg?.stockout_pct_ideal || 1);
+  const bin = waste / (tg?.waste_pct_max || 1);
+  return ran >= bin ? "ran" : "wasted";
+}
+
+function Happened({ p, targets }: { p: ProductSeries; targets: Targets | null }) {
+  const which = bigger(p, targets);
+  const label = which === "ran" ? t("numbers.d.keyRan") : which === "wasted" ? t("numbers.d.keyWasted") : t("numbers.keyFine");
   return (
     <span className="marks">
-      {wasted && (
-        <span className="mark mark-near mark-big" role="img" aria-label={t("numbers.d.keyWasted")} title={t("numbers.d.keyWasted")}>
-          <Icon name="bin" size={32} />
-        </span>
-      )}
-      {ran && (
-        <span className="mark mark-above mark-big" role="img" aria-label={t("numbers.d.keyRan")} title={t("numbers.d.keyRan")}>
-          <Icon name="crate" size={32} />
-        </span>
-      )}
-      {!wasted && !ran && (
-        <span className="mark mark-on mark-big" role="img" aria-label={t("numbers.keyFine")} title={t("numbers.keyFine")}>
-          <Icon name="tick" size={32} />
-        </span>
-      )}
+      <span className={`mark mark-big ${which === "ran" ? "mark-above" : which === "wasted" ? "mark-near" : "mark-on"}`} role="img" aria-label={label} title={label}>
+        <Icon name={which === "ran" ? "crate" : which === "wasted" ? "bin" : "tick"} size={32} />
+      </span>
     </span>
   );
 }
@@ -129,6 +131,7 @@ function Happened({ p }: { p: ProductSeries }) {
 /** A tile for every product, with its own numbers; tap one to see every day. Waste and leftover side by side. */
 export function ProductDashboard({ period }: { period: "week" | "month" }) {
   const { state, reload } = useLoad(() => api.productHistory(period), period);
+  const targets = useTargets();
   const [open, setOpen] = useState<string | null>(null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
@@ -148,7 +151,7 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
               <span className="alert-main">
                 <span className="row-name">{productName(p.sku_id)}</span>
               </span>
-              <Happened p={p} />
+              <Happened p={p} targets={targets} />
             </button>
           </li>
         ))}
