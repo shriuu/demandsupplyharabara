@@ -6,6 +6,7 @@ import type { MarkdownPayload, Suggestion, TransferPayload } from "../api/types"
 import { Confirm, TickCross } from "../components/Buttons";
 import { useChatFocus } from "../components/chatContext";
 import { Icon } from "../components/Icons";
+import { WhyLine } from "../components/WhyLine";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
@@ -71,11 +72,8 @@ function ApprovalCard({ group, showStore, onDone }: { group: Group; showStore: b
               </span>
             );
           })}
+          <WhyLine suggestion={first} />
         </div>
-        <details className="dc-why">
-          <summary>{t("dc.why")}</summary>
-          <p className="small">{first.reason}</p>
-        </details>
       </div>
       <div className="alert-actions">
         <TickCross onTick={() => void decide("approve")} onCross={() => void decide("reject")} disabled={busy} />

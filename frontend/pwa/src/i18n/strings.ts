@@ -236,6 +236,7 @@ export const en = {
   "alert.transfer": "Move to another store",
   "alert.transferDetail": "{units} to {store}, van leaves {time}",
   "alert.earlier": "Starts before the last day",
+  "alert.lastDay": "Last sellable day",
   "surplus.title": "Surplus buyers",
   "surplus.buyer": "Buyer {id}",
   "surplus.grade": "Grade {grade}",
