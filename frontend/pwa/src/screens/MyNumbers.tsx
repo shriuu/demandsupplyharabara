@@ -55,7 +55,7 @@ export function MyNumbers() {
               <DayDetail p={data.points[shown]} onPick={() => {}} />
             </section>
           )}
-          {data.days_with_closing > 0 && <ProductDashboard period={period} />}
+          {data.days_with_closing > 0 && <ProductDashboard period="week" />}
         </>
       )}
       <StoreHistory />
