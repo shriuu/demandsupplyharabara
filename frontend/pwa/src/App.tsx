@@ -14,7 +14,7 @@ import { StoreEvening } from "./screens/StoreEvening";
 import { MyNumbers } from "./screens/MyNumbers";
 import { StoreMorning } from "./screens/StoreMorning";
 import { StoreSurplus } from "./screens/StoreSurplus";
-import { t, type StringKey } from "./i18n/strings";
+import { storeLabel, t, type StringKey } from "./i18n/strings";
 
 const roleIcons: Record<Role, IconName> = {
   store_manager: "store",
@@ -64,8 +64,15 @@ export function App() {
         {role ? (
           <div className="topbar-row">
             <span className="brand">
-              <Icon name={roleIcons[role]} size={32} /> {t(`role.${role}`)}
-              {session?.area_name ? ` · ${session.area_name}` : ""}
+              <Icon name={roleIcons[role]} size={32} />
+              <span className="brand-text">
+                <span>{t(`role.${role}`)}</span>
+                {role === "store_manager" && storeId ? (
+                  <small data-testid="brand-place">{storeLabel(storeId)}</small>
+                ) : session?.area_name ? (
+                  <small data-testid="brand-place">{session.area_name}</small>
+                ) : null}
+              </span>
             </span>
             <button className="btn btn-plain" onClick={signOut} aria-label={t("app.logout")}>
               <Icon name="logout" size={32} />
