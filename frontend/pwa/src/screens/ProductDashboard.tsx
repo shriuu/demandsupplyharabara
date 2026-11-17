@@ -115,12 +115,12 @@ function standing(p: ProductSeries, tg: Targets | null): { waste: Standing; ran:
   };
 }
 
-function Mark({ what, icon, state }: { what: "bin" | "crate"; icon: string; state: Standing }) {
+/** One light per product: red if either measure is above target, amber if near, green if both are on target. */
+function Light({ state }: { state: Standing }) {
   const mark = state === "on" ? "tick" : state === "near" ? "alert" : state === "above" ? "cross" : "hourglass";
   return (
-    <span className={`mark mark-${state}`} role="img" aria-label={`${icon}: ${t(`measure.${state}` as StringKey)}`} title={t(`measure.${state}` as StringKey)}>
-      <Icon name={what} size={22} />
-      <Icon name={mark} size={22} />
+    <span className={`mark mark-${state} mark-big`} role="img" aria-label={t(`measure.${state}` as StringKey)} title={t(`measure.${state}` as StringKey)}>
+      <Icon name={mark} size={34} />
     </span>
   );
 }
@@ -151,10 +151,7 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
                 <span className="alert-main">
                   <span className="row-name">{productName(p.sku_id)}</span>
                 </span>
-                <span className="marks">
-                  <Mark what="bin" icon={t("numbers.keyWaste")} state={st.waste} />
-                  <Mark what="crate" icon={t("numbers.d.keyRan")} state={st.ran} />
-                </span>
+                <Light state={worst} />
               </button>
             </li>
           );

@@ -83,7 +83,6 @@ export const en = {
   "numbers.tileWaste": "{n} {unit} thrown away",
   "numbers.tileLeft": "About {n} {unit} left each day",
   "numbers.tileNoLeft": "Shelf stock not counted",
-  "numbers.keyWaste": "Thrown away",
   "numbers.tileRan": "Ran out {n} days",
   "numbers.back": "All products",
   "numbers.d.day": "Day",
