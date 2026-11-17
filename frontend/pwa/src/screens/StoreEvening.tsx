@@ -81,7 +81,7 @@ export function StoreEvening({ storeId }: { storeId: string }) {
       <p className="small">
         {t("order.tap")} · {t("order.left", { n: queue.length })}
       </p>
-      <ul className="alert-rows">
+      <ul className="alert-rows order-list">
         {queue.map((s, i) => {
           const units = (s.payload as OrderPayload).recommended_units;
           return (
