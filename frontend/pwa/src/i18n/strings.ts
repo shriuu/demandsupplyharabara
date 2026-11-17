@@ -160,6 +160,7 @@ export const en = {
   "closing.sold": "Sold",
   "closing.left": "Left on the shelf",
   "closing.wasted": "Thrown away",
+  "closing.wastedAsk": "Anything thrown away?",
   "closing.ranOut": "Ran out before closing?",
   "closing.yes": "Yes, it ran out",
   "closing.no": "No",

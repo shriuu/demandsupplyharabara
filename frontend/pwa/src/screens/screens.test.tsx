@@ -217,6 +217,20 @@ describe("store manager closing", () => {
     expect(mock.outcomes[0]).toMatchObject({ units_left: 4, sold_out: false });
   });
 
+  it("asks about running out only when nothing is left, and about waste only when tapped", async () => {
+    const user = await openRole("Store manager");
+    await openProduct(user, "Tomato");
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click(await screen.findByRole("button", { name: /Closing/ }));
+    await openProduct(user, "Tomato");
+    expect(screen.getByText("Ran out before closing?")).toBeInTheDocument(); // left is zero
+    expect(screen.queryByRole("textbox", { name: "Thrown away" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Left on the shelf: More" }));
+    expect(screen.queryByText("Ran out before closing?")).not.toBeInTheDocument(); // something is left
+    await user.click(screen.getByRole("button", { name: /Anything thrown away/ }));
+    expect(screen.getByRole("textbox", { name: "Thrown away" })).toBeInTheDocument();
+  });
+
   it("big counts are typed in whole numbers, not tapped one at a time", async () => {
     const user = await openRole("Store manager");
     await openProduct(user, "Tomato");
