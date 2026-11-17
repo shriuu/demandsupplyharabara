@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import type { ProductSeries } from "../api/types";
+import type { ProductSeries, Targets } from "../api/types";
 import { Icon } from "../components/Icons";
+import { useTargets } from "../components/Measure";
 import { ProductIcon } from "../components/ProductIcon";
 import { Loading, LoadError } from "../components/Status";
-import { productName, t, unitOf } from "../i18n/strings";
+import { productName, t, unitOf, type StringKey } from "../i18n/strings";
 import { pct } from "./StoreHistory";
 
 const W = 320;
@@ -101,9 +102,33 @@ function Detail({ p, onBack }: { p: ProductSeries; onBack: () => void }) {
   );
 }
 
+type Standing = "on" | "near" | "above" | "unknown";
+const WORST: Standing[] = ["above", "near", "on", "unknown"];
+
+/** Against the brief's targets: thrown away and days-ran-out, the same two measures as everywhere else. */
+function standing(p: ProductSeries, tg: Targets | null): { waste: Standing; ran: Standing } {
+  if (!tg) return { waste: "unknown", ran: "unknown" };
+  const rate = p.days_counted > 0 ? (p.days_ran_out / p.days_counted) * 100 : null;
+  return {
+    waste: p.waste_pct === null ? "unknown" : p.waste_pct <= tg.waste_pct_max ? "on" : "above",
+    ran: rate === null ? "unknown" : rate <= tg.stockout_pct_ideal ? "on" : rate <= tg.stockout_pct_hard_max ? "near" : "above",
+  };
+}
+
+function Mark({ what, icon, state }: { what: "bin" | "crate"; icon: string; state: Standing }) {
+  const mark = state === "on" ? "tick" : state === "near" ? "alert" : state === "above" ? "cross" : "hourglass";
+  return (
+    <span className={`mark mark-${state}`} role="img" aria-label={`${icon}: ${t(`measure.${state}` as StringKey)}`} title={t(`measure.${state}` as StringKey)}>
+      <Icon name={what} size={22} />
+      <Icon name={mark} size={22} />
+    </span>
+  );
+}
+
 /** A tile for every product, with its own numbers; tap one to see every day. Waste and leftover side by side. */
 export function ProductDashboard({ period }: { period: "week" | "month" }) {
   const { state, reload } = useLoad(() => api.productHistory(period), period);
+  const targets = useTargets();
   const [open, setOpen] = useState<string | null>(null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
@@ -116,30 +141,24 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
       <h3>{t("numbers.products")}</h3>
       <p className="small">{t("numbers.productsHint")}</p>
       <ul className="alert-rows alert-rows-2">
-        {products.map((p) => (
-          <li key={p.sku_id}>
-            <button className="alert-row product-row" onClick={() => setOpen(p.sku_id)}>
-              <ProductIcon skuId={p.sku_id} size={48} />
-              <span className="alert-main">
-                <span className="row-name">{productName(p.sku_id)}</span>
-              </span>
-              <span className="alert-chips">
-                <span className="chip">
-                  <Icon name="bin" size={18} /> {t("numbers.tWaste", { n: Math.round(p.units_wasted) })}
+        {products.map((p) => {
+          const st = standing(p, targets);
+          const worst = WORST.find((k) => k === st.waste || k === st.ran) ?? "unknown";
+          return (
+            <li key={p.sku_id}>
+              <button className={`alert-row product-row row-${worst}`} onClick={() => setOpen(p.sku_id)}>
+                <ProductIcon skuId={p.sku_id} size={48} />
+                <span className="alert-main">
+                  <span className="row-name">{productName(p.sku_id)}</span>
                 </span>
-                {p.days_ran_out > 0 ? (
-                  <span className="chip chip-red">
-                    <Icon name="stop" size={18} /> {t("numbers.tileRan", { n: p.days_ran_out })}
-                  </span>
-                ) : (
-                  <span className="chip">
-                    <Icon name="tick" size={18} /> {t("numbers.tNever")}
-                  </span>
-                )}
-              </span>
-            </button>
-          </li>
-        ))}
+                <span className="marks">
+                  <Mark what="bin" icon={t("numbers.keyWaste")} state={st.waste} />
+                  <Mark what="crate" icon={t("numbers.d.keyRan")} state={st.ran} />
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

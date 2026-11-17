@@ -448,8 +448,8 @@ describe("store manager: my numbers", () => {
     const tiles = await screen.findByTestId("product-tiles");
     expect(within(tiles).getAllByRole("button").length).toBe(3);
     for (const tile of within(tiles).getAllByRole("button")) {
-      expect(within(tile).getByText(/\d+ thrown away/)).toBeInTheDocument(); // words beside every number, no key to decode
-      expect(within(tile).getByText(/Ran out \d+ days|Never ran out/)).toBeInTheDocument();
+      // no sentences: two status icons, each with a spoken label against the target
+      expect(within(tile).getAllByRole("img", { name: /target|No counts yet/ })).toHaveLength(2);
     }
     await user.click(within(tiles).getAllByRole("button")[0]);
     const detail = await screen.findByTestId("product-detail");

@@ -386,3 +386,13 @@ main:has(> .login) { padding-bottom: 0; }
 .alert-rows-2 .product-row { grid-template-columns: auto minmax(0, 1fr); }
 .alert-rows-2 .product-row .alert-chips { grid-column: 1 / -1; justify-content: flex-start; }
 @media (max-width: 340px) { .alert-rows-2 { grid-template-columns: 1fr; } }
+.marks { display: inline-flex; gap: 10px; }
+.mark { display: inline-flex; align-items: center; gap: 2px; padding: 4px 8px; border-radius: 999px; border: 2px solid var(--line); background: #f3f7ee; }
+.mark-on { color: var(--green-dark); border-color: var(--green); background: #e8f5e9; }
+.mark-near { color: var(--amber); border-color: var(--amber); background: #fff3e0; }
+.mark-above { color: var(--red); border-color: var(--red); background: #ffebee; }
+.mark-unknown { color: #6b7a66; }
+.product-row.row-on { border-left-color: var(--green); }
+.product-row.row-near { border-left-color: var(--amber); }
+.product-row.row-above { border-left-color: var(--red); }
+.alert-rows-2 .product-row .marks { grid-column: 1 / -1; }
