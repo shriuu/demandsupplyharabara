@@ -382,3 +382,7 @@ main:has(> .login) { padding-bottom: 0; }
 .row-name { font-weight: 800; font-size: 1.1rem; }
 .chip-red { color: var(--red); border-color: var(--red); background: #ffebee; }
 @media (max-width: 520px) { .product-row { grid-template-columns: auto minmax(0, 1fr); } .product-row .alert-chips { grid-column: 1 / -1; justify-content: flex-start; } }
+.alert-rows-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.alert-rows-2 .product-row { grid-template-columns: auto minmax(0, 1fr); }
+.alert-rows-2 .product-row .alert-chips { grid-column: 1 / -1; justify-content: flex-start; }
+@media (max-width: 340px) { .alert-rows-2 { grid-template-columns: 1fr; } }

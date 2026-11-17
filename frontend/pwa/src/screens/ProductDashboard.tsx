@@ -115,7 +115,7 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
     <section className="stack" aria-label={t("numbers.products")} data-testid="product-tiles">
       <h3>{t("numbers.products")}</h3>
       <p className="small">{t("numbers.productsHint")}</p>
-      <ul className="alert-rows">
+      <ul className="alert-rows alert-rows-2">
         {products.map((p) => (
           <li key={p.sku_id}>
             <button className="alert-row product-row" onClick={() => setOpen(p.sku_id)}>
