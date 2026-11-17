@@ -256,6 +256,15 @@ async function openStorePerformance(): Promise<ReturnType<typeof userEvent.setup
 }
 
 describe("area manager", () => {
+  it("each store card says how many approvals are waiting for you today, and puts those stores first", async () => {
+    await openRole("Area manager");
+    const cards = within(await screen.findByTestId("store-cards"));
+    const lines = await cards.findAllByTestId("store-waiting");
+    expect(lines[0]).toHaveTextContent("1 waiting for you"); // the store with an approval waiting comes first
+    expect(lines[1]).toHaveTextContent("Nothing waiting for you");
+    expect(cards.queryByText(/ran out of time/)).not.toBeInTheDocument(); // the store manager's record, not theirs
+  });
+
   it("starts with the stores; a store opens to its decisions, then its performance", async () => {
     const user = await openRole("Area manager");
     const stores = await screen.findByText("My stores");

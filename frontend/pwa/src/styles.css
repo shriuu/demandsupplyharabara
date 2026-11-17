@@ -434,3 +434,5 @@ main:has(> .login) { padding-bottom: 0; }
   .lang-switch:has(.lang-named) { width: 100%; margin: 0; justify-content: space-between; }
   .lang-named { flex: 1 1 auto; }
 }
+.store-wait { display: flex; align-items: center; gap: 6px; margin: 4px 0; font-weight: 800; color: var(--green-dark); }
+.store-wait-on { color: #fff; background: var(--amber); border-radius: 999px; padding: 4px 12px; width: fit-content; }

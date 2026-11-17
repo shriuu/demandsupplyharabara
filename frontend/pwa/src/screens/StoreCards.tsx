@@ -1,8 +1,10 @@
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
 import type { StoreWeek } from "../api/types";
+import { Icon } from "../components/Icons";
 import { Loading, LoadError, TrafficLight } from "../components/Status";
 import { storeLabel, t } from "../i18n/strings";
+import { groupSteps } from "./priority";
 import { pct } from "./StoreHistory";
 
 type Light = "red" | "amber" | "green";
@@ -31,11 +33,20 @@ const rank: Record<Light, number> = { red: 0, amber: 1, green: 2 };
  */
 export function StoreCards({ scope, onPick, allLabel }: { scope: string; onPick: (scope: string) => void; allLabel: string }) {
   const { state, reload } = useLoad(() => api.weekHistory(), []);
+  // what is waiting for this person today: one card per product and store, as in the Decisions tab
+  const queue = useLoad(() => api.suggestions({ role: "area_manager", state: "proposed" }), []);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
+  const waitingBy = new Map<string, number>();
+  if (queue.state.status === "ready") {
+    const byStore = new Map<string, typeof queue.state.data>();
+    for (const x of queue.state.data) byStore.set(x.store_id, [...(byStore.get(x.store_id) ?? []), x]);
+    for (const [id, list] of byStore) waitingBy.set(id, groupSteps(list).length);
+  }
   const { stores, chain_waste_pct, chain_stockout_pct } = state.data;
-  const lit = stores.map((s) => ({ s, light: storeLight(s, chain_waste_pct, chain_stockout_pct) }));
-  lit.sort((a, b) => (a.light ? rank[a.light] : 3) - (b.light ? rank[b.light] : 3));
+  const lit = stores.map((s) => ({ s, light: storeLight(s, chain_waste_pct, chain_stockout_pct), waiting: waitingBy.get(s.store_id) ?? 0 }));
+  // today first: stores with something waiting for you, then the ones doing worse
+  lit.sort((a, b) => b.waiting - a.waiting || (a.light ? rank[a.light] : 3) - (b.light ? rank[b.light] : 3));
   return (
     <section className="stack" aria-label={t("area.stores")} data-testid="store-cards">
       <p className="small">{t("area.storesNote")}</p>
@@ -48,10 +59,14 @@ export function StoreCards({ scope, onPick, allLabel }: { scope: string; onPick:
             </p>
           </button>
         </li>
-        {lit.map(({ s, light }) => (
+        {lit.map(({ s, light, waiting }) => (
           <li key={s.store_id}>
             <button className="card store-card" aria-pressed={scope === s.store_id} onClick={() => onPick(s.store_id)}>
               <h3>{storeLabel(s.store_id)}</h3>
+              <p className={`store-wait ${waiting > 0 ? "store-wait-on" : ""}`} data-testid="store-waiting">
+                <Icon name={waiting > 0 ? "clock" : "tick"} size={22} />{" "}
+                {waiting > 0 ? t("area.cardWaiting", { n: waiting }) : t("area.cardNone")}
+              </p>
               {s.days_with_closing === 0 ? (
                 <p className="small">{t("week.noData")}</p>
               ) : (
@@ -62,7 +77,6 @@ export function StoreCards({ scope, onPick, allLabel }: { scope: string; onPick:
                   </p>
                 </>
               )}
-              <p className="small">{t("week.decided", { ok: s.orders_decided, late: s.orders_expired })}</p>
               <div className="week-strip" role="img" aria-label={t("week.title")}>
                 {s.days.map((d) => (
                   <span
