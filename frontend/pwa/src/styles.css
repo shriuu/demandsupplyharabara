@@ -425,3 +425,5 @@ main:has(> .login) { padding-bottom: 0; }
 @media (min-width: 700px) {
   .order-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px; }
 }
+.lang-named { min-width: 0; padding: 0 12px; font-size: 1rem; }
+@media (max-width: 520px) { .lang-named { padding: 0 7px; font-size: 0.85rem; } }

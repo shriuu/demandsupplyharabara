@@ -87,7 +87,7 @@ export function App() {
             <span className="brand">
               <Icon name="home" /> {t("app.name")}
             </span>
-            <LanguageSwitch />
+            <LanguageSwitch named />
           </div>
         )}
       </header>
