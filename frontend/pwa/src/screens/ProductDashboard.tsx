@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
-import type { ProductSeries, Targets } from "../api/types";
+import type { ProductSeries } from "../api/types";
 import { Icon } from "../components/Icons";
-import { useTargets } from "../components/Measure";
 import { ProductIcon } from "../components/ProductIcon";
 import { Loading, LoadError } from "../components/Status";
-import { productName, t, unitOf, type StringKey } from "../i18n/strings";
+import { productName, t, unitOf } from "../i18n/strings";
 import { pct } from "./StoreHistory";
 
 const W = 320;
@@ -102,25 +101,27 @@ function Detail({ p, onBack }: { p: ProductSeries; onBack: () => void }) {
   );
 }
 
-type Standing = "on" | "near" | "above" | "unknown";
-const WORST: Standing[] = ["above", "near", "on", "unknown"];
-
-/** Against the brief's targets: thrown away and days-ran-out, the same two measures as everywhere else. */
-function standing(p: ProductSeries, tg: Targets | null): { waste: Standing; ran: Standing } {
-  if (!tg) return { waste: "unknown", ran: "unknown" };
-  const rate = p.days_counted > 0 ? (p.days_ran_out / p.days_counted) * 100 : null;
-  return {
-    waste: p.waste_pct === null ? "unknown" : p.waste_pct <= tg.waste_pct_max ? "on" : "above",
-    ran: rate === null ? "unknown" : rate <= tg.stockout_pct_ideal ? "on" : rate <= tg.stockout_pct_hard_max ? "near" : "above",
-  };
-}
-
-/** One light per product: red if either measure is above target, amber if near, green if both are on target. */
-function Light({ state }: { state: Standing }) {
-  const mark = state === "on" ? "tick" : state === "near" ? "alert" : state === "above" ? "stop" : "hourglass";
+/** Over the chosen period: did it run out, was any thrown away. Icons only; a green tick when neither happened. */
+function Happened({ p }: { p: ProductSeries }) {
+  const ran = p.days_ran_out > 0;
+  const wasted = p.units_wasted > 0;
   return (
-    <span className={`mark mark-${state} mark-big`} role="img" aria-label={t(`measure.${state}` as StringKey)} title={t(`measure.${state}` as StringKey)}>
-      <Icon name={mark} size={34} />
+    <span className="marks">
+      {wasted && (
+        <span className="mark mark-near mark-big" role="img" aria-label={t("numbers.d.keyWasted")} title={t("numbers.d.keyWasted")}>
+          <Icon name="bin" size={32} />
+        </span>
+      )}
+      {ran && (
+        <span className="mark mark-above mark-big" role="img" aria-label={t("numbers.d.keyRan")} title={t("numbers.d.keyRan")}>
+          <Icon name="crate" size={32} />
+        </span>
+      )}
+      {!wasted && !ran && (
+        <span className="mark mark-on mark-big" role="img" aria-label={t("numbers.keyFine")} title={t("numbers.keyFine")}>
+          <Icon name="tick" size={32} />
+        </span>
+      )}
     </span>
   );
 }
@@ -128,7 +129,6 @@ function Light({ state }: { state: Standing }) {
 /** A tile for every product, with its own numbers; tap one to see every day. Waste and leftover side by side. */
 export function ProductDashboard({ period }: { period: "week" | "month" }) {
   const { state, reload } = useLoad(() => api.productHistory(period), period);
-  const targets = useTargets();
   const [open, setOpen] = useState<string | null>(null);
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
@@ -141,21 +141,17 @@ export function ProductDashboard({ period }: { period: "week" | "month" }) {
       <h3>{t("numbers.products")}</h3>
       <p className="small">{t("numbers.productsHint")}</p>
       <ul className="alert-rows alert-rows-2">
-        {products.map((p) => {
-          const st = standing(p, targets);
-          const worst = WORST.find((k) => k === st.waste || k === st.ran) ?? "unknown";
-          return (
-            <li key={p.sku_id}>
-              <button className={`alert-row product-row row-${worst}`} onClick={() => setOpen(p.sku_id)}>
-                <ProductIcon skuId={p.sku_id} size={48} />
-                <span className="alert-main">
-                  <span className="row-name">{productName(p.sku_id)}</span>
-                </span>
-                <Light state={worst} />
-              </button>
-            </li>
-          );
-        })}
+        {products.map((p) => (
+          <li key={p.sku_id}>
+            <button className="alert-row product-row" onClick={() => setOpen(p.sku_id)}>
+              <ProductIcon skuId={p.sku_id} size={48} />
+              <span className="alert-main">
+                <span className="row-name">{productName(p.sku_id)}</span>
+              </span>
+              <Happened p={p} />
+            </button>
+          </li>
+        ))}
       </ul>
     </section>
   );

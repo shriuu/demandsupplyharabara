@@ -399,3 +399,5 @@ main:has(> .login) { padding-bottom: 0; }
 .mark-big { padding: 6px 14px; }
 .alert-rows-2 .product-row { grid-template-columns: auto minmax(0, 1fr) auto; }
 .alert-rows-2 .product-row .mark { grid-column: auto; }
+.marks { display: inline-flex; gap: 8px; }
+.alert-rows-2 .product-row .marks { grid-column: auto; justify-content: flex-end; }
