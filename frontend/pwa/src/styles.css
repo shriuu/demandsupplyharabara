@@ -551,3 +551,7 @@ main:has(> .login) { padding-bottom: 0; }
 .store-card[aria-pressed="true"] { border-color: var(--brand); background: var(--warm-soft); }
 .login-pin, .org-img { box-shadow: 0 4px 14px rgba(120, 90, 10, 0.18); }
 .mark { background: var(--warm-soft); }
+
+/* Ask and sign out share one look: white outline on the green header. */
+.chat-fab { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.75); box-shadow: none; }
+.chat-fab:active:not(:disabled) { transform: translateY(2px); }

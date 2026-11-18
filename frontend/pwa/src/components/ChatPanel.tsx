@@ -60,7 +60,7 @@ export function ChatPanel({ role, focusId }: { role: Role; focusId: string | nul
 
   if (!open) {
     return (
-      <button className="chat-fab btn" onClick={() => setOpen(true)} aria-label={t("chat.open")}>
+      <button className="chat-fab btn btn-plain" onClick={() => setOpen(true)} aria-label={t("chat.open")}>
         <Icon name="chat" size={34} />
         <span>{t("chat.open")}</span>
       </button>
