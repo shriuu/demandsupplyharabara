@@ -61,7 +61,7 @@ export function StoreClosing({ storeId }: { storeId: string }) {
   return (
     <>
       <p className="small">{t("closing.tap")}</p>
-      <ul className="alert-rows">
+      <ul className="alert-rows order-list">
         {queue.map((s) => (
           <li key={s.id}>
             <button className="alert-row product-row" onClick={() => setOpenId(s.id)}>
