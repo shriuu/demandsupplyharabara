@@ -543,3 +543,11 @@ main:has(> .login) { padding-bottom: 0; }
 .alert-row.product-row { border-color: var(--line); border-left-color: var(--turmeric); }
 .btn.tab-on, .btn.nav-on, .nav-tile.tab-on, .nav-tile.nav-on { background: var(--brand); color: #fff; border-color: var(--brand-dark); box-shadow: 0 3px 0 var(--brand-dark); }
 .btn.tab:not(.tab-on) { background: #fff; border-color: var(--warm-edge); }
+
+/* Warm up the last pale-green fills that are not status colours. */
+.notice, .reason, .chat-a { background: var(--warm-soft); }
+.rangebar-track, .measure-track { background: #f3e7bf; }
+.rangebar-band { background: #f1cf7a; }
+.store-card[aria-pressed="true"] { border-color: var(--brand); background: var(--warm-soft); }
+.login-pin, .org-img { box-shadow: 0 4px 14px rgba(120, 90, 10, 0.18); }
+.mark { background: var(--warm-soft); }

@@ -58,12 +58,6 @@ export function StoreEvening({ storeId }: { storeId: string }) {
       <p className="small">
         {t("order.tap")} · {t("order.left", { n: queue.length })}
       </p>
-      <p className="small order-legend">
-        <span className="chip">
-          <Icon name="calendar" size={18} /> 123
-        </span>{" "}
-        {t("order.legend")}
-      </p>
       <ul className="alert-rows order-list">
         {queue.map((s, i) => (
           <OrderRow key={s.id} suggestion={s} rank={i + 1} top={i < TOP_TILES} onDone={reload} />
@@ -90,8 +84,6 @@ function OrderRow({ suggestion, rank, top, onDone }: { suggestion: Suggestion; r
   const edited = units !== suggested;
   const big = Math.abs(units - suggested) > suggested * LARGE_EDIT_FRACTION;
   const needsReason = edited && reason.trim() === "";
-  // the low end of the band is an ordinary day's order; the suggestion also covers a busy day
-  const normal = Math.round(payload.range.low);
 
   async function send(body: Parameters<typeof decideAll>[2]) {
     if (busy) return;
@@ -122,11 +114,6 @@ function OrderRow({ suggestion, rank, top, onDone }: { suggestion: Suggestion; r
           <span className="row-name">{productName(suggestion.sku_id)}</span>
           <DriverTag driver={suggestion.drivers[0]} reason={suggestion.reason} />
         </div>
-        {normal < suggested && (
-          <span className="order-band chip" role="img" aria-label={t("order.band", { n: normal })} title={t("order.band", { n: normal })}>
-            <Icon name="calendar" size={18} /> {normal}
-          </span>
-        )}
       </div>
       <div className="order-controls">
         <button className="btn btn-step" aria-label={t("action.minus")} disabled={units <= 0 || busy} onClick={() => setUnits((n) => Math.max(0, n - EDIT_STEP_UNITS))}>
