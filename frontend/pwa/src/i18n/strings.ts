@@ -47,6 +47,7 @@ export const en = {
   "tab.numbers": "My numbers",
   "hist.title": "Any past day",
   "hist.note": "Pick a day to see what you ordered and how it closed. A day with no closing count shows a dash, not zero.",
+  "hist.noteStore": "Pick a day to see what this store ordered and how it closed. A day with no closing count shows a dash, not zero.",
   "hist.orders": "{ok} ordered · {edit} changed · {no} refused · {late} ran out of time",
   "hist.noOrders": "No orders that day",
   "hist.closed": "Thrown away {waste} · ran out {out}",

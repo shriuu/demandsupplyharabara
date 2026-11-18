@@ -148,8 +148,10 @@ export function createMockApi() {
       return json(weekHistory(user.role === "store_manager" ? ["S01"] : ["S01", "S02"], user.role === "store_manager"));
     }
     if (method === "GET" && path === "/history/day") {
-      const denied = need("store_manager");
-      return denied ?? json(dayView(q.get("date") ?? todayIso(), todayIso(), true));
+      const denied = need("store_manager", "area_manager");
+      if (denied) return denied;
+      if (user.role === "area_manager" && !q.get("store_id")) return json({ detail: "say which store" }, 422);
+      return json(dayView(q.get("date") ?? todayIso(), todayIso(), true));
     }
     if (method === "GET" && path === "/history/series") {
       const denied = need("area_manager", "store_manager");

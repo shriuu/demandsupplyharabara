@@ -3657,6 +3657,22 @@
             }
           },
           {
+            "in": "query",
+            "name": "store_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Store Id"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

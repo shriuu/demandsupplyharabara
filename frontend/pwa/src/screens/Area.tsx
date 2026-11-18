@@ -10,7 +10,9 @@ import { WhyLine } from "../components/WhyLine";
 import { ProductIcon } from "../components/ProductIcon";
 import { Empty, Loading, LoadError } from "../components/Status";
 import { productName, storeLabel, t, unitOf } from "../i18n/strings";
+import { ProductDashboard } from "./ProductDashboard";
 import { StoreCards } from "./StoreCards";
+import { StoreHistory } from "./StoreHistory";
 import { Trend } from "./Trend";
 import { decideAll } from "./decide";
 import { biggestGroupFirst, groupSteps, type Group } from "./priority";
@@ -169,7 +171,15 @@ function StoreView({ store, killed, onBack }: { store: string; killed: boolean; 
           </button>
         ))}
       </div>
-      {tab === "decisions" ? <Queue killed={killed} store={store} /> : <Trend scope={store} onPick={() => undefined} />}
+      {tab === "decisions" ? (
+        <Queue killed={killed} store={store} />
+      ) : (
+        <>
+          <Trend scope={store} onPick={() => undefined} />
+          <ProductDashboard key={`p-${store}`} period="week" storeId={store} />
+          <StoreHistory key={`h-${store}`} storeId={store} />
+        </>
+      )}
     </div>
   );
 }

@@ -269,8 +269,12 @@ def create_app(
         return service.farmer_share(user)
 
     @router.get("/history/day")
-    def history_day(user: CurrentUser, on: Annotated[date, Query(alias="date")]) -> DayView:
-        return service.day_view(user, on)
+    def history_day(
+        user: CurrentUser,
+        on: Annotated[date, Query(alias="date")],
+        store_id: Annotated[str | None, Query()] = None,
+    ) -> DayView:
+        return service.day_view(user, on, store_id)
 
     @router.get("/history/series")
     def history_series(

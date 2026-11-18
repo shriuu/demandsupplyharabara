@@ -734,14 +734,27 @@ class Service:
         everyone |= {r.store_id for r in self.storage.list_outcomes() if r.store_id}
         return everyone
 
-    def day_view(self, user: User, on: date) -> DayView:
-        """One day picked on the calendar, for a store manager's own store."""
-        self.require_role(user, "store_manager")
+    def day_view(self, user: User, on: date, store_id: str | None = None) -> DayView:
+        """One day picked on the calendar for one store: a store manager's own store, or a store in
+        an area manager's area (they must say which)."""
+        self.require_role(user, "store_manager", "area_manager")
         today = self.now().date()
         self._check_calendar_day(on, today)
-        store = user.store_id
-        if not store:
-            raise ApiError(403, "this sign-in has no store")
+        if user.role == "store_manager":
+            if store_id not in (None, user.store_id):
+                raise ApiError(403, "a store manager sees only their own store")
+            store = user.store_id
+            if not store:
+                raise ApiError(403, "this sign-in has no store")
+        else:
+            if store_id is None:
+                raise ApiError(422, "say which store")
+            known = fallback.attempt(lambda: [self._history_stores(user)])
+            if not known.items:
+                raise ApiError(503, "history is not available right now")
+            if store_id not in known.items[0]:
+                raise ApiError(403, "that store is not in your area")
+            store = store_id
 
         def build() -> DayView:
             suggestions = [

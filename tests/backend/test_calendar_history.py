@@ -122,9 +122,39 @@ def test_a_day_with_nothing_on_record_says_so_and_the_calendar_has_limits(env: E
         ).status_code
         == 422
     )
+    # the DC lead and the farmer coordinator have no store, so no day to pick
+    for pin in ("4444", "5555"):
+        assert (
+            env.client.get(f"{V1}/history/day?date={TODAY}", headers=env.login(pin)).status_code
+            == 403
+        )
+
+
+def test_an_area_manager_picks_a_day_for_a_store_in_their_area(env: Env) -> None:
+    day = TODAY - timedelta(days=4)
+    for sid, store in (("o1", "S1"), ("o2", "S2")):
+        env.storage.create_suggestion(
+            make_suggestion(sid, store).model_copy(update={"created_at": NOW - timedelta(days=4)})
+        )
+    env.storage.put_outcome(closing(day, "S1", "tomato", 80, 20, True))
+    env.storage.put_outcome(closing(day, "S2", "tomato", 5, 5, False))
+    h = env.login("3333")
+    # which store? is a question the area manager must answer, never a guess
+    assert env.client.get(f"{V1}/history/day?date={day}", headers=h).status_code == 422
+    r = env.client.get(f"{V1}/history/day?date={day}&store_id=S1", headers=h)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["day"]["orders_made"] == 1  # S1's order only, not S2's
+    assert (body["day"]["waste_pct"], body["day"]["stockout_pct"]) == (20.0, 100.0)
+
+
+def test_a_store_manager_cannot_ask_for_another_stores_day(env: Env) -> None:
+    h = env.login("1111")
     assert (
-        env.client.get(f"{V1}/history/day?date={TODAY}", headers=env.login("3333")).status_code
-        == 403
+        env.client.get(f"{V1}/history/day?date={TODAY}&store_id=S2", headers=h).status_code == 403
+    )
+    assert (
+        env.client.get(f"{V1}/history/day?date={TODAY}&store_id=S1", headers=h).status_code == 200
     )
 
 

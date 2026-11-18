@@ -125,23 +125,26 @@ export function DayCard({
   );
 }
 
-/** The store manager's history: pick any past day on the calendar. Starts on yesterday. */
-export function StoreHistory() {
+/**
+ * Pick any past day on the calendar. Starts on yesterday. A store manager sees their own store; an area
+ * manager names a store in their area (`storeId`).
+ */
+export function StoreHistory({ storeId }: { storeId?: string }) {
   const [day, setDay] = useState(() => addDays(todayIso(), -1));
   const [bounds, setBounds] = useState<{ first: string; last: string } | null>(
     null,
   );
   const { state, reload } = useLoad(async () => {
-    const view = await api.dayHistory(day);
+    const view = await api.dayHistory(day, storeId);
     setBounds({ first: view.first_day, last: view.last_day });
     return view;
-  }, day);
+  }, `${storeId ?? ""}:${day}`);
   return (
     <div className="stack">
       <h2>
         <Icon name="calendar" /> {t("hist.title")}
       </h2>
-      <p className="small">{t("hist.note")}</p>
+      <p className="small">{t(storeId ? "hist.noteStore" : "hist.note")}</p>
       <CalendarPick
         value={day}
         min={bounds?.first ?? day}

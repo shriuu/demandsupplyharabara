@@ -291,6 +291,15 @@ describe("area manager", () => {
     expect(await screen.findByTestId("store-cards")).toBeInTheDocument();
   });
 
+  it("a store's performance has what its manager sees: a light per product and any past day as a table", async () => {
+    await openStorePerformance();
+    const tiles = await screen.findByTestId("product-tiles");
+    expect(within(tiles).getAllByRole("button").length).toBeGreaterThan(0);
+    expect(await screen.findByText("Any past day")).toBeInTheDocument();
+    expect(await screen.findByText(/what this store ordered/)).toBeInTheDocument(); // worded for the area manager
+    expect((await screen.findAllByRole("row")).length).toBeGreaterThan(1); // the day's table: ordered, sold, thrown away, left
+  });
+
   it("shows thrown away and ran out as bars against their targets, and no farmer share", async () => {
     await openStorePerformance();
     const trend = await screen.findByTestId("trend");

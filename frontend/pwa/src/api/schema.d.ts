@@ -1940,6 +1940,7 @@ export interface operations {
         parameters: {
             query: {
                 date: string;
+                store_id?: string | null;
             };
             header?: {
                 authorization?: string | null;

@@ -100,7 +100,7 @@ export const api = {
   farmers: () => request<FarmerVolumeForecast[]>("/farmers/forecast"),
   scorecard: () => request<Scorecard[]>("/scorecard"),
   weekHistory: () => request<WeekHistory>("/history/week"),
-  dayHistory: (date: string) => request<DayView>(`/history/day${query({ date })}`),
+  dayHistory: (date: string, storeId?: string) => request<DayView>(`/history/day${query({ date, store_id: storeId })}`),
   historySeries: (period: "week" | "month", storeId?: string) =>
     request<HistorySeries>(`/history/series${query({ period, store_id: storeId })}`),
   productHistory: (period: "week" | "month", storeId?: string) =>

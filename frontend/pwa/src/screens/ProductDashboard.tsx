@@ -129,8 +129,8 @@ function Happened({ p, targets }: { p: ProductSeries; targets: Targets | null })
 }
 
 /** A tile for every product, with its own numbers; tap one to see every day. Waste and leftover side by side. */
-export function ProductDashboard({ period }: { period: "week" | "month" }) {
-  const { state, reload } = useLoad(() => api.productHistory(period), period);
+export function ProductDashboard({ period, storeId }: { period: "week" | "month"; storeId?: string }) {
+  const { state, reload } = useLoad(() => api.productHistory(period, storeId), `${storeId ?? ""}:${period}`);
   const targets = useTargets();
   const [open, setOpen] = useState<string | null>(null);
   if (state.status === "loading") return <Loading />;
