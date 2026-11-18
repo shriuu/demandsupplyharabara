@@ -63,23 +63,27 @@ function PurchaseCard({ sku, markets, onBack, onSaved }: { sku: string; markets:
     }
   }
   return (
-    <article className="card order-card">
-      <button className="btn btn-plain" onClick={onBack}>
-        <Icon name="back" size={28} /> {t("order.back")}
-      </button>
-      <ProductIcon skuId={sku} size={96} />
-      <h2>{productName(sku)}</h2>
-      <Counter label={t("dc.fpo")} value={fpo} step={ENTRY_STEP_UNITS} unit={unit} onChange={setFpo} />
-      {markets.map((market) => (
-        <Counter
-          key={market}
-          label={t("dc.spotAt", { market })}
-          value={spot[market] ?? 0}
-          step={ENTRY_STEP_UNITS}
-          unit={unit}
-          onChange={(n) => setSpot((s) => ({ ...s, [market]: n }))}
-        />
-      ))}
+    <article className="card order-card closing-card">
+      <div className="closing-head">
+        <button className="btn btn-plain" onClick={onBack} aria-label={t("order.back")}>
+          <Icon name="back" size={28} />
+        </button>
+        <ProductIcon skuId={sku} size={48} />
+        <h2>{productName(sku)}</h2>
+      </div>
+      <div className="counter-grid">
+        <Counter label={t("dc.fpo")} value={fpo} step={ENTRY_STEP_UNITS} unit={unit} onChange={setFpo} />
+        {markets.map((market) => (
+          <Counter
+            key={market}
+            label={t("dc.spotAt", { market })}
+            value={spot[market] ?? 0}
+            step={ENTRY_STEP_UNITS}
+            unit={unit}
+            onChange={(n) => setSpot((s) => ({ ...s, [market]: n }))}
+          />
+        ))}
+      </div>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
       <button className="btn btn-yes" style={{ width: "100%" }} onClick={() => void save()}>
         <Icon name="tick" size={40} /> {t("closing.save")}

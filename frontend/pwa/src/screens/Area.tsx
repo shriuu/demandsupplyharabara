@@ -97,7 +97,7 @@ function Queue({ killed, store }: { killed: boolean; store?: string }) {
   const shown = all ? sorted : sorted.slice(0, SHORT_LIST);
   return (
     <>
-      <ul className="alert-rows">
+      <ul className="alert-rows order-list">
         {shown.map((g) => (
           <ApprovalCard key={g.key} group={g} showStore={!store} onDone={reload} />
         ))}

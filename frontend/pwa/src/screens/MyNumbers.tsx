@@ -46,13 +46,17 @@ export function MyNumbers() {
               <Icon name="clock" size={20} /> {t("numbers.noCounts")}
             </p>
           ) : (
-            <section className="card stack">
-              <Chart data={data} active={shown} onActive={(index) => setPicked({ key: period, index })} />
-              <p className="trend-legend">
-                <span className="trend-key trend-key-waste" /> {t("trend.waste")} <span className="trend-key trend-key-out" /> {t("trend.out")}
-              </p>
-              <p className="small">{t("numbers.pickDay")}</p>
-              <DayDetail p={data.points[shown]} onPick={() => {}} />
+            <section className="card">
+              <div className="perf-grid">
+                <div className="stack">
+                  <Chart data={data} active={shown} onActive={(index) => setPicked({ key: period, index })} />
+                  <p className="trend-legend">
+                    <span className="trend-key trend-key-waste" /> {t("trend.waste")} <span className="trend-key trend-key-out" /> {t("trend.out")}
+                  </p>
+                  <p className="small">{t("numbers.pickDay")}</p>
+                </div>
+                <DayDetail p={data.points[shown]} onPick={() => {}} />
+              </div>
             </section>
           )}
           {data.days_with_closing > 0 && <ProductDashboard period="week" />}

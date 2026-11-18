@@ -42,25 +42,21 @@ export function StoreClosing({ storeId }: { storeId: string }) {
   const open = queue.find((s) => s.id === openId);
   if (open) {
     return (
-      <>
-        <button className="btn btn-plain" onClick={() => setOpenId(null)}>
-          <Icon name="back" size={28} /> {t("order.back")}
-        </button>
-        <ClosingCard
-          key={open.id}
-          suggestion={open}
-          storeId={storeId}
-          onDone={() => {
-            setOpenId(null);
-            reload();
-          }}
-        />
-      </>
+      <ClosingCard
+        key={open.id}
+        suggestion={open}
+        storeId={storeId}
+        onBack={() => setOpenId(null)}
+        onDone={() => {
+          setOpenId(null);
+          reload();
+        }}
+      />
     );
   }
   return (
     <>
-      <p className="small">{t("closing.tap")}</p>
+      <p className="small">{t("closing.tap")} {t("closing.note")}</p>
       <ul className="alert-rows order-list">
         {queue.map((s) => (
           <li key={s.id}>
@@ -78,7 +74,7 @@ export function StoreClosing({ storeId }: { storeId: string }) {
   );
 }
 
-function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; storeId: string; onDone: () => void }) {
+function ClosingCard({ suggestion, storeId, onBack, onDone }: { suggestion: Suggestion; storeId: string; onBack: () => void; onDone: () => void }) {
   const [sold, setSold] = useState(0);
   const [wasted, setWasted] = useState(0);
   const [left, setLeft] = useState(0);
@@ -108,13 +104,18 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
   }
 
   return (
-    <article className="card order-card">
-      <div className="product">
-        <ProductIcon skuId={suggestion.sku_id} size={112} />
+    <article className="card order-card closing-card">
+      <div className="closing-head">
+        <button className="btn btn-plain" onClick={onBack} aria-label={t("order.back")}>
+          <Icon name="back" size={28} />
+        </button>
+        <ProductIcon skuId={suggestion.sku_id} size={48} />
         <h2>{productName(suggestion.sku_id)}</h2>
       </div>
-      <Counter label={t("closing.sold")} value={sold} step={1} unit={unit} onChange={setSold} />
-      <Counter label={t("closing.left")} value={left} step={1} unit={unit} onChange={setLeft} />
+      <div className="counter-pair">
+        <Counter label={t("closing.sold")} value={sold} step={1} unit={unit} onChange={setSold} />
+        <Counter label={t("closing.left")} value={left} step={1} unit={unit} onChange={setLeft} />
+      </div>
       {askWaste || wasted > 0 ? (
         <Counter label={t("closing.wasted")} value={wasted} step={1} unit={unit} onChange={setWasted} />
       ) : (
@@ -135,7 +136,6 @@ function ClosingCard({ suggestion, storeId, onDone }: { suggestion: Suggestion; 
           </div>
         </>
       )}
-      <p className="small">{t("closing.note")}</p>
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
       <button className="btn btn-yes" style={{ width: "100%" }} onClick={() => void save()}>
         <Icon name="tick" size={40} /> {t("closing.save")}

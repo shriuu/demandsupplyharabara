@@ -100,7 +100,7 @@ export function FarmerScreen() {
       <p className="small">
         {t("farmer.what")} {t("farmer.threeDays")}
       </p>
-      <ul className="alert-rows">
+      <ul className="alert-rows order-list">
         {ordered.map(([sku, rows]) => (
           <li key={sku} className="alert-row farmer-row">
             <ProductIcon skuId={sku} size={56} />

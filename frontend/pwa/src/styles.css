@@ -454,3 +454,38 @@ main:has(> .login) { padding-bottom: 0; }
 .order-controls .tickcross .btn svg { width: 30px; height: 30px; }
 .order-band { margin: 0; }
 @media (max-width: 420px) { .order-controls { gap: 5px; } .order-controls .btn-step { flex-basis: 46px; } .order-controls .tickcross .btn { width: 50px; flex-basis: 50px; } }
+
+/* Tonight's orders: bigger tiles with more air between them. Nothing inside a tile changes. */
+.order-list { grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); }
+@media (min-width: 700px) { .order-list { gap: 20px; } }
+.order-line { padding: 18px 22px; gap: 10px; border-radius: 18px; }
+@media (max-width: 520px) { .order-line { padding: 12px 14px; } }
+.order-head .order-band { margin-left: auto; align-self: flex-start; white-space: nowrap; }
+
+/* Closing: the whole card on one screen. */
+.closing-card { max-width: 760px; padding: 10px 16px; gap: 6px; }
+.closing-card .product h2 { font-size: 1.3rem; margin: 2px 0 0; }
+.counter-pair { display: grid; grid-template-columns: 1fr; gap: 6px; width: 100%; }
+@media (min-width: 640px) { .counter-pair { grid-template-columns: 1fr 1fr; gap: 16px; } }
+.closing-card .counter-label { margin: 0 0 2px; }
+.closing-card .btn-step { min-height: 52px; }
+.closing-card .number-input { min-height: 52px; }
+.closing-card .stepper { gap: 8px; }
+.closing-card .tickcross { margin-top: 4px; gap: 10px; }
+.closing-card .tickcross .btn { min-height: 52px; }
+.closing-card .btn-plain { min-height: 44px; }
+.closing-card > .btn-yes { min-height: 56px; }
+.closing-card .small { margin: 2px 0; }
+.closing-head { display: flex; align-items: center; gap: 10px; width: 100%; }
+.closing-head h2 { margin: 0; font-size: 1.3rem; }
+.closing-head .btn { min-height: 44px; flex: 0 0 auto; }
+
+/* My numbers, each product: three across on a wide screen. */
+@media (min-width: 1100px) { .alert-rows-2 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Every row list on a wide screen: more air between rows and inside them. */
+@media (min-width: 700px) {
+  .alert-rows { gap: 16px; }
+  .alert-row { padding: 14px 20px; }
+}
+.counter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 16px; width: 100%; }
