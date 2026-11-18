@@ -489,3 +489,57 @@ main:has(> .login) { padding-bottom: 0; }
   .alert-row { padding: 14px 20px; }
 }
 .counter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 16px; width: 100%; }
+
+/* Buttons you can see are buttons: a visible border and a little depth that presses down. */
+.btn { border-color: #8fae7a; box-shadow: 0 3px 0 rgba(27, 94, 32, 0.28); transition: transform 0.05s, box-shadow 0.05s; }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(27, 94, 32, 0.28); }
+.btn:disabled { box-shadow: none; }
+.btn-plain { background: #fff; border-color: #8fae7a; }
+.btn-yes { border-color: #14461a; box-shadow: 0 3px 0 #14461a; }
+.btn-no, .btn-danger { border-color: #7f1717; box-shadow: 0 3px 0 #7f1717; }
+.btn-step { border-color: #7fa466; }
+.nav-tile { border-color: #8fae7a; }
+.nav-on { border-color: #14461a; box-shadow: 0 3px 0 #14461a; }
+.topbar .btn-plain { background: transparent; border-color: rgba(255, 255, 255, 0.75); box-shadow: none; }
+.pad-key { border-color: #8fae7a; }
+.pad-key.btn-yes { border-color: #14461a; }
+.pad-key.btn-no { border-color: #7f1717; }
+.alert-row.product-row { border-color: var(--line); box-shadow: 0 3px 0 rgba(27, 94, 32, 0.12); }
+.alert-row.product-row:active { transform: translateY(2px); box-shadow: none; }
+.chat-fab { border-color: #0d3c7a; box-shadow: 0 3px 0 #0d3c7a; }
+
+/* Investor palette: leaf green brand, cream page, turmeric accent, charcoal text.
+   Green stays for good and for tick; red for risk and for cross. */
+:root {
+  --brand: #1f6b2a;
+  --brand-dark: #14461a;
+  --turmeric: #e8a317;
+  --paper: #fbf6e9;
+  --line: #e3d3a0;
+  --ink: #222b22;
+  --warm-fill: #fdf0c9;
+  --warm-soft: #fdf6dc;
+  --warm-edge: #c9b27a;
+}
+.topbar { background: var(--brand); }
+.nav-on, .tab-on { background: var(--brand); border-color: var(--brand-dark); box-shadow: 0 3px 0 var(--brand-dark); }
+.btn { background: var(--warm-fill); border-color: var(--warm-edge); box-shadow: 0 3px 0 rgba(120, 90, 10, 0.25); }
+.btn:disabled { box-shadow: none; }
+.nav-tile, .btn-plain { background: #fff; border-color: var(--warm-edge); }
+.btn-step { background: var(--warm-fill); border-color: var(--warm-edge); }
+.btn-yes { background: var(--green); border-color: #14461a; box-shadow: 0 3px 0 #14461a; }
+.btn-no, .btn-danger { background: var(--red); border-color: #7f1717; box-shadow: 0 3px 0 #7f1717; }
+.nav-on { background: var(--brand); }
+.topbar .btn-plain { background: transparent; border-color: rgba(255, 255, 255, 0.75); box-shadow: none; }
+.chat-fab { background: #1565c0; border-color: #0d3c7a; box-shadow: 0 3px 0 #0d3c7a; }
+.lang-btn { box-shadow: none; }
+.chip { background: var(--warm-soft); border-color: var(--line); }
+.dc-block { background: var(--warm-soft); }
+.order-line { border-left-color: var(--turmeric); }
+.order-line.tile-top { border-left-color: var(--brand); }
+.surplus-row, .product-row { border-left-color: var(--turmeric); }
+.product-row.row-on { border-left-color: var(--turmeric); }
+.alert-row:not(.alert-row-red):not(.alert-row-amber) { border-left-color: var(--turmeric); }
+.alert-row.product-row { border-color: var(--line); border-left-color: var(--turmeric); }
+.btn.tab-on, .btn.nav-on, .nav-tile.tab-on, .nav-tile.nav-on { background: var(--brand); color: #fff; border-color: var(--brand-dark); box-shadow: 0 3px 0 var(--brand-dark); }
+.btn.tab:not(.tab-on) { background: #fff; border-color: var(--warm-edge); }
