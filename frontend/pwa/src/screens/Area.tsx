@@ -155,17 +155,9 @@ function StoreView({ store, killed, onBack }: { store: string; killed: boolean; 
       <button className="btn btn-plain" onClick={onBack}>
         <Icon name="back" size={24} /> {t("area.back")}
       </button>
-      <div className="store-title">
-        <h2>
-          <Icon name="store" /> {storeLabel(store)}
-        </h2>
-        <button
-          className="btn"
-          onClick={() => setTab("orders")}
-        >
-          <Icon name="box" size={24} /> {t("area.viewBuys")}
-        </button>
-      </div>
+      <h2>
+        <Icon name="store" /> {storeLabel(store)}
+      </h2>
       <CallStore storeId={store} />
       <div className="area-tabs" role="group">
         {(["decisions", "performance", "orders"] as const).map((k) => (

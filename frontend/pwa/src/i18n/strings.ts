@@ -295,7 +295,6 @@ export const en = {
   "area.decidedRow": "{ok} accepted · {edit} changed · {no} rejected · {wait} waiting",
   "area.stores": "My stores",
   "area.back": "All stores",
-  "area.viewBuys": "Store orders and history",
   "area.tab.decisions": "Decisions",
   "area.tab.performance": "Performance",
   "area.tab.orders": "Orders",

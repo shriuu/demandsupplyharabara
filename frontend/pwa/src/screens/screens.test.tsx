@@ -291,12 +291,13 @@ describe("area manager", () => {
     expect(await screen.findByTestId("store-cards")).toBeInTheDocument();
   });
 
-  it("a button beside the store name opens that store's orders and history", async () => {
+  it("a store has an Orders tab with its orders and history, and no second button beside its name", async () => {
     const user = await openRole("Area manager");
     const cards = within(await screen.findByTestId("store-cards"));
     await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
     expect(screen.queryByText("Any past day")).not.toBeInTheDocument(); // starts on Decisions
-    await user.click(await screen.findByRole("button", { name: "Store orders and history" })); // beside the store name
+    expect(screen.queryByRole("button", { name: "Store orders and history" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Orders" }));
     expect(await screen.findByTestId("product-tiles")).toBeInTheDocument();
     expect(await screen.findByText("Any past day")).toBeInTheDocument();
   });

@@ -293,7 +293,6 @@ export const ta: Locale = {
     "area.decidedRow": "{ok} ஏற்றது · {edit} மாற்றியது · {no} நிராகரித்தது · {wait} காத்திருக்கிறது",
     "area.stores": "என் கடைகள்",
     "area.back": "எல்லா கடைகளும்",
-    "area.viewBuys": "கடையின் ஆர்டர்கள் மற்றும் வரலாறு",
     "area.tab.decisions": "முடிவுகள்",
     "area.tab.performance": "செயல்திறன்",
     "area.tab.orders": "ஆர்டர்கள்",

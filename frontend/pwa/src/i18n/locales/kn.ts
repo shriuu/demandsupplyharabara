@@ -293,7 +293,6 @@ export const kn: Locale = {
     "area.decidedRow": "{ok} ಒಪ್ಪಿದ್ದು · {edit} ಬದಲಾಯಿಸಿದ್ದು · {no} ತಿರಸ್ಕರಿಸಿದ್ದು · {wait} ಕಾಯುತ್ತಿರುವುದು",
     "area.stores": "ನನ್ನ ಅಂಗಡಿಗಳು",
     "area.back": "ಎಲ್ಲ ಅಂಗಡಿಗಳು",
-    "area.viewBuys": "ಅಂಗಡಿಯ ಆರ್ಡರ್ ಮತ್ತು ಇತಿಹಾಸ",
     "area.tab.decisions": "ನಿರ್ಧಾರಗಳು",
     "area.tab.performance": "ಕಾರ್ಯಕ್ಷಮತೆ",
     "area.tab.orders": "ಆರ್ಡರ್",

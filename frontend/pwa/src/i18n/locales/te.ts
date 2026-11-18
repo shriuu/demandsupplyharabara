@@ -293,7 +293,6 @@ export const te: Locale = {
     "area.decidedRow": "{ok} అంగీకరించినవి · {edit} మార్చినవి · {no} తిరస్కరించినవి · {wait} వేచి ఉన్నవి",
     "area.stores": "నా స్టోర్లు",
     "area.back": "అన్ని స్టోర్లు",
-    "area.viewBuys": "స్టోర్ ఆర్డర్లు మరియు చరిత్ర",
     "area.tab.decisions": "నిర్ణయాలు",
     "area.tab.performance": "పనితీరు",
     "area.tab.orders": "ఆర్డర్లు",

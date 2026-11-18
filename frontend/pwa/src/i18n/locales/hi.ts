@@ -293,7 +293,6 @@ export const hi: Locale = {
     "area.decidedRow": "{ok} मंज़ूर · {edit} बदले · {no} नामंज़ूर · {wait} इंतज़ार में",
     "area.stores": "मेरे स्टोर",
     "area.back": "सभी स्टोर",
-    "area.viewBuys": "स्टोर के ऑर्डर और इतिहास",
     "area.tab.decisions": "फैसले",
     "area.tab.performance": "प्रदर्शन",
     "area.tab.orders": "ऑर्डर",
