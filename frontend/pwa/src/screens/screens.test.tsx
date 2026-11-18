@@ -38,6 +38,14 @@ async function openProduct(user: ReturnType<typeof userEvent.setup>, name: strin
   return screen.findByRole("heading", { name });
 }
 
+/** One product's order row on Tonight's orders: the amount, minus, plus, tick and cross all live on it. */
+async function orderRow(name: string) {
+  const rows = await screen.findAllByTestId("order-row");
+  const row = rows.find((r) => r.textContent?.includes(name));
+  if (!row) throw new Error(`no order row for ${name}`);
+  return within(row);
+}
+
 async function openRole(name: string) {
   const user = userEvent.setup();
   render(<App />);
@@ -108,44 +116,51 @@ describe("sign-in", () => {
 });
 
 describe("store manager evening", () => {
-  it("shows the products as tiles, biggest sellers first", async () => {
+  it("shows every product as a row with its own amount, biggest sellers first", async () => {
     await openRole("Store manager");
-    const tiles = await screen.findAllByRole("button", { name: /(Banana|Tomato|Spinach).*\d/ });
-    expect(tiles[0]).toHaveTextContent("Banana");
-    expect(tiles[1]).toHaveTextContent("Tomato");
-    expect(tiles[0]).not.toHaveTextContent("crates");
+    const rows = await screen.findAllByTestId("order-row");
+    expect(rows[0]).toHaveTextContent("Banana");
+    expect(rows[1]).toHaveTextContent("Tomato");
+    expect(within(rows[0]!).getByRole("textbox", { name: "Amount to order" })).toHaveValue("20");
+    expect(within(rows[0]!).getByRole("button", { name: "Accept" })).toBeInTheDocument(); // no page to open
+  });
+
+  it("says in a few words why, from the real driver, not a sentence", async () => {
+    await openRole("Store manager");
+    const row = await orderRow("Tomato");
+    expect(row.getByText(/Busy day of the week|Rain|Hot|Festival|stock|shelf|Sold out|Weather|Price|Promotion|rule/i)).toBeInTheDocument();
   });
 
   it("the amount can be typed as a whole number, and letters or points are dropped", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    const box = screen.getByRole("textbox", { name: "Amount to order" });
+    const row = await orderRow("Tomato");
+    const box = row.getByRole("textbox", { name: "Amount to order" });
     await user.clear(box);
     await user.type(box, "2a5.7");
     expect(box).toHaveValue("257");
-    await user.type(screen.getByPlaceholderText("Write a reason to save"), "Festival");
-    await user.click(screen.getByRole("button", { name: "Save change" }));
+    await user.type(row.getByPlaceholderText("Write a reason to save"), "Festival");
+    await user.click(row.getByRole("button", { name: "Save change" }));
     await user.click(await screen.findByRole("button", { name: "Yes" })); // a big change asks first
     await waitFor(() => expect(mock.decisions).toHaveLength(1));
     expect(mock.decisions[0]).toMatchObject({ action: "edit", edited_units: 257 });
   });
 
-  it("accepting sends an approve and goes back to the tiles", async () => {
+  it("accepting sends an approve and the row leaves the list", async () => {
     const user = await openRole("Store manager");
-    expect(await openProduct(user, "Tomato")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Accept" }));
-    expect(await screen.findByRole("button", { name: /Banana/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Tomato/ })).not.toBeInTheDocument();
+    const row = await orderRow("Tomato");
+    await user.click(row.getByRole("button", { name: "Accept" }));
+    await waitFor(() => expect(screen.queryAllByTestId("order-row").some((r) => r.textContent?.includes("Tomato"))).toBe(false));
+    expect(screen.getAllByTestId("order-row").some((r) => r.textContent?.includes("Banana"))).toBe(true);
     expect(mock.decisions[0]).toMatchObject({ action: "approve", suggestion_id: "s-order-tomato" });
   });
 
   it("an edit needs a reason before it can be saved", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Less" }));
-    const save = screen.getByRole("button", { name: "Save change" });
+    const row = await orderRow("Tomato");
+    await user.click(row.getByRole("button", { name: "Less" }));
+    const save = row.getByRole("button", { name: "Save change" });
     expect(save).toBeDisabled();
-    await user.type(screen.getByPlaceholderText("Write a reason to save"), "Market is slow");
+    await user.type(row.getByPlaceholderText("Write a reason to save"), "Market is slow");
     expect(save).toBeEnabled();
     await user.click(save);
     await waitFor(() => expect(mock.decisions).toHaveLength(1));
@@ -154,10 +169,10 @@ describe("store manager evening", () => {
 
   it("a big edit asks are-you-sure first", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    for (let i = 0; i < 4; i++) await user.click(screen.getByRole("button", { name: "Less" }));
-    await user.type(screen.getByPlaceholderText("Write a reason to save"), "Closing early");
-    await user.click(screen.getByRole("button", { name: "Save change" }));
+    const row = await orderRow("Tomato");
+    for (let i = 0; i < 4; i++) await user.click(row.getByRole("button", { name: "Less" }));
+    await user.type(row.getByPlaceholderText("Write a reason to save"), "Closing early");
+    await user.click(row.getByRole("button", { name: "Save change" }));
     expect(mock.decisions).toHaveLength(0);
     await user.click(await screen.findByRole("button", { name: "Yes" }));
     await waitFor(() => expect(mock.decisions[0]).toMatchObject({ action: "edit", edited_units: 4 }));
@@ -165,8 +180,8 @@ describe("store manager evening", () => {
 
   it("rejecting asks first", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Reject" }));
+    const row = await orderRow("Tomato");
+    await user.click(row.getByRole("button", { name: "Reject" }));
     expect(mock.decisions).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Yes" }));
     await waitFor(() => expect(mock.decisions[0]).toMatchObject({ action: "reject" }));
@@ -176,8 +191,7 @@ describe("store manager evening", () => {
 describe("store manager closing", () => {
   it("records how a decided order went, and the order leaves the list", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click((await orderRow("Tomato")).getByRole("button", { name: "Accept" }));
     await user.click(await screen.findByRole("button", { name: /Closing/ }));
     await openProduct(user, "Tomato");
     for (let i = 0; i < 3; i++) await user.click(screen.getByRole("button", { name: "Sold: More" }));
@@ -207,8 +221,7 @@ describe("store manager closing", () => {
 
   it("records what was left on the shelf, and only if it did not run out", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click((await orderRow("Tomato")).getByRole("button", { name: "Accept" }));
     await user.click(await screen.findByRole("button", { name: /Closing/ }));
     await openProduct(user, "Tomato");
     for (let i = 0; i < 4; i++) await user.click(screen.getByRole("button", { name: "Left on the shelf: More" }));
@@ -219,8 +232,7 @@ describe("store manager closing", () => {
 
   it("asks about running out only when nothing is left, and about waste only when tapped", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click((await orderRow("Tomato")).getByRole("button", { name: "Accept" }));
     await user.click(await screen.findByRole("button", { name: /Closing/ }));
     await openProduct(user, "Tomato");
     expect(screen.getByText("Ran out before closing?")).toBeInTheDocument(); // left is zero
@@ -233,8 +245,7 @@ describe("store manager closing", () => {
 
   it("big counts are typed in whole numbers, not tapped one at a time", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Accept" }));
+    await user.click((await orderRow("Tomato")).getByRole("button", { name: "Accept" }));
     await user.click(await screen.findByRole("button", { name: /Closing/ }));
     await openProduct(user, "Tomato");
     const sold = screen.getByRole("textbox", { name: "Sold" });
@@ -428,8 +439,11 @@ describe("farmer coordinator", () => {
 describe("chat panel", () => {
   it("answers from the suggestion, or says it does not have it", async () => {
     const user = await openRole("Store manager");
-    await openProduct(user, "Tomato");
-    await user.click(screen.getByRole("button", { name: "Ask" }));
+    await user.click(await screen.findByRole("button", { name: "Ask" }));
+    // a list of orders has no single one in front of the person, so Ask lets them choose
+    const menu = await screen.findByRole("combobox", { name: "Choose a suggestion first" });
+    const tomato = [...menu.querySelectorAll("option")].find((o) => o.textContent?.includes("Tomato"))!;
+    await user.selectOptions(menu, tomato.getAttribute("value")!);
     const box = screen.getByPlaceholderText("Type your question");
     await user.type(box, "why?{Enter}");
     expect(await screen.findAllByText("Rain is coming tomorrow, so fewer shoppers will visit.")).not.toHaveLength(0);

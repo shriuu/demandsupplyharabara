@@ -29,3 +29,16 @@ export function ReasonBadge({ driver, reason }: { driver: Driver; reason: string
     </div>
   );
 }
+
+/** The short picture-and-words version of a reason, for a row: the driver's icon, arrow and a few words. */
+export function DriverTag({ driver, reason }: { driver: Driver; reason: string }) {
+  const arrow = driver.direction === "up" ? "↑" : driver.direction === "down" ? "↓" : "";
+  const key = `driver.${driver.kind}.${driver.direction}` as StringKey;
+  return (
+    <span className="driver-tag" title={reason} data-driver={driver.kind}>
+      <Icon name={iconFor[driver.kind](driver)} size={20} />
+      {arrow && <span aria-hidden="true">{arrow}</span>}
+      <span>{t(key)}</span>
+    </span>
+  );
+}

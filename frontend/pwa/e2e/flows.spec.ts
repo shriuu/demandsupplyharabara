@@ -13,17 +13,16 @@ async function signIn(page: import("@playwright/test").Page, who: string) {
   await page.getByRole("button", { name: "Go" }).click();
 }
 
-test("store manager: answers tonight's orders one at a time, then sees morning alerts and surplus", async ({ page }) => {
+test("store manager: answers tonight's orders on their rows, then sees morning alerts and surplus", async ({ page }) => {
   await signIn(page, "Store manager");
-  await expect(page.getByRole("heading", { name: "Tomato" })).toBeVisible();
-  await page.getByRole("button", { name: "Accept" }).click();
-  await expect(page.getByRole("heading", { name: "Banana" })).toBeVisible();
-  // edit with a reason
-  await page.getByRole("button", { name: "More" }).click();
-  await page.getByPlaceholder("Write a reason to save").fill("Festival crowd");
-  await page.getByRole("button", { name: "Save change" }).click();
-  await expect(page.getByRole("heading", { name: "Spinach" })).toBeVisible();
-  await page.getByRole("button", { name: "Reject" }).click();
+  const row = (name: string) => page.getByTestId("order-row").filter({ hasText: name });
+  await expect(row("Tomato")).toBeVisible();
+  await row("Tomato").getByRole("button", { name: "Accept" }).click();
+  // edit with a reason, on the same row
+  await row("Banana").getByRole("button", { name: "More" }).click();
+  await row("Banana").getByPlaceholder("Write a reason to save").fill("Festival crowd");
+  await row("Banana").getByRole("button", { name: "Save change" }).click();
+  await row("Spinach").getByRole("button", { name: "Reject" }).click();
   await page.getByRole("button", { name: "Yes" }).click();
   await expect(page.getByText("All orders answered")).toBeVisible();
 

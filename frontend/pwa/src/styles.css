@@ -436,3 +436,21 @@ main:has(> .login) { padding-bottom: 0; }
 }
 .store-wait { display: flex; align-items: center; gap: 6px; margin: 4px 0; font-weight: 800; color: var(--green-dark); }
 .store-wait-on { color: #fff; background: var(--amber); border-radius: 999px; padding: 4px 12px; width: fit-content; }
+
+/* Tonight's orders: the order itself on the row. */
+.order-list { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+.order-line { list-style: none; display: flex; flex-direction: column; gap: 6px; background: var(--card); border: 2px solid var(--line); border-left: 8px solid var(--green); border-radius: 14px; padding: 8px 12px; }
+.order-line.tile-top { border-left-color: var(--amber); }
+.order-head { display: flex; align-items: center; gap: 10px; }
+.order-head .tile-rank { position: static; min-width: 18px; }
+.order-name { display: flex; flex-direction: column; min-width: 0; }
+.driver-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #4a5a44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.order-controls { display: flex; align-items: center; gap: 8px; }
+.order-controls .btn-step { min-height: 52px; flex: 0 0 52px; padding: 0; }
+.order-controls .number-field { flex: 1 1 70px; min-width: 70px; display: flex; align-items: center; gap: 4px; }
+.order-controls .number-input { width: 100%; min-height: 52px; text-align: center; font-size: 1.3rem; font-weight: 800; }
+.order-controls .tickcross { margin: 0 0 0 auto; width: auto; gap: 6px; }
+.order-controls .tickcross .btn { min-height: 52px; width: 56px; flex: 0 0 56px; padding: 0; }
+.order-controls .tickcross .btn svg { width: 30px; height: 30px; }
+.order-band { margin: 0; }
+@media (max-width: 420px) { .order-controls { gap: 5px; } .order-controls .btn-step { flex-basis: 46px; } .order-controls .tickcross .btn { width: 50px; flex-basis: 50px; } }

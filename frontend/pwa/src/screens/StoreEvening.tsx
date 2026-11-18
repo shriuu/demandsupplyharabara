@@ -3,13 +3,11 @@ import { api } from "../api/client";
 import { useLoad } from "../api/useApi";
 import type { OrderPayload, Suggestion } from "../api/types";
 import { Confirm, TickCross } from "../components/Buttons";
-import { Crates } from "../components/Crates";
 import { NumberField } from "../components/NumberField";
-import { useChatFocus } from "../components/chatContext";
 import { todayIso } from "../components/CalendarPick";
 import { Icon } from "../components/Icons";
 import { ProductIcon } from "../components/ProductIcon";
-import { ReasonBadge } from "../components/ReasonBadge";
+import { DriverTag } from "../components/ReasonBadge";
 import { Loading, LoadError } from "../components/Status";
 import { EDIT_STEP_UNITS, LARGE_EDIT_FRACTION } from "../config";
 import { productName, t, unitOf } from "../i18n/strings";
@@ -24,10 +22,9 @@ export function StoreEvening({ storeId }: { storeId: string }) {
     () => api.suggestions({ role: "store_manager", store_id: storeId, kind: "order", recent: true }),
     [storeId],
   );
-  const [openId, setOpenId] = useState<string | null>(null);
+  const queue = state.status === "ready" ? state.data.filter((s) => s.state === "proposed").sort(biggestFirst) : [];
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <LoadError onRetry={reload} />;
-  const queue = state.data.filter((s) => s.state === "proposed").sort(biggestFirst);
   if (!queue.length) {
     // Say what really happened tonight. An older batch is not tonight's: if the last batch was
     // answered, tonight's have simply not arrived yet.
@@ -56,69 +53,26 @@ export function StoreEvening({ storeId }: { storeId: string }) {
       </>
     );
   }
-  const open = queue.find((s) => s.id === openId);
-  if (open) {
-    return (
-      <>
-        <button className="btn btn-plain" onClick={() => setOpenId(null)}>
-          <Icon name="back" size={28} /> {t("order.back")}
-        </button>
-        <OrderCard
-          key={open.id}
-          suggestion={open}
-          position={queue.indexOf(open) + 1}
-          total={queue.length}
-          onDone={() => {
-            setOpenId(null);
-            reload();
-          }}
-        />
-      </>
-    );
-  }
   return (
     <>
       <p className="small">
         {t("order.tap")} · {t("order.left", { n: queue.length })}
       </p>
       <ul className="alert-rows order-list">
-        {queue.map((s, i) => {
-          const units = (s.payload as OrderPayload).recommended_units;
-          return (
-            <li key={s.id}>
-              <button
-                className={`alert-row product-row order-row ${i < TOP_TILES ? "tile-top" : ""}`}
-                onClick={() => setOpenId(s.id)}
-              >
-                <span className="tile-rank">{i + 1}</span>
-                <ProductIcon skuId={s.sku_id} size={48} />
-                <span className="alert-main">
-                  <span className="row-name">{productName(s.sku_id)}</span>
-                </span>
-                <span className="chip">{t("order.units", { n: Math.round(units), unit: unitOf(s.sku_id) })}</span>
-                <span className="row-go">
-                  <Icon name="back" size={28} />
-                </span>
-              </button>
-            </li>
-          );
-        })}
+        {queue.map((s, i) => (
+          <OrderRow key={s.id} suggestion={s} rank={i + 1} top={i < TOP_TILES} onDone={reload} />
+        ))}
       </ul>
     </>
   );
 }
 
-export function OrderCard({
-  suggestion,
-  position,
-  total,
-  onDone,
-}: {
-  suggestion: Suggestion;
-  position: number;
-  total: number;
-  onDone: () => void;
-}) {
+/**
+ * One order on one row: the amount with its own minus and plus, a tick and a cross. No page of its own.
+ * Changing the amount opens the reason box on this row, and the tick waits for it (every edit has a
+ * reason). A cross, and a big change, still ask "are you sure".
+ */
+function OrderRow({ suggestion, rank, top, onDone }: { suggestion: Suggestion; rank: number; top: boolean; onDone: () => void }) {
   const payload = suggestion.payload as OrderPayload;
   const suggested = Math.round(payload.recommended_units);
   const [units, setUnits] = useState(suggested);
@@ -126,10 +80,12 @@ export function OrderCard({
   const [confirming, setConfirming] = useState<"reject" | "bigEdit" | null>(null);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const unit = unitOf(suggestion.sku_id);
   const edited = units !== suggested;
   const big = Math.abs(units - suggested) > suggested * LARGE_EDIT_FRACTION;
   const needsReason = edited && reason.trim() === "";
-  useChatFocus(suggestion.id);
+  // the low end of the band is an ordinary day's order; the suggestion also covers a busy day
+  const normal = Math.round(payload.range.low);
 
   async function send(body: Parameters<typeof decideAll>[2]) {
     if (busy) return;
@@ -152,59 +108,46 @@ export function OrderCard({
   };
 
   return (
-    <article className="card order-card">
-      <p className="progress" aria-label={t("order.progress", { n: position, total })}>
-        {t("order.progress", { n: position, total })}
-      </p>
-      <div className="product">
-        <ProductIcon skuId={suggestion.sku_id} size={112} />
-        <h2>{productName(suggestion.sku_id)}</h2>
+    <li className={`order-line ${top ? "tile-top" : ""}`} data-testid="order-row" data-sku={suggestion.sku_id}>
+      <div className="order-head">
+        <span className="tile-rank">{rank}</span>
+        <ProductIcon skuId={suggestion.sku_id} size={48} />
+        <div className="order-name">
+          <span className="row-name">{productName(suggestion.sku_id)}</span>
+          <DriverTag driver={suggestion.drivers[0]} reason={suggestion.reason} />
+        </div>
       </div>
-      <Crates units={units} range={payload.range} skuId={suggestion.sku_id} />
-      <div className="stepper">
-        <button
-          className="btn btn-step"
-          aria-label={t("action.minus")}
-          disabled={units <= 0}
-          onClick={() => setUnits((n) => Math.max(0, n - EDIT_STEP_UNITS))}
-        >
-          <Icon name="minus" size={40} />
+      <div className="order-controls">
+        <button className="btn btn-step" aria-label={t("action.minus")} disabled={units <= 0 || busy} onClick={() => setUnits((n) => Math.max(0, n - EDIT_STEP_UNITS))}>
+          <Icon name="minus" size={32} />
         </button>
-        <NumberField label={t("order.amount")} value={units} onChange={setUnits} unit={unitOf(suggestion.sku_id)} />
-        <button className="btn btn-step" aria-label={t("action.plus")} onClick={() => setUnits((n) => n + EDIT_STEP_UNITS)}>
-          <Icon name="plus" size={40} />
+        <NumberField label={t("order.amount")} value={units} onChange={setUnits} unit={unit} />
+        <button className="btn btn-step" aria-label={t("action.plus")} disabled={busy} onClick={() => setUnits((n) => n + EDIT_STEP_UNITS)}>
+          <Icon name="plus" size={32} />
         </button>
+        <TickCross
+          onTick={onTick}
+          onCross={() => setConfirming("reject")}
+          tickLabel={edited ? t("action.save") : t("action.accept")}
+          disabled={busy || (edited && needsReason)}
+        />
       </div>
-      {payload.manager_rule_units != null && (
-        <p className="usual">{t("order.usual", { n: Math.round(payload.manager_rule_units) })}</p>
-      )}
-      <ReasonBadge driver={suggestion.drivers[0]} reason={suggestion.reason} />
+      {!edited && normal < suggested && <p className="order-band small">{t("order.band", { n: normal })}</p>}
       {edited && (
         <label className="reason-field">
           <span>
             <Icon name="mic-off" size={20} /> {t("edit.reason")}
           </span>
-          <input
-            className="field"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder={t("edit.reasonNeeded")}
-          />
+          <input className="field" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("edit.reasonNeeded")} />
         </label>
       )}
       {failed && <p className="notice notice-error" role="alert">{t("app.error")}</p>}
-      <TickCross
-        onTick={onTick}
-        onCross={() => setConfirming("reject")}
-        tickLabel={edited ? t("action.save") : t("action.accept")}
-        disabled={busy || (edited && needsReason)}
-      />
       {confirming === "reject" && (
         <Confirm message={t("action.confirm.sure")} onYes={() => void send({ action: "reject" })} onNo={() => setConfirming(null)} />
       )}
       {confirming === "bigEdit" && (
         <Confirm message={`${t("edit.large")} ${t("action.confirm.sure")}`} onYes={() => void saveEdit()} onNo={() => setConfirming(null)} />
       )}
-    </article>
+    </li>
   );
 }
