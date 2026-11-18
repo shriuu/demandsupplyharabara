@@ -152,7 +152,7 @@ function StoreView({ store, killed, onBack }: { store: string; killed: boolean; 
   const [tab, setTab] = useState<"decisions" | "performance" | "orders">("decisions");
   return (
     <div className="stack">
-      <button className="btn btn-plain" onClick={onBack}>
+      <button className="btn btn-plain" onClick={onBack} data-tip={t("tip.stores")}>
         <Icon name="back" size={24} /> {t("area.back")}
       </button>
       <h2>
@@ -165,6 +165,7 @@ function StoreView({ store, killed, onBack }: { store: string; killed: boolean; 
             key={k}
             className={`btn nav-tile ${tab === k ? "nav-on" : ""}`}
             aria-pressed={tab === k}
+            data-tip={t(`tip.${k}`)}
             onClick={() => setTab(k)}
           >
             <Icon name={k === "decisions" ? "tick" : k === "performance" ? "chart" : "box"} size={24} /> {t(`area.tab.${k}`)}

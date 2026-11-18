@@ -555,3 +555,52 @@ main:has(> .login) { padding-bottom: 0; }
 /* Ask and sign out share one look: white outline on the green header. */
 .chat-fab { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.75); box-shadow: none; }
 .chat-fab:active:not(:disabled) { transform: translateY(2px); }
+
+/* A short explanation on hover or keyboard focus for each main tab. */
+.btn[data-tip] { position: relative; }
+.btn[data-tip]:hover::after, .btn[data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: min(280px, 80vw); background: #222b22; color: #fff; font-size: 0.9rem; font-weight: 500;
+  line-height: 1.4; text-align: left; white-space: normal; padding: 9px 13px; border-radius: 10px; z-index: 40; pointer-events: none;
+}
+.btn[data-tip]:hover::before, .btn[data-tip]:focus-visible::before {
+  content: ""; position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 41; pointer-events: none;
+  border: 8px solid transparent; border-bottom-color: #222b22; border-top-width: 0;
+}
+.tabs .btn[data-tip]:first-child:hover::after, .area-tabs .btn[data-tip]:first-child:hover::after,
+.tabs .btn[data-tip]:first-child:focus-visible::after, .area-tabs .btn[data-tip]:first-child:focus-visible::after { left: 0; transform: none; }
+.tabs .btn[data-tip]:last-child:hover::after, .area-tabs .btn[data-tip]:last-child:hover::after,
+.tabs .btn[data-tip]:last-child:focus-visible::after, .area-tabs .btn[data-tip]:last-child:focus-visible::after { left: auto; right: 0; transform: none; }
+
+/* Tooltip, nicer: a cream card with a turmeric edge, a pointer, and a gentle fade after a short pause. */
+@keyframes tip-in { from { opacity: 0; transform: translate(var(--tx, -50%), 4px); } to { opacity: 1; transform: translate(var(--tx, -50%), 0); } }
+.btn[data-tip]:hover::after, .btn[data-tip]:focus-visible::after {
+  background: #fffdf5; color: var(--ink); font-size: 1rem; font-weight: 600; line-height: 1.45;
+  padding: 12px 16px 12px 14px; border: 2px solid #c9b27a; border-left: 6px solid var(--turmeric); border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(60, 45, 5, 0.22); max-width: min(300px, 82vw);
+  top: calc(100% + 14px); animation: tip-in 0.16s ease-out 0.25s both;
+}
+.btn[data-tip]:hover::before, .btn[data-tip]:focus-visible::before {
+  top: calc(100% + 8px); width: 14px; height: 14px; border: 0; background: #fffdf5;
+  border-top: 2px solid #c9b27a; border-left: 2px solid #c9b27a; transform: translateX(-50%) rotate(45deg); z-index: 41;
+  animation: tip-in 0.16s ease-out 0.25s both; --tx: -50%;
+}
+.tabs .btn[data-tip]:first-child:hover::after, .area-tabs .btn[data-tip]:first-child:hover::after,
+.tabs .btn[data-tip]:first-child:focus-visible::after, .area-tabs .btn[data-tip]:first-child:focus-visible::after { --tx: 0; }
+.tabs .btn[data-tip]:last-child:hover::after, .area-tabs .btn[data-tip]:last-child:hover::after,
+.tabs .btn[data-tip]:last-child:focus-visible::after, .area-tabs .btn[data-tip]:last-child:focus-visible::after { --tx: 0; }
+.btn[data-tip]:hover::after, .btn[data-tip]:focus-visible::after { --tx: -50%; }
+@keyframes tip-arrow-in { from { opacity: 0; transform: translateX(-50%) translateY(4px) rotate(45deg); } to { opacity: 1; transform: translateX(-50%) translateY(0) rotate(45deg); } }
+.btn[data-tip]:hover::before, .btn[data-tip]:focus-visible::before { animation: tip-arrow-in 0.16s ease-out 0.25s both; }
+
+/* Tooltips for the header buttons, the DC buttons and the farmer history line. */
+.chat-fab[data-tip] { position: fixed; }
+.chat-fab[data-tip]:hover::after, .chat-fab[data-tip]:focus-visible::after,
+.topbar .btn[data-tip]:hover::after, .topbar .btn[data-tip]:focus-visible::after { left: auto; right: 0; --tx: 0; }
+summary[data-tip] { position: relative; cursor: pointer; }
+summary[data-tip]:hover::after, summary[data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 10px); left: 0; z-index: 40; pointer-events: none;
+  width: max-content; max-width: min(300px, 82vw); background: #fffdf5; color: var(--ink); font-size: 1rem; font-weight: 600; line-height: 1.45;
+  padding: 12px 16px 12px 14px; border: 2px solid #c9b27a; border-left: 6px solid var(--turmeric); border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(60, 45, 5, 0.22); animation: tip-in 0.16s ease-out 0.25s both; --tx: 0;
+}

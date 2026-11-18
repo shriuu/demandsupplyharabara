@@ -37,7 +37,7 @@ function FarmerHistory() {
       : 1;
   return (
     <details className="card farmer-history">
-      <summary>
+      <summary data-tip={t("tip.history")}>
         <Icon name="calendar" size={24} /> {t("farmer.history")}
       </summary>
       <p className="small">{t("farmer.histNote")}</p>

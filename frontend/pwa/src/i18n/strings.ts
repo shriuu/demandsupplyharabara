@@ -350,6 +350,19 @@ export const en = {
   "kill.off": "Start suggestions again",
   "kill.confirmOff": "Start suggestions again for everyone?",
   "kill.stoppedNow": "Suggestions are stopped",
+  "tip.evening": "Tonight: check each product's amount, then tick it or change it. This becomes tomorrow's order.",
+  "tip.morning": "This morning: discounts, moves to another store and surplus pickups. Tick the ones you agree with.",
+  "tip.closing": "End of day: enter how much sold and what is left, so we can see how the day went.",
+  "tip.numbers": "How your store is doing: thrown away, ran out, and any past day.",
+  "tip.decisions": "Big discounts and store moves waiting for your yes.",
+  "tip.performance": "How this store is doing, and what to talk about with its manager.",
+  "tip.orders": "What this store ordered, sold, threw away and had left, for any day.",
+  "tip.ask": "Ask why a suggestion was made.",
+  "tip.logout": "Sign out and return to the PIN screen.",
+  "tip.record": "Write down how much you bought from farmer groups and from the market.",
+  "tip.sendTo": "See which area and store each amount goes to. Information only.",
+  "tip.stores": "Back to the list of your stores.",
+  "tip.history": "Pick a past day to see the estimate shared that day and what was bought.",
 } as const;
 
 export type StringKey = keyof typeof en;

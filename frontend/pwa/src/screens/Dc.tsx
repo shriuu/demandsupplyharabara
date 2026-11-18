@@ -104,7 +104,7 @@ function SendTo({ product }: { product: DcOrders["products"][number] }) {
   }
   return (
     <details className="send-to">
-      <summary className="btn btn-plain send-btn">
+      <summary className="btn btn-plain send-btn" data-tip={t("tip.sendTo")}>
         <Icon name="van" size={24} /> {t("dc.sendTo")}
       </summary>
       {[...groups.entries()].map(([key, group]) => {
@@ -208,7 +208,7 @@ function ProductRow({
             {t("dc.boughtRow", { units: Math.round(b.units), unit, where: where(b.market) })}
           </p>
         ))}
-        <button className={`btn ${saved ? "btn-plain" : "btn-yes"}`} onClick={onRecord}>
+        <button className={`btn ${saved ? "btn-plain" : "btn-yes"}`} onClick={onRecord} data-tip={t("tip.record")}>
           <Icon name={saved ? "tick" : "plus"} size={22} /> {saved ? t("dc.saved") : t("dc.record")}
         </button>
       </div>

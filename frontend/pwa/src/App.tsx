@@ -26,11 +26,11 @@ const roleIcons: Record<Role, IconName> = {
 };
 
 type StoreTab = "evening" | "morning" | "closing" | "numbers";
-const storeTabs: { tab: StoreTab; icon: IconName; label: StringKey }[] = [
-  { tab: "evening", icon: "moon", label: "tab.evening" },
-  { tab: "morning", icon: "sun", label: "tab.morning" },
-  { tab: "closing", icon: "tick", label: "tab.closing" },
-  { tab: "numbers", icon: "chart", label: "tab.numbers" },
+const storeTabs: { tab: StoreTab; icon: IconName; label: StringKey; tip: StringKey }[] = [
+  { tab: "evening", icon: "moon", label: "tab.evening", tip: "tip.evening" },
+  { tab: "morning", icon: "sun", label: "tab.morning", tip: "tip.morning" },
+  { tab: "closing", icon: "tick", label: "tab.closing", tip: "tip.closing" },
+  { tab: "numbers", icon: "chart", label: "tab.numbers", tip: "tip.numbers" },
 ];
 
 export function App() {
@@ -78,7 +78,7 @@ export function App() {
               </span>
             </span>
             <LanguageSwitch clearOfAsk={role === "store_manager" || role === "area_manager"} />
-            <button className="btn btn-plain" onClick={signOut} aria-label={t("app.logout")}>
+            <button className="btn btn-plain" onClick={signOut} aria-label={t("app.logout")} data-tip={t("tip.logout")}>
               <Icon name="logout" size={32} />
             </button>
           </div>
@@ -107,6 +107,7 @@ export function App() {
                   key={s.tab}
                   className={`btn tab ${tab === s.tab ? "tab-on" : ""}`}
                   aria-pressed={tab === s.tab}
+                  data-tip={t(s.tip)}
                   onClick={() => setTab(s.tab)}
                 >
                   <Icon name={s.icon} size={36} />
