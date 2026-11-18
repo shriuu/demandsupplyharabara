@@ -149,36 +149,43 @@ function KillSwitch({ killed, onChange }: { killed: boolean; onChange: (killed: 
 }
 
 function StoreView({ store, killed, onBack }: { store: string; killed: boolean; onBack: () => void }) {
-  const [tab, setTab] = useState<"decisions" | "performance">("decisions");
+  const [tab, setTab] = useState<"decisions" | "performance" | "orders">("decisions");
   return (
     <div className="stack">
       <button className="btn btn-plain" onClick={onBack}>
         <Icon name="back" size={24} /> {t("area.back")}
       </button>
-      <h2>
-        <Icon name="store" /> {storeLabel(store)}
-      </h2>
+      <div className="store-title">
+        <h2>
+          <Icon name="store" /> {storeLabel(store)}
+        </h2>
+        <button
+          className="btn"
+          onClick={() => setTab("orders")}
+        >
+          <Icon name="box" size={24} /> {t("area.viewBuys")}
+        </button>
+      </div>
       <CallStore storeId={store} />
       <div className="area-tabs" role="group">
-        {(["decisions", "performance"] as const).map((k) => (
+        {(["decisions", "performance", "orders"] as const).map((k) => (
           <button
             key={k}
             className={`btn nav-tile ${tab === k ? "nav-on" : ""}`}
             aria-pressed={tab === k}
             onClick={() => setTab(k)}
           >
-            <Icon name={k === "decisions" ? "tick" : "chart"} size={24} /> {t(`area.tab.${k}`)}
+            <Icon name={k === "decisions" ? "tick" : k === "performance" ? "chart" : "box"} size={24} /> {t(`area.tab.${k}`)}
           </button>
         ))}
       </div>
-      {tab === "decisions" ? (
-        <Queue killed={killed} store={store} />
-      ) : (
-        <>
-          <Trend scope={store} onPick={() => undefined} />
+      {tab === "decisions" && <Queue killed={killed} store={store} />}
+      {tab === "performance" && <Trend scope={store} onPick={() => undefined} />}
+      {tab === "orders" && (
+        <div className="stack">
           <ProductDashboard key={`p-${store}`} period="week" storeId={store} />
           <StoreHistory key={`h-${store}`} storeId={store} />
-        </>
+        </div>
       )}
     </div>
   );

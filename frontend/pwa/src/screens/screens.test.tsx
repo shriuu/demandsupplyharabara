@@ -291,8 +291,19 @@ describe("area manager", () => {
     expect(await screen.findByTestId("store-cards")).toBeInTheDocument();
   });
 
-  it("a store's performance has what its manager sees: a light per product and any past day as a table", async () => {
+  it("a button beside the store name opens that store's orders and history", async () => {
+    const user = await openRole("Area manager");
+    const cards = within(await screen.findByTestId("store-cards"));
+    await user.click(cards.getByRole("button", { name: /Jayanagar/ }));
+    expect(screen.queryByText("Any past day")).not.toBeInTheDocument(); // starts on Decisions
+    await user.click(await screen.findByRole("button", { name: "Store orders and history" })); // beside the store name
+    expect(await screen.findByTestId("product-tiles")).toBeInTheDocument();
+    expect(await screen.findByText("Any past day")).toBeInTheDocument();
+  });
+
+  it("a store's Orders tab has what its manager sees: a light per product and any past day as a table", async () => {
     await openStorePerformance();
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Orders" }));
     const tiles = await screen.findByTestId("product-tiles");
     expect(within(tiles).getAllByRole("button").length).toBeGreaterThan(0);
     expect(await screen.findByText("Any past day")).toBeInTheDocument();

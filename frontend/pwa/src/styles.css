@@ -551,3 +551,5 @@ main:has(> .login) { padding-bottom: 0; }
 .store-card[aria-pressed="true"] { border-color: var(--brand); background: var(--warm-soft); }
 .login-pin, .org-img { box-shadow: 0 4px 14px rgba(120, 90, 10, 0.18); }
 .mark { background: var(--warm-soft); }
+.store-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.store-title h2 { margin: 0; }
